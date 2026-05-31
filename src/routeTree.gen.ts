@@ -34,6 +34,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContributorIndexRouteImport } from './routes/contributor.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as PostSlugRouteImport } from './routes/post.$slug'
 import { Route as ContributorWalletRouteImport } from './routes/contributor.wallet'
 import { Route as ContributorSubmitRouteImport } from './routes/contributor.submit'
 import { Route as ContributorSubmissionsRouteImport } from './routes/contributor.submissions'
@@ -178,6 +179,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const PostSlugRoute = PostSlugRouteImport.update({
+  id: '/post/$slug',
+  path: '/post/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContributorWalletRoute = ContributorWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/post/$slug': typeof PostSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/contributor/': typeof ContributorIndexRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/post/$slug': typeof PostSlugRoute
   '/admin': typeof AdminIndexRoute
   '/contributor': typeof ContributorIndexRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
@@ -399,6 +407,7 @@ export interface FileRoutesById {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/post/$slug': typeof PostSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/contributor/': typeof ContributorIndexRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
@@ -446,6 +455,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/post/$slug'
     | '/admin/'
     | '/contributor/'
     | '/admin/edit/$id'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/post/$slug'
     | '/admin'
     | '/contributor'
     | '/admin/edit/$id'
@@ -534,6 +545,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/post/$slug'
     | '/admin/'
     | '/contributor/'
     | '/admin/edit/$id'
@@ -567,6 +579,7 @@ export interface RootRouteChildren {
   ArticleSlugRoute: typeof ArticleSlugRouteWithChildren
   AuthorIdRoute: typeof AuthorIdRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  PostSlugRoute: typeof PostSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -745,6 +758,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/post/$slug': {
+      id: '/post/$slug'
+      path: '/post/$slug'
+      fullPath: '/post/$slug'
+      preLoaderRoute: typeof PostSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/contributor/wallet': {
       id: '/contributor/wallet'
@@ -964,6 +984,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArticleSlugRoute: ArticleSlugRouteWithChildren,
   AuthorIdRoute: AuthorIdRoute,
   CategorySlugRoute: CategorySlugRoute,
+  PostSlugRoute: PostSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
