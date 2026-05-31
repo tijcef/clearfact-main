@@ -24,20 +24,21 @@ export interface Article {
 }
 
 export const CATEGORIES = [
-  { slug: "breaking-news", label: "Breaking" },
+  { slug: "breaking", label: "Breaking" },
   { slug: "politics", label: "Politics" },
   { slug: "business", label: "Business" },
+  { slug: "economy", label: "Economy" },
   { slug: "technology", label: "Technology" },
   { slug: "education", label: "Education" },
   { slug: "health", label: "Health" },
-  { slug: "agriculture", label: "Agriculture" },
   { slug: "security", label: "Security" },
-  { slug: "environment", label: "Environment" },
+  { slug: "metro", label: "Metro" },
   { slug: "sports", label: "Sports" },
   { slug: "entertainment", label: "Entertainment" },
   { slug: "investigations", label: "Investigations" },
   { slug: "fact-check", label: "Fact Check" },
   { slug: "opinion", label: "Opinion" },
+  { slug: "world", label: "World" },
 ];
 
 export const ARTICLES: Article[] = [
