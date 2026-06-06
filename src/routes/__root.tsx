@@ -129,6 +129,13 @@ function RootShell({
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8967021504063466"
+          crossOrigin="anonymous"
+        />
       </head>
 
       <body>
