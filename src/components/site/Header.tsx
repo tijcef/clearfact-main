@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
+import { getPosts } from "@/lib/wordpress";
 import { Link } from "@tanstack/react-router";
 import { Search, Menu, ShieldCheck } from "lucide-react";
-import { useState } from "react";
-import { CATEGORIES, TICKER } from "@/lib/news-data";
+import { CATEGORIES } from "@/lib/news-data";
 import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/clearfact-logo.jpg";
 
@@ -33,6 +34,20 @@ function Logo() {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [tickerPosts, setTickerPosts] = useState<any[]>([]);
+
+useEffect(() => {
+  const loadTickerPosts = async () => {
+    try {
+      const posts = await getPosts();
+      setTickerPosts(posts.slice(0, 5));
+    } catch (error) {
+      console.error("Failed to load ticker posts:", error);
+    }
+  };
+
+  loadTickerPosts();
+}, []);
 
   const date = new Date().toLocaleDateString("en-NG", {
     weekday: "long",
@@ -177,13 +192,13 @@ export function Header() {
           </span>
 
           <div className="overflow-hidden flex-1">
-            <div className="ticker-track flex gap-10 whitespace-nowrap text-xs">
-              {[...TICKER, ...TICKER].map((t, i) => (
-                <span key={i} className="opacity-90">
-                  • {t}
-                </span>
-              ))}
-            </div>
+           <div className="ticker-track flex gap-10 whitespace-nowrap text-xs">
+  {[...tickerPosts, ...tickerPosts].map((post, i) => (
+    <span key={`${post.id}-${i}`} className="opacity-90">
+      • {post.title?.rendered || "Loading..."}
+    </span>
+  ))}
+</div>
           </div>
         </div>
       </div>

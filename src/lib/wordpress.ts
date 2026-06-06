@@ -1,24 +1,16 @@
-const API =
-  "https://cms.tijcef.org/wp/wp-json/wp/v2/posts?_embed";
+export const WP_API = "https://clearfact.ng/wp-json/wp/v2";
 
 export async function getPosts() {
-  try {
-    const response = await fetch(API, {
-      cache: "no-store",
-    });
+  const res = await fetch(`${WP_API}/posts?_embed`);
+  return res.json();
+}
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch posts");
-    }
+export async function getCategories() {
+  const res = await fetch(`${WP_API}/categories`);
+  return res.json();
+}
 
-    const data = await response.json();
-
-    console.log("WORDPRESS POSTS:", data);
-
-    return data;
-  } catch (error) {
-    console.error("WordPress Fetch Error:", error);
-
-    return [];
-  }
+export async function getTags() {
+  const res = await fetch(`${WP_API}/tags`);
+  return res.json();
 }
