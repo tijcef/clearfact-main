@@ -1,12 +1,8 @@
+import { getPosts, searchPosts } from "@/lib/wordpress";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-import { Search as SearchIcon, Loader2, TrendingUp, Tag } from "lucide-react";
+import { Search as SearchIcon, Loader2, TrendingUp } from "lucide-react";
 import { CATEGORIES } from "@/lib/news-data";
-import { VerificationBadge } from "@/components/site/VerificationBadge";
-
-type Article = Database["public"]["Tables"]["articles"]["Row"];
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -29,24 +25,26 @@ function SearchPage() {
   const { q, category, tag } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [input, setInput] = useState(q);
-  const [results, setResults] = useState<Article[] | null>(null);
+  const [results, setResults] = useState<any[] | null>(null);
 
   useEffect(() => { setInput(q); }, [q]);
 
   useEffect(() => {
-    (async () => {
+  (async () => {
+    try {
       setResults(null);
-      let query = supabase.from("articles").select("*")
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(40);
-      if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%,body.ilike.%${q}%`);
-      if (category) query = query.eq("category", category);
-      if (tag) query = query.contains("tags", [tag]);
-      const { data } = await query;
-      setResults(data ?? []);
-    })();
-  }, [q, category, tag]);
+
+      const posts = q
+        ? await searchPosts(q)
+        : await getPosts();
+
+      setResults(posts);
+    } catch (error) {
+      console.error(error);
+      setResults([]);
+    }
+  })();
+}, [q]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,32 +117,36 @@ function SearchPage() {
             <div className="py-10 text-muted-foreground">No results. Try a different keyword.</div>
           ) : (
             <ul className="space-y-6">
-              {results.map((a) => (
-                <li key={a.id} className="grid sm:grid-cols-[200px_1fr] gap-4 pb-6 border-b border-border last:border-0">
-                  {a.cover_image && (
-                    <Link to="/article/$slug" params={{ slug: a.slug }}>
-                      <img src={a.cover_image} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover rounded-sm" />
-                    </Link>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">{a.category}</span>
-                      <VerificationBadge status={a.verification} />
-                    </div>
-                    <Link to="/article/$slug" params={{ slug: a.slug }}>
-                      <h3 className="font-serif text-xl mt-1 hover:underline decoration-gold underline-offset-4">{a.title}</h3>
-                    </Link>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{a.excerpt}</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {(a.tags ?? []).slice(0, 6).map((t) => (
-                        <Link key={t} to="/search" search={{ q: "", category: "", tag: t }}
-                          className="text-[11px] px-1.5 py-0.5 rounded-sm bg-muted hover:bg-accent">#{t}</Link>
-                      ))}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+  {results.map((post) => (
+    <li
+      key={post.id}
+      className="pb-6 border-b border-border last:border-0"
+    >
+      <Link
+        to="/article/$slug"
+        params={{ slug: post.slug }}
+      >
+        <h3
+          className="font-serif text-xl hover:underline decoration-gold underline-offset-4"
+          dangerouslySetInnerHTML={{
+            __html: post.title.rendered,
+          }}
+        />
+      </Link>
+
+      <p
+        className="text-sm text-muted-foreground mt-2"
+        dangerouslySetInnerHTML={{
+          __html: post.excerpt.rendered,
+        }}
+      />
+
+      <div className="text-xs text-muted-foreground mt-2">
+        {new Date(post.date).toLocaleDateString()}
+      </div>
+    </li>
+  ))}
+</ul>
           )}
         </div>
       </div>

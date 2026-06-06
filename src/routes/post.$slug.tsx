@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getPost } from "../lib/wordpress";
+import { getPostBySlug } from "../lib/wordpress";
 
 export const Route = createFileRoute(
   "/post/$slug"
@@ -10,7 +10,7 @@ export const Route = createFileRoute(
 async function PostPage() {
   const { slug } = Route.useParams();
 
-  const post = await getPost(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return (

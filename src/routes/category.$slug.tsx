@@ -1,47 +1,106 @@
+import { Link } from "@tanstack/react-router";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { ARTICLES, CATEGORIES } from "@/lib/news-data";
-import { ArticleCard } from "@/components/site/ArticleCard";
+import { useEffect, useState } from "react";
+import { getCategories, getPostsByCategory } from "@/lib/wordpress";
 
 export const Route = createFileRoute("/category/$slug")({
-  loader: ({ params }) => {
-    const cat = CATEGORIES.find((c) => c.slug === params.slug);
-    if (!cat) throw notFound();
-    return { cat };
-  },
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.cat.label} — ClearFact News` },
-          { name: "description", content: `Verified ${loaderData.cat.label} reporting from ClearFact News.` },
-          { property: "og:title", content: `${loaderData.cat.label} — ClearFact News` },
-          { property: "og:description", content: `Verified ${loaderData.cat.label} reporting from ClearFact News.` },
-        ]
-      : [],
-  }),
-  errorComponent: ({ error }) => <div className="container-news py-16">{error.message}</div>,
-  notFoundComponent: () => <div className="container-news py-16">Category not found.</div>,
   component: CategoryPage,
 });
 
 function CategoryPage() {
-  const { cat } = Route.useLoaderData();
-  // mock by tagging all articles into this section
-  const items = ARTICLES.filter((a) => a.category.toLowerCase().includes(cat.label.toLowerCase()))
-    .concat(ARTICLES)
-    .slice(0, 9);
-  const [lead, ...rest] = items;
+  const { slug } = Route.useParams();
+
+  const [category, setCategory] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        const categories = await getCategories();
+
+        const cat = categories.find(
+          (c: any) => c.slug.toLowerCase() === slug.toLowerCase()
+        );
+
+        if (!cat) {
+          throw notFound();
+        }
+
+        setCategory(cat);
+
+        const categoryPosts = await getPostsByCategory(cat.id);
+        setPosts(categoryPosts);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategory();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="container-news py-12">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="container-news py-8 md:py-12">
       <div className="border-b-2 border-primary pb-3 mb-8">
-        <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">Section</div>
-        <h1 className="font-serif text-4xl md:text-5xl mt-1">{cat.label}</h1>
+        <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
+          Section
+        </div>
+
+        <h1 className="font-serif text-4xl md:text-5xl mt-1">
+          {category?.name}
+        </h1>
+
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          Verified, transparent reporting from the ClearFact {cat.label} desk.
+          Latest stories from the {category?.name} desk.
         </p>
       </div>
-      <ArticleCard article={lead} variant="wide" />
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
-        {rest.map((a) => <ArticleCard key={a.slug + Math.random()} article={a} />)}
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map((post) => (
+          <article
+            key={post.id}
+            className="border border-border rounded-sm overflow-hidden"
+          >
+            {post._embedded?.["wp:featuredmedia"]?.[0]?.source_url && (
+              <img
+                src={post._embedded["wp:featuredmedia"][0].source_url}
+                alt=""
+                className="w-full h-48 object-cover"
+              />
+            )}
+
+            <div className="p-4">
+              <Link
+  to="/article/$slug"
+  params={{ slug: post.slug }}
+>
+  <h2
+    className="font-serif text-xl hover:underline"
+    dangerouslySetInnerHTML={{
+      __html: post.title.rendered,
+    }}
+  />
+</Link>
+
+              <div
+                className="text-sm text-muted-foreground mt-2 line-clamp-3"
+                dangerouslySetInnerHTML={{
+                  __html: post.excerpt.rendered,
+                }}
+              />
+            </div>
+          </article>
+        ))}
       </div>
     </div>
   );
