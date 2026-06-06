@@ -1,4 +1,4 @@
-export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
+export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 
 export async function getPosts() {
   const res = await fetch(`${WP_API}/posts?_embed`);
