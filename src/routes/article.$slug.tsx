@@ -8,10 +8,58 @@ import {
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/article/$slug")({
-component: ArticlePage,
-notFoundComponent: () => ( <div className="container-news py-16">
-Article not found. </div>
-),
+  component: ArticlePage,
+
+  head: ({ params }) => ({
+ meta: [
+  {
+    title: `${decodeURIComponent(
+      params.slug.replace(/-/g, " ")
+    )} | ClearFact News`,
+  },
+  {
+    name: "description",
+    content:
+      "Latest verified news and investigations from ClearFact News.",
+  },
+  {
+    property: "og:type",
+    content: "article",
+  },
+  {
+    property: "og:title",
+    content: `${decodeURIComponent(
+      params.slug.replace(/-/g, " ")
+    )} | ClearFact News`,
+  },
+  {
+    property: "og:description",
+    content:
+      "Latest verified news and investigations from ClearFact News.",
+  },
+  {
+    property: "og:url",
+    content: `https://clearfact.ng/article/${params.slug}`,
+  },
+  {
+    name: "twitter:card",
+    content: "summary_large_image",
+  },
+],
+
+  links: [
+    {
+      rel: "canonical",
+      href: `https://clearfact.ng/article/${params.slug}`,
+    },
+  ],
+}),
+
+  notFoundComponent: () => (
+    <div className="container-news py-16">
+      Article not found.
+    </div>
+  ),
 });
 
 function ArticlePage() {
@@ -69,10 +117,6 @@ return (
     __html: post.title.rendered,
   }}
 />
-
-<p className="text-red-500">
-  Related posts found: {relatedPosts.length}
-</p>
 
     <div className="text-sm text-muted-foreground mb-6">
       {new Date(post.date).toLocaleDateString()}
