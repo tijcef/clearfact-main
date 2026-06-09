@@ -31,7 +31,7 @@ function Queue() {
     setBusy(id + decision);
     try {
       const r = await decide({ data: { submissionId: id, decision, feedback: feedback || undefined, payoutKobo: decision === "approve" ? payout * 100 : undefined } });
-      toast.success(decision === "approve" ? `Published: /article/${(r as { slug?: string }).slug}` : "Rejected with feedback");
+      toast.success(decision === "approve" ? `Published: /post/${(r as { slug?: string }).slug}` : "Rejected with feedback");
       setOpen(null); setFeedback(""); load();
     } catch (e) { toast.error((e as Error).message); }
     finally { setBusy(null); }

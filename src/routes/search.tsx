@@ -123,7 +123,7 @@ function SearchPage() {
       className="pb-6 border-b border-border last:border-0"
     >
       <Link
-        to="/article/$slug"
+        to="/post/$slug"
         params={{ slug: post.slug }}
       >
         <h3

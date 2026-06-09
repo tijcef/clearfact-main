@@ -62,7 +62,7 @@ function CorrectionsPage() {
               <li key={c.id} className="p-5">
                 <div className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString()} · {c.editor_name ?? "Editor"}</div>
                 {c.article && (
-                  <Link to="/article/$slug" params={{ slug: c.article.slug }} className="block font-serif text-lg mt-1 hover:underline">
+                  <Link to="/post/$slug" params={{ slug: c.article.slug }} className="block font-serif text-lg mt-1 hover:underline">
                     {c.article.title}
                   </Link>
                 )}

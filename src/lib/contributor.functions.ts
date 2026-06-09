@@ -182,7 +182,7 @@ export const decideSubmission = createServerFn({ method: "POST" })
       kind: "submission_published",
       title: `Published: ${sub.title}`,
       body: `Your story is now live on ClearFact News.${payout > 0 ? ` ₦${(payout / 100).toLocaleString()} credited to your wallet.` : ""}`,
-      link: `/article/${art.slug}`,
+      link: `/post/${art.slug}`,
     });
 
     return { ok: true, status: "published" as const, slug: art.slug };

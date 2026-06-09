@@ -57,7 +57,7 @@ function AuthorPage() {
         {articles.map((a) => (
           <article key={a.id} className="border-b border-border pb-5">
             {a.cover_image && (
-              <Link to="/article/$slug" params={{ slug: a.slug }}>
+              <Link to="/post/$slug" params={{ slug: a.slug }}>
                 <img src={a.cover_image} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover rounded-sm mb-3" />
               </Link>
             )}
@@ -65,7 +65,7 @@ function AuthorPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">{a.category}</span>
               <VerificationBadge status={a.verification} />
             </div>
-            <Link to="/article/$slug" params={{ slug: a.slug }}>
+            <Link to="/post/$slug" params={{ slug: a.slug }}>
               <h2 className="font-serif text-xl mt-1 hover:underline decoration-gold underline-offset-4">{a.title}</h2>
             </Link>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{a.excerpt}</p>

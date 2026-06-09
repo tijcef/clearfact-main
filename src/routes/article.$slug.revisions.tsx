@@ -46,7 +46,7 @@ function RevisionsPage() {
 
   return (
     <div className="container-news py-10 max-w-3xl">
-      <Link to="/article/$slug" params={{ slug }} className="text-xs inline-flex items-center gap-1 text-primary hover:underline">
+      <Link to="/post/$slug" params={{ slug }} className="text-xs inline-flex items-center gap-1 text-primary hover:underline">
         <ArrowLeft className="h-3 w-3" /> Back to article
       </Link>
       <div className="mt-3 flex items-center gap-2">

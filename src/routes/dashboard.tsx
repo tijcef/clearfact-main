@@ -27,7 +27,7 @@ type Tab = "saved" | "history" | "comments" | "reactions" | "profile";
 function ArticleLink({ a }: { a: ArticleStub | null }) {
   if (!a) return <span className="text-muted-foreground">Article removed</span>;
   return (
-    <Link to="/article/$slug" params={{ slug: a.slug }} className="font-semibold hover:text-primary">
+    <Link to="/post/$slug" params={{ slug: a.slug }} className="font-semibold hover:text-primary">
       {a.title}
     </Link>
   );

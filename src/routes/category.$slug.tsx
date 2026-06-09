@@ -81,7 +81,7 @@ function CategoryPage() {
 
             <div className="p-4">
               <Link
-  to="/article/$slug"
+  to="/post/$slug"
   params={{ slug: post.slug }}
 >
   <h2
