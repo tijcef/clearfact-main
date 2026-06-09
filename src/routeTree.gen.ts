@@ -44,7 +44,6 @@ import { Route as ContributorOnboardingRouteImport } from './routes/contributor.
 import { Route as ContributorNotificationsRouteImport } from './routes/contributor.notifications'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AuthorIdRouteImport } from './routes/author.$id'
-import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
 import { Route as AdminPayoutsRouteImport } from './routes/admin.payouts'
@@ -230,11 +229,6 @@ const AuthorIdRoute = AuthorIdRouteImport.update({
   path: '/author/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ArticleSlugRoute = ArticleSlugRouteImport.update({
-  id: '/article/$slug',
-  path: '/article/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -266,9 +260,9 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 const ArticleSlugRevisionsRoute = ArticleSlugRevisionsRouteImport.update({
-  id: '/revisions',
-  path: '/revisions',
-  getParentRoute: () => ArticleSlugRoute,
+  id: '/article/$slug/revisions',
+  path: '/article/$slug/revisions',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminEditIdRoute = AdminEditIdRouteImport.update({
   id: '/edit/$id',
@@ -306,7 +300,6 @@ export interface FileRoutesByFullPath {
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/article/$slug': typeof ArticleSlugRouteWithChildren
   '/author/$id': typeof AuthorIdRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
@@ -350,7 +343,6 @@ export interface FileRoutesByTo {
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/article/$slug': typeof ArticleSlugRouteWithChildren
   '/author/$id': typeof AuthorIdRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
@@ -397,7 +389,6 @@ export interface FileRoutesById {
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/article/$slug': typeof ArticleSlugRouteWithChildren
   '/author/$id': typeof AuthorIdRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
@@ -445,7 +436,6 @@ export interface FileRouteTypes {
     | '/admin/payouts'
     | '/admin/submissions'
     | '/admin/users'
-    | '/article/$slug'
     | '/author/$id'
     | '/category/$slug'
     | '/contributor/notifications'
@@ -489,7 +479,6 @@ export interface FileRouteTypes {
     | '/admin/payouts'
     | '/admin/submissions'
     | '/admin/users'
-    | '/article/$slug'
     | '/author/$id'
     | '/category/$slug'
     | '/contributor/notifications'
@@ -535,7 +524,6 @@ export interface FileRouteTypes {
     | '/admin/payouts'
     | '/admin/submissions'
     | '/admin/users'
-    | '/article/$slug'
     | '/author/$id'
     | '/category/$slug'
     | '/contributor/notifications'
@@ -576,10 +564,10 @@ export interface RootRouteChildren {
   TransparencyRoute: typeof TransparencyRoute
   TrustCenterRoute: typeof TrustCenterRoute
   WhistleblowerRoute: typeof WhistleblowerRoute
-  ArticleSlugRoute: typeof ArticleSlugRouteWithChildren
   AuthorIdRoute: typeof AuthorIdRoute
   CategorySlugRoute: typeof CategorySlugRoute
   PostSlugRoute: typeof PostSlugRoute
+  ArticleSlugRevisionsRoute: typeof ArticleSlugRevisionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -829,13 +817,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthorIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/article/$slug': {
-      id: '/article/$slug'
-      path: '/article/$slug'
-      fullPath: '/article/$slug'
-      preLoaderRoute: typeof ArticleSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -880,10 +861,10 @@ declare module '@tanstack/react-router' {
     }
     '/article/$slug/revisions': {
       id: '/article/$slug/revisions'
-      path: '/revisions'
+      path: '/article/$slug/revisions'
       fullPath: '/article/$slug/revisions'
       preLoaderRoute: typeof ArticleSlugRevisionsRouteImport
-      parentRoute: typeof ArticleSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/edit/$id': {
       id: '/admin/edit/$id'
@@ -945,18 +926,6 @@ const ContributorRouteWithChildren = ContributorRoute._addFileChildren(
   ContributorRouteChildren,
 )
 
-interface ArticleSlugRouteChildren {
-  ArticleSlugRevisionsRoute: typeof ArticleSlugRevisionsRoute
-}
-
-const ArticleSlugRouteChildren: ArticleSlugRouteChildren = {
-  ArticleSlugRevisionsRoute: ArticleSlugRevisionsRoute,
-}
-
-const ArticleSlugRouteWithChildren = ArticleSlugRoute._addFileChildren(
-  ArticleSlugRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -981,10 +950,10 @@ const rootRouteChildren: RootRouteChildren = {
   TransparencyRoute: TransparencyRoute,
   TrustCenterRoute: TrustCenterRoute,
   WhistleblowerRoute: WhistleblowerRoute,
-  ArticleSlugRoute: ArticleSlugRouteWithChildren,
   AuthorIdRoute: AuthorIdRoute,
   CategorySlugRoute: CategorySlugRoute,
   PostSlugRoute: PostSlugRoute,
+  ArticleSlugRevisionsRoute: ArticleSlugRevisionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
