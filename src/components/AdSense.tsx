@@ -9,27 +9,25 @@ declare global {
 export default function AdSense() {
   useEffect(() => {
     try {
-      window.adsbygoogle =
-        window.adsbygoogle || [];
-
-      window.adsbygoogle.push({});
-    } catch (err) {
-      console.error(err);
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
   return (
-    <div className="my-10">
-
+    <div className="my-8 overflow-hidden">
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{
+          display: "block",
+          textAlign: "center",
+        }}
         data-ad-client="ca-pub-8967021504063466"
         data-ad-slot="7837413984"
         data-ad-format="auto"
         data-full-width-responsive="true"
-      ></ins>
-
+      />
     </div>
   );
 }

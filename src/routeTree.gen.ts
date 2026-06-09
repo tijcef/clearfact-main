@@ -14,7 +14,9 @@ import { Route as TrustCenterRouteImport } from './routes/trust-center'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SubmitStoryRouteImport } from './routes/submit-story'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NewsletterRouteImport } from './routes/newsletter'
 import { Route as LoginRouteImport } from './routes/login'
@@ -78,9 +80,19 @@ const SubmitStoryRoute = SubmitStoryRouteImport.update({
   path: '/submit-story',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -288,7 +300,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/newsletter': typeof NewsletterRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit-story': typeof SubmitStoryRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -331,7 +345,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/newsletter': typeof NewsletterRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit-story': typeof SubmitStoryRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -377,7 +393,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/newsletter': typeof NewsletterRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit-story': typeof SubmitStoryRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -424,7 +442,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/newsletter'
     | '/privacy'
+    | '/robots.txt'
     | '/search'
+    | '/sitemap.xml'
     | '/submit-story'
     | '/terms'
     | '/transparency'
@@ -467,7 +487,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/newsletter'
     | '/privacy'
+    | '/robots.txt'
     | '/search'
+    | '/sitemap.xml'
     | '/submit-story'
     | '/terms'
     | '/transparency'
@@ -512,7 +534,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/newsletter'
     | '/privacy'
+    | '/robots.txt'
     | '/search'
+    | '/sitemap.xml'
     | '/submit-story'
     | '/terms'
     | '/transparency'
@@ -558,7 +582,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NewsletterRoute: typeof NewsletterRoute
   PrivacyRoute: typeof PrivacyRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SearchRoute: typeof SearchRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SubmitStoryRoute: typeof SubmitStoryRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
@@ -607,11 +633,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubmitStoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -944,7 +984,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NewsletterRoute: NewsletterRoute,
   PrivacyRoute: PrivacyRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SearchRoute: SearchRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SubmitStoryRoute: SubmitStoryRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,

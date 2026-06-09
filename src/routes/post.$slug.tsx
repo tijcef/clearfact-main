@@ -59,9 +59,23 @@ export const Route = createFileRoute("/post/$slug")({
       ?.source_url || "",
 },
       {
-        name: "twitter:card",
-        content: "summary_large_image",
-      },
+  name: "twitter:card",
+  content: "summary_large_image",
+},
+{
+  property: "article:published_time",
+  content: loaderData.post.date,
+},
+{
+  property: "article:modified_time",
+  content: loaderData.post.modified,
+},
+{
+  property: "article:author",
+  content:
+    loaderData.post._embedded?.author?.[0]?.name ||
+    "ClearFact News",
+},
     ],
 
     links: [
@@ -111,29 +125,79 @@ const contentParts =
   post.content.rendered.split("</p>");
 
 return (
-  <article className="container-news py-10 max-w-4xl">
-    <h1
-  className="font-serif text-4xl md:text-5xl mb-4"
-  dangerouslySetInnerHTML={{
-    __html: post.title.rendered,
-  }}
-/>
+  <article className="container-news py-12 px-4 max-w-5xl mx-auto">
 
-    <div className="text-sm text-muted-foreground mb-6">
-      {new Date(post.date).toLocaleDateString()}
+    <div className="mb-4">
+      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm font-medium">
+        Latest News
+      </span>
     </div>
+
+    <h1
+      className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-6"
+      dangerouslySetInnerHTML={{
+        __html: post.title.rendered,
+      }}
+    />
+
+    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
+  <span>
+    By <strong>{post._embedded?.author?.[0]?.name || "ClearFact News"}</strong>
+  </span>
+
+  <span>•</span>
+
+  <time dateTime={post.date}>
+    {new Date(post.date).toLocaleDateString("en-NG", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}
+  </time>
+
+  <span>•</span>
+
+  <span>5 min read</span>
+
+  <span>•</span>
+
+  <span>
+    Updated {new Date(post.modified).toLocaleDateString("en-NG", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })}
+  </span>
+</div>
 
     {featuredImage && (
       <img
         src={featuredImage}
         alt={post.title.rendered}
-        className="w-full rounded-sm mb-8"
+        className="w-full rounded-lg mb-10"
       />
     )}
 
     <AdSense />
 
-    <div className="prose prose-lg max-w-none">
+    <div
+  className="
+  prose
+  prose-lg
+  lg:prose-xl
+  max-w-none
+  prose-p:leading-8
+  prose-p:mb-7
+  prose-h2:mt-12
+  prose-h2:mb-6
+  prose-h2:text-3xl
+  prose-h2:font-bold
+  prose-h3:mt-10
+  prose-h3:mb-4
+  prose-blockquote:border-l-4
+  prose-blockquote:pl-4
+"
+>
       {contentParts.map((part: string, index: number) => (
         <div key={index}>
           <div
@@ -142,9 +206,8 @@ return (
             }}
           />
 
-          {index === 4 && <AdSense />}
-          {index === 10 && <AdSense />}
-          {index === 16 && <AdSense />}
+          {index === 6 && <AdSense />}
+          {index === 14 && <AdSense />}
         </div>
       ))}
     </div>
