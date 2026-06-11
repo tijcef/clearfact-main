@@ -5,6 +5,14 @@ import {
   getPostBySlug,
   getPostsByCategory,
 } from "@/lib/wordpress";
+import Comments from "@/components/Comments";
+
+import {
+  FaFacebook,
+  FaLinkedin,
+  FaWhatsapp,
+  FaXTwitter,
+} from "react-icons/fa6";
 
 export const Route = createFileRoute("/post/$slug")({
   loader: async ({ params }) => {
@@ -134,6 +142,13 @@ const cleanContent = post.content.rendered
   .replace(/<div[^>]*wp-block-spacer[^>]*>.*?<\/div>/gis, "")
   .replace(/style="height:[^"]*"/gi, "");
 
+const articleUrl = `https://clearfact.ng/post/${post.slug}`;
+
+const articleTitle = post.title.rendered.replace(
+  /<[^>]+>/g,
+  ""
+);
+
 return (
   <article className="container-news py-12 px-4 max-w-5xl mx-auto">
     <div className="mb-4">
@@ -205,7 +220,53 @@ return (
 
     <AdSense />
 
-    {relatedPosts.length > 0 && (
+    <div className="mt-8 border-t pt-6">
+  <h3 className="font-semibold mb-4">
+    Share this article
+  </h3>
+
+  <div className="flex items-center gap-5">
+    <a
+      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Share on Facebook"
+    >
+      <FaFacebook size={24} />
+    </a>
+
+    <a
+      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(articleTitle)}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Share on X"
+    >
+      <FaXTwitter size={24} />
+    </a>
+
+    <a
+      href={`https://wa.me/?text=${encodeURIComponent(articleTitle + " " + articleUrl)}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Share on WhatsApp"
+    >
+      <FaWhatsapp size={24} />
+    </a>
+
+    <a
+  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Share on LinkedIn"
+    >
+      <FaLinkedin size={24} />
+    </a>
+  </div>
+</div>
+
+<Comments postId={post.id} />
+
+{relatedPosts.length > 0 && (
       <section className="mt-12 border-t pt-8">
         <h2 className="text-2xl font-bold mb-6">
           Related News

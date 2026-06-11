@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
+import { Mail, MapPin } from "lucide-react";
+
 import {
-  Mail,
-  MapPin,
-  Twitter,
-  Facebook,
-  Youtube,
-  Instagram,
-} from "lucide-react";
+  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaXTwitter,
+  FaLinkedin,
+  FaWhatsapp,
+} from "react-icons/fa6";
 import { CATEGORIES } from "@/lib/news-data";
 
 const policy = [
@@ -57,7 +59,7 @@ export function Footer() {
               aria-label="X"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
             >
-              <Twitter className="h-4 w-4" />
+              <FaXTwitter className="h-4 w-4" />
             </a>
 
             <a
@@ -67,7 +69,7 @@ export function Footer() {
               aria-label="Facebook"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
             >
-              <Facebook className="h-4 w-4" />
+              <FaFacebook className="h-4 w-4" />
             </a>
 
             <a
@@ -77,7 +79,7 @@ export function Footer() {
               aria-label="Instagram"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
             >
-              <Instagram className="h-4 w-4" />
+              <FaInstagram className="h-4 w-4" />
             </a>
 
             <a
@@ -87,7 +89,7 @@ export function Footer() {
               aria-label="YouTube"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
             >
-              <Youtube className="h-4 w-4" />
+              <FaYoutube className="h-4 w-4" />
             </a>
 
             <a
@@ -97,7 +99,7 @@ export function Footer() {
               aria-label="LinkedIn"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
             >
-              in
+              <FaLinkedin className="h-4 w-4" />
             </a>
 
             <a
@@ -107,7 +109,7 @@ export function Footer() {
               aria-label="WhatsApp"
               className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
             >
-              WA
+              <FaWhatsapp className="h-4 w-4" />
             </a>
           </div>
         </div>
