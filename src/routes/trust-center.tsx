@@ -109,9 +109,9 @@ function TrustCenter() {
                   {s.value}
                 </div>
 
-                <div className="text-xs text-primary-foreground/70 mt-1">
-                  {s.label}
-                </div>
+                <div className="text-xs text-primary-foreground/70">
+  verification category
+</div>
               </div>
             ))}
           </div>

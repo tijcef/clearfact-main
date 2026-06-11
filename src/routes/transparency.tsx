@@ -15,8 +15,9 @@ type Stats = {
 
 export const Route = createFileRoute("/transparency")({
   head: () => ({
-    meta: [
-      { title: "Transparency Dashboard — ClearFact News" },
+  title: "Transparency Dashboard — ClearFact News",
+
+  meta: [
       { name: "description", content: "Live, public verification metrics, corrections, source disclosure and editorial accountability for ClearFact News." },
       { property: "og:title", content: "ClearFact Transparency Dashboard" },
       { property: "og:description", content: "Truth over speed. Verification over virality. Trust over traffic." },
@@ -76,15 +77,29 @@ function TransparencyDashboard() {
             Live verification record, correction history and trust metrics. Truth over speed. Verification over virality. Trust over traffic.
           </p>
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {cards.map((c) => (
-              <div key={c.l} className="rounded-sm bg-primary-foreground/5 border border-primary-foreground/10 p-5">
-                <c.i className="h-5 w-5 text-gold" />
-                <div className="font-serif text-3xl mt-3">{c.v}</div>
-                <div className="text-xs text-primary-foreground/70 mt-1">{c.l}</div>
-              </div>
-            ))}
-            {!stats && <div className="text-primary-foreground/60 text-sm">Loading metrics…</div>}
-          </div>
+  {cards.map((c) => (
+    <div
+      key={c.l}
+      className="rounded-sm bg-primary-foreground/5 border border-primary-foreground/10 p-5"
+    >
+      <c.i className="h-5 w-5 text-gold" />
+
+      <div className="font-serif text-3xl mt-3">
+        {c.v}
+      </div>
+
+      <div className="text-xs text-primary-foreground/70">
+        {c.l}
+      </div>
+    </div>
+  ))}
+
+  {!stats && (
+    <div className="text-primary-foreground/60 text-sm">
+      Loading metrics...
+    </div>
+  )}
+</div>
         </div>
       </section>
 
