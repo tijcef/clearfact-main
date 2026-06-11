@@ -25,7 +25,13 @@ export function ArticleCard({ article, variant = "default" }: { article: Article
             </h3>
           </Link>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-            <VerificationBadge status={article.verification} />
+            <VerificationBadge
+  status={
+    article.acf?.verification_status ||
+    article.verification ||
+    "Verified"
+  }
+/>
             <span>{timeAgo(article.publishedAt)}</span>
           </div>
         </div>
@@ -42,7 +48,13 @@ export function ArticleCard({ article, variant = "default" }: { article: Article
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">{article.category}</span>
-            <VerificationBadge status={article.verification} />
+            <VerificationBadge
+  status={
+    article.acf?.verification_status ||
+    article.verification ||
+    "Verified"
+  }
+/>
           </div>
           <Link to="/">
             <h2 className="mt-2 font-serif text-2xl md:text-3xl leading-tight text-balance group-hover:underline decoration-gold underline-offset-4">
@@ -65,7 +77,13 @@ export function ArticleCard({ article, variant = "default" }: { article: Article
       </Link>
       <div className="mt-3 flex items-center gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">{article.category}</span>
-        <VerificationBadge status={article.verification} />
+        <VerificationBadge
+  status={
+    article.acf?.verification_status ||
+    article.verification ||
+    "Verified"
+  }
+/>
       </div>
       <Link to="/">
         <h3 className="mt-1 font-serif text-xl leading-snug text-balance group-hover:underline decoration-gold underline-offset-4">

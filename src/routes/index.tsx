@@ -108,6 +108,24 @@ async function Home() {
   const trendingPosts = posts.filter(
     (post: any) => post.acf?.trending
   );
+  const getVerificationColor = (status: string) => {
+  switch (status) {
+    case "Verified":
+      return "bg-green-600 text-white";
+    case "Fact-Checked":
+      return "bg-blue-600 text-white";
+    case "Developing":
+      return "bg-yellow-500 text-black";
+    case "Opinion":
+      return "bg-purple-600 text-white";
+    case "Breaking":
+      return "bg-red-600 text-white";
+    case "False Claim":
+      return "bg-red-800 text-white";
+    default:
+      return "bg-gray-600 text-white";
+  }
+};
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
@@ -179,21 +197,30 @@ async function Home() {
         </a>
 
         <div className="mt-8">
+<div className="flex gap-2 flex-wrap mb-4">
 
-          <div className="flex gap-2 flex-wrap mb-4">
+  {heroPost._embedded?.["wp:term"]?.[0]?.map(
+    (cat: any) => (
+      <span
+        key={cat.id}
+        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
+      >
+        {cat.name}
+      </span>
+    )
+  )}
 
-            {heroPost._embedded?.["wp:term"]?.[0]?.map(
-              (cat: any) => (
-                <span
-                  key={cat.id}
-                  className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
-                >
-                  {cat.name}
-                </span>
-              )
-            )}
+  {heroPost.acf?.verification_status && (
+    <span
+      className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
+        heroPost.acf.verification_status
+      )}`}
+    >
+      {heroPost.acf.verification_status}
+    </span>
+  )}
 
-          </div>
+</div>
 
           <a href={`/post/${heroPost.slug}`}>
 
@@ -229,54 +256,69 @@ async function Home() {
 
       </section>
 
-      {/* LATEST POSTS */}
-      <section className="mb-16">
+     {/* LATEST POSTS */}
+<section className="mb-16">
+  <h2 className="text-4xl font-black mb-8">
+    Latest Posts
+  </h2>
 
-        <h2 className="text-4xl font-black mb-8">
-          Latest Posts
-        </h2>
+  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {latestPosts.map((post: any) => (
+      <article
+        key={post.id}
+        className="border rounded-2xl overflow-hidden"
+      >
+        <a href={`/post/${post.slug}`}>
+          <img
+            src={
+              post._embedded?.["wp:featuredmedia"]?.[0]
+                ?.source_url ||
+              "https://via.placeholder.com/800x500"
+            }
+            alt=""
+            className="w-full h-56 object-cover"
+          />
+        </a>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="p-5">
+          <div className="flex gap-2 flex-wrap mb-3">
+            {post._embedded?.["wp:term"]?.[0]?.map(
+              (cat: any) => (
+                <span
+                  key={cat.id}
+                  className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
+                >
+                  {cat.name}
+                </span>
+              )
+            )}
 
-          {latestPosts.map((post: any) => (
+            {post.acf?.verification_status && (
+              <span
+                className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
+                  post.acf.verification_status
+                )}`}
+              >
+                {post.acf.verification_status}
+              </span>
+            )}
+          </div>
 
-            <article
-              key={post.id}
-              className="border rounded-2xl overflow-hidden"
-            >
+          <h3
+            className="text-2xl font-bold leading-tight"
+            dangerouslySetInnerHTML={{
+              __html: post.title.rendered,
+            }}
+          />
 
-              <a href={`/post/${post.slug}`}>
-
-                <img
-                  src={
-                    post._embedded?.[
-                      "wp:featuredmedia"
-                    ]?.[0]?.source_url
-                  }
-                  alt=""
-                  className="w-full h-56 object-cover"
-                />
-
-              </a>
-
-              <div className="p-5">
-
-                <h3
-                  className="text-2xl font-bold leading-tight"
-                  dangerouslySetInnerHTML={{
-                    __html: post.title.rendered,
-                  }}
-                />
-
-              </div>
-
-            </article>
-
-          ))}
-
+          <p className="text-sm text-gray-500 mt-3">
+            {new Date(post.date).toDateString()}
+          </p>
         </div>
-
-      </section>
+      </article>
+    ))}
+  </div>
+</section>
 
       {/* MAIN GRID */}
       <div className="grid lg:grid-cols-4 gap-10">
@@ -309,18 +351,28 @@ async function Home() {
 
                 <div className="flex gap-2 flex-wrap mb-3">
 
-                  {post._embedded?.["wp:term"]?.[0]?.map(
-                    (cat: any) => (
-                      <span
-                        key={cat.id}
-                        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
-                      >
-                        {cat.name}
-                      </span>
-                    )
-                  )}
+  {post._embedded?.["wp:term"]?.[0]?.map(
+  (cat: any) => (
+    <span
+      key={cat.id}
+      className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
+    >
+      {cat.name}
+    </span>
+  )
+)}
 
-                </div>
+{post.acf?.verification_status && (
+  <span
+    className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
+      post.acf.verification_status
+    )}`}
+  >
+    {post.acf.verification_status}
+  </span>
+)}
+
+</div>
 
                 <a href={`/post/${post.slug}`}>
 
