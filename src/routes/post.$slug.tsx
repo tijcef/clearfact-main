@@ -21,6 +21,7 @@ export const Route = createFileRoute("/post/$slug")({
 
  head: ({ loaderData }) => ({
   title: `${loaderData.post.title.rendered} | ClearFact News`,
+
   meta: [
     {
       name: "description",
@@ -28,6 +29,68 @@ export const Route = createFileRoute("/post/$slug")({
         loaderData.post.excerpt?.rendered
           ?.replace(/<[^>]+>/g, "")
           ?.slice(0, 160) || "",
+    },
+
+    {
+      property: "og:type",
+      content: "article",
+    },
+
+    {
+      property: "og:title",
+      content: loaderData.post.title.rendered,
+    },
+
+    {
+      property: "og:description",
+      content:
+        loaderData.post.excerpt?.rendered
+          ?.replace(/<[^>]+>/g, "")
+          ?.slice(0, 160) || "",
+    },
+
+    {
+      property: "og:url",
+      content: `https://clearfact.ng/post/${loaderData.post.slug}`,
+    },
+
+    {
+      property: "og:image",
+      content:
+        loaderData.post._embedded?.["wp:featuredmedia"]?.[0]
+          ?.source_url || "",
+    },
+
+    {
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+
+    {
+      name: "twitter:title",
+      content: loaderData.post.title.rendered,
+    },
+
+    {
+      name: "twitter:description",
+      content:
+        loaderData.post.excerpt?.rendered
+          ?.replace(/<[^>]+>/g, "")
+          ?.slice(0, 160) || "",
+    },
+
+    {
+      name: "twitter:image",
+      content:
+        loaderData.post._embedded?.["wp:featuredmedia"]?.[0]
+          ?.source_url || "",
+    },
+  ],
+
+  links: [
+    {
+      rel: "canonical",
+      href: `https://clearfact.ng/post/${loaderData.post.slug}`,
     },
   ],
 }),

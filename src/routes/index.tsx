@@ -3,6 +3,61 @@ import { getPosts } from "../lib/wordpress";
 import { useTheme } from "next-themes";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    title: "ClearFact News | Verified Journalism From Nigeria",
+
+    meta: [
+      {
+        name: "description",
+        content:
+          "ClearFact News delivers verified, transparent and timely journalism from Nigeria.",
+      },
+      {
+        property: "og:title",
+        content: "ClearFact News",
+      },
+      {
+        property: "og:description",
+        content: "Verified journalism from Nigeria.",
+      },
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        property: "og:url",
+        content: "https://clearfact.ng/",
+      },
+      {
+        property: "og:image",
+        content: "https://clearfact.ng/clearfact-logo.jpg",
+      },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+      {
+        name: "twitter:title",
+        content: "ClearFact News",
+      },
+      {
+        name: "twitter:description",
+        content: "Verified journalism from Nigeria.",
+      },
+      {
+        name: "twitter:image",
+        content: "https://clearfact.ng/clearfact-logo.jpg",
+      },
+    ],
+
+    links: [
+      {
+        rel: "canonical",
+        href: "https://clearfact.ng/",
+      },
+    ],
+  }),
+
   component: Home,
 });
 
