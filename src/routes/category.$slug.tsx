@@ -15,31 +15,47 @@ function CategoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadCategory = async () => {
-      try {
-        const categories = await getCategories();
+  const loadCategory = async () => {
+    try {
+      console.log("Current slug:", slug);
 
-        const cat = categories.find(
-          (c: any) => c.slug.toLowerCase() === slug.toLowerCase()
-        );
+      const categories = await getCategories();
+      console.log("Categories:", categories);
 
-        if (!cat) {
-          throw notFound();
-        }
+      const cat = categories.find(
+        (c: any) => c.slug.toLowerCase() === slug.toLowerCase()
+      );
 
-        setCategory(cat);
+      console.log("Found category:", cat);
 
-        const categoryPosts = await getPostsByCategory(cat.id);
-        setPosts(categoryPosts);
-      } catch (error) {
-        console.error(error);
-      } finally {
+      if (!cat) {
         setLoading(false);
+        return;
       }
-    };
 
-    loadCategory();
-  }, [slug]);
+      setCategory(cat);
+
+      const categoryPosts = await getPostsByCategory(cat.id);
+
+console.log("SLUG:", slug);
+console.log("CATEGORY:", cat);
+console.log("POSTS:", categoryPosts);
+
+setPosts(categoryPosts);
+
+      console.log("Posts returned:", categoryPosts);
+
+      setPosts(Array.isArray(categoryPosts) ? categoryPosts : []);
+    } catch (error) {
+      console.error("CATEGORY ERROR:", error);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadCategory();
+}, [slug]);
 
   if (loading) {
     return (
@@ -66,7 +82,8 @@ function CategoryPage() {
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
+        {Array.isArray(posts) &&
+  posts.map((post) => (
           <article
             key={post.id}
             className="border border-border rounded-sm overflow-hidden"

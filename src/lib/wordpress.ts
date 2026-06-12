@@ -9,7 +9,9 @@ export async function getPosts() {
 }
 
 export async function getCategories() {
-  const res = await fetch(`${WP_API}/categories`);
+  const res = await fetch(
+    `${WP_API}/categories?per_page=100`
+  );
 
   return res.json();
 }
@@ -50,7 +52,7 @@ export async function getPostsByCategory(
   categoryId: number
 ) {
   const res = await fetch(
-    `${WP_API}/posts?categories=${categoryId}&_embed&acf_format=standard`
+    `${WP_API}/posts?categories=${categoryId}&per_page=100&_embed&acf_format=standard`
   );
 
   return res.json();
