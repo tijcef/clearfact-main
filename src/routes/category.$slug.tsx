@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getCategories, getPostsByCategory } from "@/lib/wordpress";
 
@@ -15,47 +15,36 @@ function CategoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const loadCategory = async () => {
-    try {
-      console.log("Current slug:", slug);
+    const loadCategory = async () => {
+      try {
+        const categories = await getCategories();
 
-      const categories = await getCategories();
-      console.log("Categories:", categories);
+        const cat = categories.find(
+          (c: any) => c.slug.toLowerCase() === slug.toLowerCase()
+        );
 
-      const cat = categories.find(
-        (c: any) => c.slug.toLowerCase() === slug.toLowerCase()
-      );
+        if (!cat) {
+          setLoading(false);
+          return;
+        }
 
-      console.log("Found category:", cat);
+        setCategory(cat);
 
-      if (!cat) {
+        const categoryPosts = await getPostsByCategory(cat.id);
+
+        setPosts(
+          Array.isArray(categoryPosts) ? categoryPosts : []
+        );
+      } catch (error) {
+        console.error("CATEGORY ERROR:", error);
+        setPosts([]);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      setCategory(cat);
-
-      const categoryPosts = await getPostsByCategory(cat.id);
-
-console.log("SLUG:", slug);
-console.log("CATEGORY:", cat);
-console.log("POSTS:", categoryPosts);
-
-setPosts(categoryPosts);
-
-      console.log("Posts returned:", categoryPosts);
-
-      setPosts(Array.isArray(categoryPosts) ? categoryPosts : []);
-    } catch (error) {
-      console.error("CATEGORY ERROR:", error);
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadCategory();
-}, [slug]);
+    loadCategory();
+  }, [slug]);
 
   if (loading) {
     return (
@@ -83,41 +72,76 @@ setPosts(categoryPosts);
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(posts) &&
-  posts.map((post) => (
-          <article
-            key={post.id}
-            className="border border-border rounded-sm overflow-hidden"
-          >
-            {post._embedded?.["wp:featuredmedia"]?.[0]?.source_url && (
-              <img
-                src={post._embedded["wp:featuredmedia"][0].source_url}
-                alt=""
-                className="w-full h-48 object-cover"
-              />
-            )}
+          posts.map((post) => (
+            <article
+              key={post.id}
+              className="border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 bg-card"
+            >
+              {post._embedded?.["wp:featuredmedia"]?.[0]
+                ?.source_url && (
+                <img
+                  src={
+                    post._embedded["wp:featuredmedia"][0]
+                      .source_url
+                  }
+                  alt={post.title?.rendered || ""}
+                  className="w-full h-48 object-cover"
+                />
+              )}
 
-            <div className="p-4">
-              <Link
-  to="/post/$slug"
-  params={{ slug: post.slug }}
->
-  <h2
-    className="font-serif text-xl hover:underline"
-    dangerouslySetInnerHTML={{
-      __html: post.title.rendered,
-    }}
-  />
-</Link>
+              <div className="p-4">
+                <Link
+                  to="/post/$slug"
+                  params={{ slug: post.slug }}
+                >
+                  <h2
+                    className="font-serif text-xl hover:text-primary transition-colors"
+                    dangerouslySetInnerHTML={{
+                      __html: post.title.rendered,
+                    }}
+                  />
+                </Link>
 
-              <div
-                className="text-sm text-muted-foreground mt-2 line-clamp-3"
-                dangerouslySetInnerHTML={{
-                  __html: post.excerpt.rendered,
-                }}
-              />
-            </div>
-          </article>
-        ))}
+                <div
+                  className="text-sm text-muted-foreground mt-2 line-clamp-3"
+                  dangerouslySetInnerHTML={{
+                    __html: post.excerpt.rendered,
+                  }}
+                />
+              </div>
+            </article>
+          ))}
+      </div>
+
+      {posts.length === 0 && (
+        <div className="text-center py-16">
+          <h3 className="text-2xl font-semibold mb-2">
+            No articles found
+          </h3>
+
+          <p className="text-muted-foreground">
+            There are currently no published posts in this
+            category.
+          </p>
+        </div>
+      )}
+
+      <div className="mt-16 rounded-2xl bg-primary text-white p-8 md:p-12 text-center">
+        <h3 className="text-3xl font-bold mb-3">
+          Stay Ahead with Verified News
+        </h3>
+
+        <p className="text-white/80 max-w-2xl mx-auto mb-6">
+          Get trusted reports, investigations, fact-checks and
+          breaking news delivered directly to your inbox.
+        </p>
+
+        <Link
+          to="/newsletter"
+          className="inline-flex bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:opacity-90"
+        >
+          Subscribe Now
+        </Link>
       </div>
     </div>
   );

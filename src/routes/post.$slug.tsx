@@ -152,9 +152,9 @@ const articleTitle = post.title.rendered.replace(
 return (
   <article className="container-news py-12 px-4 max-w-5xl mx-auto">
     <div className="mb-4">
-      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm font-medium">
-        Latest News
-      </span>
+      <span className="inline-flex rounded-full bg-primary text-white px-3 py-1 text-xs font-bold uppercase tracking-wide">
+  {post._embedded?.["wp:term"]?.[0]?.[0]?.name || "News"}
+</span>
     </div>
 
     <h1
@@ -184,14 +184,23 @@ return (
 
       <span>•</span>
 
-      <span>5 min read</span>
+      <span>
+  {Math.max(
+    1,
+    Math.ceil(
+      post.content.rendered
+        .replace(/<[^>]+>/g, "")
+        .split(" ").length / 200
+    )
+  )} min read
+</span>
     </div>
 
-    {featuredImage && (
+  {featuredImage && (
   <img
     src={featuredImage}
     alt={post.title.rendered}
-    className="w-full rounded-lg mb-2"
+    className="w-full rounded-xl mb-8"
     loading="eager"
   />
 )}
@@ -273,33 +282,44 @@ return (
         </h2>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {relatedPosts.map((item: any) => (
-            <Link
-              key={item.id}
-              to="/post/$slug"
-              params={{ slug: item.slug }}
-              className="block border rounded-lg p-4 hover:bg-muted"
-            >
-              <h3
-                className="font-semibold"
-                dangerouslySetInnerHTML={{
-                  __html: item.title.rendered,
-                }}
-              />
-            </Link>
-          ))}
-        </div>
-      </section>
-    )}
+  {relatedPosts.map((item: any) => (
+    <Link
+      key={item.id}
+      to="/post/$slug"
+      params={{ slug: item.slug }}
+      className="block border border-border rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 bg-card"
+    >
+      {item._embedded?.["wp:featuredmedia"]?.[0]?.source_url && (
+        <img
+          src={item._embedded["wp:featuredmedia"][0].source_url}
+          alt=""
+          className="w-full h-40 object-cover"
+        />
+      )}
 
-    <div className="mt-10">
-      <Link
-        to="/"
-        className="text-sm font-semibold text-primary hover:underline"
-      >
-        ← Back to homepage
-      </Link>
-    </div>
-  </article>
+      <div className="p-5">
+        <h3
+          className="font-semibold"
+          dangerouslySetInnerHTML={{
+            __html: item.title.rendered,
+          }}
+        />
+      </div>
+    </Link>
+  ))}
+</div>
+</section>
+)}
+
+<div className="mt-10">
+  <Link
+    to="/"
+    className="text-sm font-semibold text-primary hover:underline"
+  >
+    ← Back to homepage
+  </Link>
+</div>
+
+</article>
 );
 }
