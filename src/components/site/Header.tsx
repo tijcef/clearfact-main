@@ -62,7 +62,7 @@ useEffect(() => {
       <div className="bg-primary text-primary-foreground text-xs">
         <div className="container-news flex h-8 items-center justify-between">
           <span className="hidden sm:inline">
-            {date} · Yola, Nigeria
+            {date} · Nigeria
           </span>
 
           <div className="flex items-center gap-4">
@@ -184,24 +184,35 @@ useEffect(() => {
       </nav>
 
       {/* Live ticker */}
-      <div className="bg-foreground text-background overflow-hidden">
-        <div className="container-news flex items-center gap-3 py-1.5">
-          <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-breaking text-breaking-foreground px-2 py-0.5 rounded-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-breaking-foreground animate-pulse" />
-            Live
-          </span>
-
-          <div className="overflow-hidden flex-1">
-           <div className="ticker-track flex gap-10 whitespace-nowrap text-xs">
-  {[...tickerPosts, ...tickerPosts].map((post, i) => (
-    <span key={`${post.id}-${i}`} className="opacity-90">
-      • {post.title?.rendered || "Loading..."}
+{/* Live ticker */}
+<div className="bg-[#0f172a] text-white border-y border-slate-700 overflow-hidden">
+  <div className="container-news flex items-center gap-3 py-2.5">
+    <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-gradient-to-r from-red-700 to-red-500 px-3 py-1 rounded-md shadow-sm">
+      <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+      BREAKING NEWS
     </span>
-  ))}
-</div>
-          </div>
-        </div>
+
+    <div className="overflow-hidden flex-1">
+      <div className="ticker-track flex gap-6 md:gap-8 whitespace-nowrap">
+        {[...tickerPosts, ...tickerPosts].map((post, i) => (
+          <Link
+            key={`${post.id}-${i}`}
+            to={`/post/${post.slug}`}
+            className="inline-flex items-center gap-3 hover:text-[#f59e0b] hover:underline underline-offset-4 transition-all duration-300"
+          >
+            <span className="h-2 w-2 rounded-full bg-red-500"></span>
+
+            <span className="font-semibold text-sm">
+              {post.title?.rendered || "Loading..."}
+            </span>
+
+            <span className="text-slate-600 mx-1">•</span>
+          </Link>
+        ))}
       </div>
+    </div>
+  </div>
+</div>
     </header>
   );
 }
