@@ -56,7 +56,7 @@ head: ({ loaderData }) => {
       "@type": "Person",
       name:
         post._embedded?.author?.[0]?.name ||
-        "Emmanuel Tijwun",
+        "Emmanuel Sunday Tijwun",
     },
     publisher: {
   "@type": "Organization",
