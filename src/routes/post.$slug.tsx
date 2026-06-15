@@ -27,81 +27,139 @@ export const Route = createFileRoute("/post/$slug")({
 
   component: ArticlePage,
 
- head: ({ loaderData }) => ({
-  title: `${loaderData.post.title.rendered} | ClearFact News`,
+head: ({ loaderData }) => {
+  const post = loaderData.post;
 
-  meta: [
-    {
-      name: "description",
-      content:
-        loaderData.post.excerpt?.rendered
-          ?.replace(/<[^>]+>/g, "")
-          ?.slice(0, 160) || "",
-    },
+  const description =
+    post.excerpt?.rendered
+      ?.replace(/<[^>]+>/g, "")
+      ?.slice(0, 160) || "";
 
-    {
-      property: "og:type",
-      content: "article",
-    },
+  const image =
+    post._embedded?.["wp:featuredmedia"]?.[0]
+      ?.source_url || "";
 
-    {
-      property: "og:title",
-      content: loaderData.post.title.rendered,
-    },
+  const schema = {
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
 
-    {
-      property: "og:description",
-      content:
-        loaderData.post.excerpt?.rendered
-          ?.replace(/<[^>]+>/g, "")
-          ?.slice(0, 160) || "",
-    },
+  headline: post.title.rendered.replace(/<[^>]+>/g, ""),
 
-    {
-      property: "og:url",
-      content: `https://clearfact.ng/post/${loaderData.post.slug}`,
-    },
+  description,
 
-    {
-      property: "og:image",
-      content:
-        loaderData.post._embedded?.["wp:featuredmedia"]?.[0]
-          ?.source_url || "",
-    },
+  image: [image],
 
-    {
-      name: "twitter:card",
-      content: "summary_large_image",
-    },
+  datePublished: post.date,
 
-    {
-      name: "twitter:title",
-      content: loaderData.post.title.rendered,
+  dateModified: post.modified,
+    author: {
+      "@type": "Person",
+      name:
+        post._embedded?.author?.[0]?.name ||
+        "Emmanuel Tijwun",
     },
+    publisher: {
+  "@type": "Organization",
+  name: "ClearFact News",
+  url: "https://clearfact.ng",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://clearfact.ng/logo.png",
+  },
+},
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://clearfact.ng/post/${post.slug}`,
+    },
+  };
 
-    {
-      name: "twitter:description",
-      content:
-        loaderData.post.excerpt?.rendered
-          ?.replace(/<[^>]+>/g, "")
-          ?.slice(0, 160) || "",
-    },
+  return {
+    title: `${post.title.rendered} | ClearFact News`,
 
-    {
-      name: "twitter:image",
-      content:
-        loaderData.post._embedded?.["wp:featuredmedia"]?.[0]
-          ?.source_url || "",
-    },
-  ],
+    meta: [
+      {
+        name: "description",
+        content: description,
+      },
 
-  links: [
-    {
-      rel: "canonical",
-      href: `https://clearfact.ng/post/${loaderData.post.slug}`,
-    },
-  ],
-}),
+      {
+        property: "og:type",
+        content: "article",
+      },
+
+      {
+        property: "og:title",
+        content: post.title.rendered,
+      },
+
+      {
+        property: "og:description",
+        content: description,
+      },
+
+      {
+        property: "og:url",
+        content: `https://clearfact.ng/post/${post.slug}`,
+      },
+
+      {
+        property: "og:image",
+        content: image,
+      },
+
+      {
+        property: "article:published_time",
+        content: post.date,
+      },
+
+      {
+        property: "article:modified_time",
+        content: post.modified,
+      },
+
+      {
+        property: "article:author",
+        content:
+          post._embedded?.author?.[0]?.name ||
+          "Emmanuel Sunday Tijwun",
+      },
+
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+
+      {
+        name: "twitter:title",
+        content: post.title.rendered,
+      },
+
+      {
+        name: "twitter:description",
+        content: description,
+      },
+
+      {
+        name: "twitter:image",
+        content: image,
+      },
+    ],
+
+    links: [
+      {
+        rel: "canonical",
+        href: `https://clearfact.ng/post/${post.slug}`,
+      },
+    ],
+
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(schema),
+      },
+    ],
+  };
+},
 
   notFoundComponent: () => (
     <div className="container-news py-16">
@@ -123,7 +181,7 @@ useEffect(() => {
       setRelatedPosts(
         related
           .filter((item: any) => item.id !== post.id)
-          .slice(0, 4)
+          .slice(0, 8)
       );
     }
   };
