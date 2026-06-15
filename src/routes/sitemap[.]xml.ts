@@ -12,24 +12,38 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const posts = await postsRes.json();
 
-        const urls = [
-          "https://clearfact.ng/",
-          "https://clearfact.ng/about",
-          "https://clearfact.ng/contact",
-
-          ...posts.map(
-            (post: any) =>
-              `https://clearfact.ng/post/${post.slug}`
-          ),
+        const staticPages = [
+          {
+            loc: "https://clearfact.ng/",
+            lastmod: new Date().toISOString().split("T")[0],
+          },
+          {
+            loc: "https://clearfact.ng/about",
+            lastmod: new Date().toISOString().split("T")[0],
+          },
+          {
+            loc: "https://clearfact.ng/contact",
+            lastmod: new Date().toISOString().split("T")[0],
+          },
         ];
+
+        const articlePages = posts.map((post: any) => ({
+          loc: `https://clearfact.ng/post/${post.slug}`,
+          lastmod: post.modified
+            ? post.modified.split("T")[0]
+            : post.date.split("T")[0],
+        }));
+
+        const urls = [...staticPages, ...articlePages];
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
   .map(
-    (url) => `
+    (item) => `
   <url>
-    <loc>${url}</loc>
+    <loc>${item.loc}</loc>
+    <lastmod>${item.lastmod}</lastmod>
   </url>`
   )
   .join("")}
