@@ -64,7 +64,7 @@ head: ({ loaderData }) => {
   url: "https://clearfact.ng",
   logo: {
     "@type": "ImageObject",
-    url: "https://clearfact.ng/logo.png",
+    url: "https://clearfact.ng/clearfact-logo.jpg",
   },
 },
     mainEntityOfPage: {
