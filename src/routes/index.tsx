@@ -120,6 +120,9 @@ const factCheckPosts = posts.filter((post: any) =>
     (cat: any) => cat.slug === "fact-check"
   )
 );
+const opportunitiesCount = opportunitiesPosts.length;
+
+const latestFactChecks = factCheckPosts.slice(0, 3);
   const getVerificationColor = (status: string) => {
   switch (status) {
     case "Verified":
@@ -175,6 +178,12 @@ const factCheckPosts = posts.filter((post: any) =>
 
 </header>
 
+<div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
+
+  🚨 BREAKING NEWS:
+  {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
+
+</div>
 
       {/* HERO SECTION */}
       <section className="mb-16">
@@ -254,6 +263,16 @@ const factCheckPosts = posts.filter((post: any) =>
 
       </section>
 
+      <div className="mb-10">
+
+  <input
+    type="text"
+    placeholder="🔍 Search ClearFact News..."
+    className="w-full border rounded-xl p-4 text-lg"
+  />
+
+</div>
+      
      {/* LATEST POSTS */}
 <section className="mb-16">
   <h2 className="text-4xl font-black mb-8">
@@ -511,7 +530,7 @@ const factCheckPosts = posts.filter((post: any) =>
             <div className="border rounded-2xl p-5 mt-8">
 
   <h3 className="text-2xl font-bold mb-4">
-    🚀 Opportunities
+    🚀 Active Opportunities ({opportunitiesCount})
   </h3>
 
   <div className="flex flex-col gap-3">
@@ -560,6 +579,28 @@ const factCheckPosts = posts.filter((post: any) =>
   <h3 className="text-2xl font-bold mb-4">
     🇳🇬 Today in Nigeria
   </h3>
+  <div className="border rounded-2xl p-5 mt-8">
+
+  <h3 className="text-2xl font-bold mb-4">
+    ✓ Latest Fact Checks
+  </h3>
+
+  <div className="flex flex-col gap-3">
+
+    {latestFactChecks.map((post: any) => (
+      <a
+        key={post.id}
+        href={`/post/${post.slug}`}
+        className="hover:text-blue-600"
+        dangerouslySetInnerHTML={{
+          __html: post.title.rendered,
+        }}
+      />
+    ))}
+
+  </div>
+
+</div>
 
   <div className="flex flex-col gap-3">
 
@@ -576,7 +617,7 @@ const factCheckPosts = posts.filter((post: any) =>
     </a>
 
     <a href="/category/opportunities">
-      🚀 Opportunities
+      🚀 Active Opportunities ({opportunitiesCount})
     </a>
 
   </div>
