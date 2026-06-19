@@ -52,18 +52,24 @@ export const CATEGORIES = [
   { slug: "breaking", label: "Breaking" },
   { slug: "politics", label: "Politics" },
   { slug: "business", label: "Business" },
-  { slug: "economy", label: "Economy" },
   { slug: "technology", label: "Technology" },
   { slug: "education", label: "Education" },
   { slug: "health", label: "Health" },
   { slug: "security", label: "Security" },
+  { slug: "fact-check", label: "Fact Check" },
+  { slug: "investigations", label: "Investigations" },
+  { slug: "opportunities", label: "Opportunities" },
+  { slug: "world", label: "World" },
+];
+
+export const MORE_CATEGORIES = [
   { slug: "metro", label: "Metro" },
   { slug: "sports", label: "Sports" },
   { slug: "entertainment", label: "Entertainment" },
-  { slug: "investigations", label: "Investigations" },
-  { slug: "fact-check", label: "Fact Check" },
   { slug: "opinion", label: "Opinion" },
-  { slug: "world", label: "World" },
+  { slug: "climate-environment", label: "Climate & Environment" },
+  { slug: "data-research", label: "Data & Research" },
+  { slug: "video", label: "Video" },
 ];
 
 export const ARTICLES: Article[] = [

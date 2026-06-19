@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { getPosts } from "@/lib/wordpress";
 import { Link } from "@tanstack/react-router";
 import { Search, Menu, ShieldCheck } from "lucide-react";
-import { CATEGORIES } from "@/lib/news-data";
+import { getPosts, getCategories } from "@/lib/wordpress";
 import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/clearfact-logo.jpg";
 
@@ -34,19 +33,26 @@ function Logo() {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
 useEffect(() => {
-  const loadTickerPosts = async () => {
+  const loadData = async () => {
     try {
-      const posts = await getPosts();
+      const [posts, cats] = await Promise.all([
+        getPosts(),
+        getCategories(),
+      ]);
+
       setTickerPosts(posts.slice(0, 5));
+      setCategories(cats);
     } catch (error) {
-      console.error("Failed to load ticker posts:", error);
+      console.error(error);
     }
   };
 
-  loadTickerPosts();
+  loadData();
 }, []);
 
   const date = new Date().toLocaleDateString("en-NG", {
@@ -55,6 +61,30 @@ useEffect(() => {
     month: "long",
     day: "numeric",
   });
+
+  const MAIN_CATEGORY_SLUGS = [
+  "breaking",
+  "politics",
+  "business",
+  "technology",
+  "education",
+  "health",
+  "security",
+  "fact-check",
+  "investigations",
+  "opportunities",
+  "world",
+];
+
+const mainCategories = categories.filter((cat: any) =>
+  MAIN_CATEGORY_SLUGS.includes(cat.slug)
+);
+
+const moreCategories = categories.filter(
+  (cat: any) =>
+    !MAIN_CATEGORY_SLUGS.includes(cat.slug) &&
+    cat.parent === 0
+);
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
@@ -165,22 +195,62 @@ useEffect(() => {
         }`}
         aria-label="Sections"
       >
-        <div className="container-news flex flex-wrap lg:flex-nowrap gap-x-1 gap-y-1 lg:gap-x-3 overflow-x-auto py-2 text-sm">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.slug}
-              to={`/category/$slug`}
-              params={{ slug: c.slug }}
-              className="px-2 py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
-              activeProps={{
-                className:
-                  "px-2 py-1 rounded-sm whitespace-nowrap font-semibold text-primary bg-accent",
-              }}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </div>
+        <div className="container-news flex flex-wrap lg:flex-nowrap gap-x-1 gap-y-1 lg:gap-x-3 overflow-x-auto lg:overflow-visible py-2 text-sm">
+          {mainCategories.map((c) => (
+  <Link
+    key={c.slug}
+    to="/category/$slug"
+    params={{ slug: c.slug }}
+    className="px-2 py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
+    activeProps={{
+      className:
+        "px-2 py-1 rounded-sm whitespace-nowrap font-semibold text-primary bg-accent",
+    }}
+  >
+    {c.name}
+  </Link>
+))}
+
+<div className="relative">
+  <button
+    onClick={() => setMoreOpen(!moreOpen)}
+    className="px-2 py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
+  >
+    More ▼
+  </button>
+
+  {moreOpen && (
+    <div className="absolute top-full left-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-xl z-[999]">
+      {moreCategories.map((c) => (
+        <Link
+          key={c.slug}
+          to="/category/$slug"
+          params={{ slug: c.slug }}
+          className="block px-4 py-3 hover:bg-accent"
+          onClick={() => setMoreOpen(false)}
+        >
+          {c.name}
+        </Link>
+      ))}
+    </div>
+  )}
+
+  {open && (
+    <div className="lg:hidden absolute top-full left-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-xl z-[999]">
+      {moreCategories.map((c) => (
+        <Link
+          key={c.slug}
+          to="/category/$slug"
+          params={{ slug: c.slug }}
+          className="block px-4 py-3 hover:bg-accent"
+        >
+          {c.name}
+        </Link>
+      ))}
+    </div>
+  )}
+</div>
+ </div>
       </nav>
 
       {/* Live ticker */}
