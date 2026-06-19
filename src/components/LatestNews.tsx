@@ -5,20 +5,17 @@ export default function LatestNews({
 }: any) {
   return (
     <section className="mt-10">
-
       <h2 className="text-3xl font-bold mb-6">
         Latest News
       </h2>
 
-      <div className="grid md:grid-cols-2 gap-6">
-
-        {posts.map((post: any) => (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.slice(0, 6).map((post: any) => (
           <PostCard
             key={post.id}
             post={post}
           />
         ))}
-
       </div>
     </section>
   );

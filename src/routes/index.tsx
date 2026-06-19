@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getPosts } from "../lib/wordpress";
+import { getPosts, getTags } from "../lib/wordpress";
 import { useTheme } from "next-themes";
 
 export const Route = createFileRoute("/")({
@@ -80,6 +80,7 @@ function ThemeToggle() {
 
 async function Home() {
   const posts = await getPosts();
+const tags = await getTags();
 
   if (!posts || posts.length === 0) {
     return (
@@ -108,6 +109,17 @@ async function Home() {
   const trendingPosts = posts.filter(
     (post: any) => post.acf?.trending
   );
+const opportunitiesPosts = posts.filter((post: any) =>
+  post._embedded?.["wp:term"]?.[0]?.some(
+    (cat: any) => cat.slug === "opportunities"
+  )
+);
+
+const factCheckPosts = posts.filter((post: any) =>
+  post._embedded?.["wp:term"]?.[0]?.some(
+    (cat: any) => cat.slug === "fact-check"
+  )
+);
   const getVerificationColor = (status: string) => {
   switch (status) {
     case "Verified":
@@ -162,17 +174,14 @@ async function Home() {
             Top Tags
           </span>
 
-          <span className="bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full text-sm">
-            ClearFact News
-          </span>
-
-          <span className="bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full text-sm">
-            Nigerian News
-          </span>
-
-          <span className="bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full text-sm">
-            Verified News
-          </span>
+          {tags.slice(0, 15).map((tag: any) => (
+  <span
+    key={tag.id}
+    className="bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full text-sm"
+  >
+    #{tag.name}
+  </span>
+))}
 
         </div>
 
@@ -320,6 +329,54 @@ async function Home() {
   </div>
 </section>
 
+{trendingPosts.length > 0 && (
+  <section className="mb-16">
+    <h2 className="text-4xl font-black mb-8">
+      Trending News
+    </h2>
+
+    <div className="grid md:grid-cols-3 gap-6">
+      {trendingPosts.slice(0, 3).map((post: any) => (
+        <article key={post.id}>
+          <a href={`/post/${post.slug}`}>
+            <h3
+              className="text-xl font-bold"
+              dangerouslySetInnerHTML={{
+                __html: post.title.rendered,
+              }}
+            />
+          </a>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
+
+{opportunitiesPosts.length > 0 && (
+  <section className="mb-16">
+    <h2 className="text-4xl font-black mb-8">
+      Opportunities
+    </h2>
+
+    <div className="grid md:grid-cols-3 gap-6">
+      {opportunitiesPosts.slice(0, 3).map(
+        (post: any) => (
+          <article key={post.id}>
+            <a href={`/post/${post.slug}`}>
+              <h3
+                className="text-xl font-bold"
+                dangerouslySetInnerHTML={{
+                  __html: post.title.rendered,
+                }}
+              />
+            </a>
+          </article>
+        )
+      )}
+    </div>
+  </section>
+)}
+
       {/* MAIN GRID */}
       <div className="grid lg:grid-cols-4 gap-10">
 
@@ -461,6 +518,27 @@ async function Home() {
             <h3 className="text-2xl font-bold mb-4">
               Follow ClearFact News
             </h3>
+
+            <div className="border rounded-2xl p-5 mt-8">
+
+  <h3 className="text-2xl font-bold mb-4">
+    Top Tags
+  </h3>
+
+  <div className="flex flex-wrap gap-2">
+
+    {tags.slice(0, 15).map((tag: any) => (
+      <span
+        key={tag.id}
+        className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm"
+      >
+        #{tag.name}
+      </span>
+    ))}
+
+  </div>
+
+</div>
 
             <div className="flex flex-col gap-3 text-blue-600">
 

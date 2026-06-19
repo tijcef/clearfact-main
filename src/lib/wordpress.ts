@@ -17,7 +17,9 @@ export async function getCategories() {
 }
 
 export async function getTags() {
-  const res = await fetch(`${WP_API}/tags`);
+  const res = await fetch(
+    `${WP_API}/tags?per_page=20&orderby=count&order=desc`
+  );
 
   return res.json();
 }
