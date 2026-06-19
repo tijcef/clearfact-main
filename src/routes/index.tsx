@@ -1,5 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { getPosts, getTags } from "../lib/wordpress";
+import { getPosts } from "../lib/wordpress";
 import { useTheme } from "next-themes";
 
 export const Route = createFileRoute("/")({
@@ -80,7 +81,6 @@ function ThemeToggle() {
 
 async function Home() {
   const posts = await getPosts();
-const tags = await getTags();
 
   if (!posts || posts.length === 0) {
     return (
@@ -145,47 +145,36 @@ const factCheckPosts = posts.filter((post: any) =>
       {/* HEADER */}
       <header className="mb-12">
 
-        <div className="flex justify-between items-center">
+  <div className="flex justify-between items-center">
 
-          <div>
+    <Link
+      to="/"
+      className="flex items-center gap-4"
+    >
+      <img
+        src="/clearfact-logo.jpg"
+        alt="ClearFact News"
+        className="h-14 w-auto"
+      />
 
-            <h1 className="text-6xl font-black">
-              ClearFact News
-            </h1>
+      <div>
+        <h1 className="text-6xl font-black hover:text-red-600 transition-colors">
+          ClearFact News
+        </h1>
 
-            <p className="text-gray-500 mt-3 text-xl">
-              Verified journalism from Nigeria
-            </p>
+        <p className="text-gray-500 mt-1 text-xl">
+          Verified journalism from Nigeria
+        </p>
+      </div>
 
-          </div>
+    </Link>
 
-          <ThemeToggle />
+    <ThemeToggle />
 
-        </div>
+  </div>
 
-      </header>
+</header>
 
-      {/* TOP TAGS */}
-      <section className="mb-10">
-
-        <div className="flex gap-3 flex-wrap items-center">
-
-          <span className="font-bold text-lg">
-            Top Tags
-          </span>
-
-          {tags.slice(0, 15).map((tag: any) => (
-  <span
-    key={tag.id}
-    className="bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full text-sm"
-  >
-    #{tag.name}
-  </span>
-))}
-
-        </div>
-
-      </section>
 
       {/* HERO SECTION */}
       <section className="mb-16">
@@ -522,19 +511,73 @@ const factCheckPosts = posts.filter((post: any) =>
             <div className="border rounded-2xl p-5 mt-8">
 
   <h3 className="text-2xl font-bold mb-4">
-    Top Tags
+    🚀 Opportunities
   </h3>
 
-  <div className="flex flex-wrap gap-2">
+  <div className="flex flex-col gap-3">
 
-    {tags.slice(0, 15).map((tag: any) => (
-      <span
-        key={tag.id}
-        className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm"
-      >
-        #{tag.name}
-      </span>
-    ))}
+    <a
+      href="/category/opportunities"
+      className="hover:text-blue-600"
+    >
+      Scholarships
+    </a>
+
+    <a
+      href="/category/opportunities"
+      className="hover:text-blue-600"
+    >
+      Fellowships
+    </a>
+
+    <a
+      href="/category/opportunities"
+      className="hover:text-blue-600"
+    >
+      Jobs
+    </a>
+
+    <a
+      href="/category/opportunities"
+      className="hover:text-blue-600"
+    >
+      Grants
+    </a>
+
+    <a
+      href="/category/opportunities"
+      className="hover:text-blue-600"
+    >
+      Internships
+    </a>
+
+  </div>
+
+</div>
+
+<div className="border rounded-2xl p-5 mt-8">
+
+  <h3 className="text-2xl font-bold mb-4">
+    🇳🇬 Today in Nigeria
+  </h3>
+
+  <div className="flex flex-col gap-3">
+
+    <a href="#">
+      💵 Exchange Rate
+    </a>
+
+    <a href="#">
+      ⛽ Fuel Price
+    </a>
+
+    <a href="#">
+      🌦 Weather
+    </a>
+
+    <a href="/category/opportunities">
+      🚀 Opportunities
+    </a>
 
   </div>
 
