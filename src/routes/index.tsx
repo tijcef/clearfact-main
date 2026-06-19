@@ -145,38 +145,6 @@ const latestFactChecks = factCheckPosts.slice(0, 3);
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
 
-      {/* HEADER */}
-      <header className="mb-12">
-
-  <div className="flex justify-between items-center">
-
-    <Link
-      to="/"
-      className="flex items-center gap-4"
-    >
-      <img
-        src="/clearfact-logo.jpg"
-        alt="ClearFact News"
-        className="h-14 w-auto"
-      />
-
-      <div>
-        <h1 className="text-6xl font-black hover:text-red-600 transition-colors">
-          ClearFact News
-        </h1>
-
-        <p className="text-gray-500 mt-1 text-xl">
-          Verified journalism from Nigeria
-        </p>
-      </div>
-
-    </Link>
-
-    <ThemeToggle />
-
-  </div>
-
-</header>
 
 <div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
 
@@ -519,138 +487,156 @@ const latestFactChecks = factCheckPosts.slice(0, 3);
         </div>
 
         {/* SIDEBAR */}
-        <aside className="space-y-8">
+        {/* SIDEBAR */}
+<aside className="space-y-8">
 
-          <div className="border rounded-2xl p-5">
+  {/* Follow ClearFact */}
+  <div className="border rounded-2xl p-5">
 
-            <h3 className="text-2xl font-bold mb-4">
-              Follow ClearFact News
-            </h3>
+    <h3 className="text-2xl font-bold mb-4">
+      Follow ClearFact
+    </h3>
 
-            <div className="border rounded-2xl p-5 mt-8">
+    <div className="flex flex-col gap-3 text-blue-600">
 
-  <h3 className="text-2xl font-bold mb-4">
-    🚀 Active Opportunities ({opportunitiesCount})
-  </h3>
+      <a href="https://facebook.com" target="_blank">
+        Facebook
+      </a>
 
-  <div className="flex flex-col gap-3">
+      <a href="https://instagram.com" target="_blank">
+        Instagram
+      </a>
 
-    <a
-      href="/category/opportunities"
-      className="hover:text-blue-600"
-    >
-      Scholarships
-    </a>
+      <a href="https://tiktok.com" target="_blank">
+        TikTok
+      </a>
 
-    <a
-      href="/category/opportunities"
-      className="hover:text-blue-600"
-    >
-      Fellowships
-    </a>
+      <a href="https://linkedin.com" target="_blank">
+        LinkedIn
+      </a>
 
-    <a
-      href="/category/opportunities"
-      className="hover:text-blue-600"
-    >
-      Jobs
-    </a>
+      <a href="https://youtube.com" target="_blank">
+        YouTube
+      </a>
 
-    <a
-      href="/category/opportunities"
-      className="hover:text-blue-600"
-    >
-      Grants
-    </a>
-
-    <a
-      href="/category/opportunities"
-      className="hover:text-blue-600"
-    >
-      Internships
-    </a>
+    </div>
 
   </div>
 
-</div>
+  {/* Opportunities */}
+  <div className="border rounded-2xl p-5">
 
-<div className="border rounded-2xl p-5 mt-8">
-
-  <h3 className="text-2xl font-bold mb-4">
-    🇳🇬 Today in Nigeria
-  </h3>
-  <div className="border rounded-2xl p-5 mt-8">
-
-  <h3 className="text-2xl font-bold mb-4">
-    ✓ Latest Fact Checks
-  </h3>
-
-  <div className="flex flex-col gap-3">
-
-    {latestFactChecks.map((post: any) => (
-      <a
-        key={post.id}
-        href={`/post/${post.slug}`}
-        className="hover:text-blue-600"
-        dangerouslySetInnerHTML={{
-          __html: post.title.rendered,
-        }}
-      />
-    ))}
-
-  </div>
-
-</div>
-
-  <div className="flex flex-col gap-3">
-
-    <a href="#">
-      💵 Exchange Rate
-    </a>
-
-    <a href="#">
-      ⛽ Fuel Price
-    </a>
-
-    <a href="#">
-      🌦 Weather
-    </a>
-
-    <a href="/category/opportunities">
+    <h3 className="text-2xl font-bold mb-4">
       🚀 Active Opportunities ({opportunitiesCount})
-    </a>
+    </h3>
+
+    <div className="flex flex-col gap-3">
+
+      <a
+        href="/category/opportunities"
+        className="hover:text-blue-600"
+      >
+        Scholarships
+      </a>
+
+      <a
+        href="/category/opportunities"
+        className="hover:text-blue-600"
+      >
+        Fellowships
+      </a>
+
+      <a
+        href="/category/opportunities"
+        className="hover:text-blue-600"
+      >
+        Grants
+      </a>
+
+      <a
+        href="/category/opportunities"
+        className="hover:text-blue-600"
+      >
+        Jobs
+      </a>
+
+      <a
+        href="/category/opportunities"
+        className="hover:text-blue-600"
+      >
+        Internships
+      </a>
+
+    </div>
 
   </div>
 
-</div>
+  {/* Latest Fact Checks */}
+  <div className="border rounded-2xl p-5">
 
-            <div className="flex flex-col gap-3 text-blue-600">
+    <h3 className="text-2xl font-bold mb-4">
+      ✓ Latest Fact Checks
+    </h3>
 
-              <a href="https://facebook.com" target="_blank">
-                Facebook
-              </a>
+    <div className="flex flex-col gap-3">
 
-              <a href="https://instagram.com" target="_blank">
-                Instagram
-              </a>
+      {latestFactChecks.map((post: any) => (
+        <a
+          key={post.id}
+          href={`/post/${post.slug}`}
+          className="hover:text-blue-600"
+          dangerouslySetInnerHTML={{
+            __html: post.title.rendered,
+          }}
+        />
+      ))}
 
-              <a href="https://tiktok.com" target="_blank">
-                TikTok
-              </a>
+    </div>
 
-              <a href="https://linkedin.com" target="_blank">
-                LinkedIn
-              </a>
+  </div>
 
-              <a href="https://youtube.com" target="_blank">
-                YouTube
-              </a>
+  {/* Today In Nigeria */}
+  <div className="border rounded-2xl p-5">
 
-            </div>
+    <h3 className="text-2xl font-bold mb-4">
+      🇳🇬 Today in Nigeria
+    </h3>
 
-          </div>
+    <div className="space-y-4">
 
-        </aside>
+      <div className="border-b pb-3">
+        <p className="font-semibold">
+          💵 USD/NGN
+        </p>
+        <p>₦1,580</p>
+      </div>
+
+      <div className="border-b pb-3">
+        <p className="font-semibold">
+          ⛽ Fuel Price
+        </p>
+        <p>Abuja: ₦980/L</p>
+      </div>
+
+      <div className="border-b pb-3">
+        <p className="font-semibold">
+          🌦 Abuja Weather
+        </p>
+        <p>31°C</p>
+      </div>
+
+      <div>
+        <p className="font-semibold">
+          🚀 Opportunities
+        </p>
+        <p>{opportunitiesCount} active</p>
+      </div>
+
+    </div>
+
+  </div>
+
+</aside>
 
       </div>
 

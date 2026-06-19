@@ -9,24 +9,24 @@ function Logo() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-3 group"
+      className="flex items-center gap-4"
       aria-label="ClearFact News home"
     >
       <img
         src={logo}
         alt="ClearFact News Logo"
-        className="h-10 w-10 object-contain"
+        className="h-14 w-auto object-contain"
       />
 
-      <span className="leading-tight">
-        <span className="block font-serif text-xl font-bold tracking-tight">
-          ClearFact <span className="text-gold">News</span>
-        </span>
+      <div>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight hover:text-red-600 transition-colors">
+          ClearFact
+        </h1>
 
-        <span className="hidden md:block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          Verified · Transparent · Nigerian
-        </span>
-      </span>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Verified journalism from Nigeria
+        </p>
+      </div>
     </Link>
   );
 }
@@ -138,7 +138,7 @@ const moreCategories = categories.filter(
       </div>
 
       {/* Main bar */}
-      <div className="container-news flex h-16 items-center justify-between gap-4">
+      <div className="container-news flex h-28 items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
             aria-label="Open menu"

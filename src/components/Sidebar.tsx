@@ -2,32 +2,38 @@ export default function Sidebar() {
   return (
     <aside className="space-y-8">
 
-      <div>
-        <h3 className="font-bold text-xl mb-4">
-          Follow ClearFact News
-        </h3>
+  <div className="border rounded-2xl p-5">
 
-        <div className="flex flex-wrap gap-3">
+    <h3 className="text-2xl font-bold mb-4">
+      Follow ClearFact
+    </h3>
 
-          <a href="#">
-            Facebook
-          </a>
+    <div className="flex flex-col gap-3 text-blue-600">
 
-          <a href="#">
-            Instagram
-          </a>
+      <a href="https://facebook.com" target="_blank">
+        Facebook
+      </a>
 
-          <a href="#">
-            TikTok
-          </a>
+      <a href="https://instagram.com" target="_blank">
+        Instagram
+      </a>
 
-          <a href="#">
-            LinkedIn
-          </a>
+      <a href="https://tiktok.com" target="_blank">
+        TikTok
+      </a>
 
-        </div>
-      </div>
+      <a href="https://linkedin.com" target="_blank">
+        LinkedIn
+      </a>
 
-    </aside>
+      <a href="https://youtube.com" target="_blank">
+        YouTube
+      </a>
+
+    </div>
+
+  </div>
+
+</aside>
   );
 }
