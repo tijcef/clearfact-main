@@ -1,46 +1,29 @@
-import { Link } from "@tanstack/react-router";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { getPosts } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     title: "ClearFact News | Verified Journalism From Nigeria",
-
     meta: [
       {
         name: "description",
         content:
           "ClearFact News delivers verified, transparent and timely journalism from Nigeria.",
       },
-      {
-        property: "og:title",
-        content: "ClearFact News",
-      },
+      { property: "og:title", content: "ClearFact News" },
       {
         property: "og:description",
         content: "Verified journalism from Nigeria.",
       },
-      {
-        property: "og:type",
-        content: "website",
-      },
-      {
-        property: "og:url",
-        content: "https://clearfact.ng/",
-      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://clearfact.ng/" },
       {
         property: "og:image",
         content: "https://clearfact.ng/clearfact-logo.jpg",
       },
-      {
-        name: "twitter:card",
-        content: "summary_large_image",
-      },
-      {
-        name: "twitter:title",
-        content: "ClearFact News",
-      },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ClearFact News" },
       {
         name: "twitter:description",
         content: "Verified journalism from Nigeria.",
@@ -50,13 +33,7 @@ export const Route = createFileRoute("/")({
         content: "https://clearfact.ng/clearfact-logo.jpg",
       },
     ],
-
-    links: [
-      {
-        rel: "canonical",
-        href: "https://clearfact.ng/",
-      },
-    ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/" }],
   }),
 
   component: Home,
@@ -68,120 +45,96 @@ async function Home() {
   if (!posts || posts.length === 0) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-10">
-        <h1 className="text-5xl font-bold">
-          ClearFact News
-        </h1>
-
-        <p className="mt-6 text-xl">
-          No posts found from WordPress
-        </p>
+        <h1 className="text-5xl font-bold">ClearFact News</h1>
+        <p className="mt-6 text-xl">No posts found from WordPress</p>
       </main>
     );
   }
 
   const heroPost = posts[0];
-
-  const latestPosts = posts.slice(0, 5);
+  const topStories = posts.slice(1, 5);
+  const latestPosts = posts.slice(0, 6);
 
   const trendingPosts = posts.filter(
     (post: any) => post.acf?.trending
   );
 
   const getVerificationColor = (status: string) => {
-  switch (status) {
-    case "Verified":
-      return "bg-green-600 text-white";
-    case "Fact-Checked":
-      return "bg-blue-600 text-white";
-    case "Developing":
-      return "bg-yellow-500 text-black";
-    case "Opinion":
-      return "bg-purple-600 text-white";
-    case "Breaking":
-      return "bg-red-600 text-white";
-    case "False Claim":
-      return "bg-red-800 text-white";
-    default:
-      return "bg-gray-600 text-white";
-  }
-};
+    switch (status) {
+      case "Verified":
+        return "bg-green-600 text-white";
+      case "Fact-Checked":
+        return "bg-blue-600 text-white";
+      case "Developing":
+        return "bg-yellow-500 text-black";
+      case "Opinion":
+        return "bg-purple-600 text-white";
+      case "Breaking":
+        return "bg-red-600 text-white";
+      case "False Claim":
+        return "bg-red-800 text-white";
+      default:
+        return "bg-gray-600 text-white";
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
+      <div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
+        🚨 BREAKING NEWS:{" "}
+        {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
+      </div>
 
-
-<div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
-
-  🚨 BREAKING NEWS:
-  {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
-
-</div>
-
-      {/* HERO SECTION */}
       <section className="mb-16">
-
-        <a href={`/post/${heroPost.slug}`}>
-
+        <Link to="/post/$slug" params={{ slug: heroPost.slug }}>
           <img
             src={
-              heroPost._embedded?.[
-                "wp:featuredmedia"
-              ]?.[0]?.source_url ||
+              heroPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
               "https://via.placeholder.com/1200x700"
             }
             alt=""
             className="w-full rounded-3xl aspect-video object-cover"
           />
-
-        </a>
+        </Link>
 
         <div className="mt-8">
-<div className="flex gap-2 flex-wrap mb-4">
+          <div className="flex gap-2 flex-wrap mb-4">
+            {heroPost._embedded?.["wp:term"]?.[0]?.map((cat: any) => (
+              <span
+                key={cat.id}
+                className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
+              >
+                {cat.name}
+              </span>
+            ))}
 
-  {heroPost._embedded?.["wp:term"]?.[0]?.map(
-    (cat: any) => (
-      <span
-        key={cat.id}
-        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
-      >
-        {cat.name}
-      </span>
-    )
-  )}
+            {heroPost.acf?.verification_status && (
+              <span
+                className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
+                  heroPost.acf.verification_status
+                )}`}
+              >
+                {heroPost.acf.verification_status}
+              </span>
+            )}
+          </div>
 
-  {heroPost.acf?.verification_status && (
-    <span
-      className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
-        heroPost.acf.verification_status
-      )}`}
-    >
-      {heroPost.acf.verification_status}
-    </span>
-  )}
-
-</div>
-
-          <a href={`/post/${heroPost.slug}`}>
-
-            <h2
+          <Link to="/post/$slug" params={{ slug: heroPost.slug }}>
+            <h1
               className="text-5xl md:text-6xl font-black leading-tight hover:underline"
               dangerouslySetInnerHTML={{
                 __html: heroPost.title.rendered,
               }}
             />
-
-          </a>
+          </Link>
 
           <p className="text-sm text-gray-500 mt-5">
-            {new Date(
-              heroPost.date
-            ).toDateString()}
+            {new Date(heroPost.date).toDateString()}
           </p>
 
           <p className="text-sm text-gray-500 mt-1">
             By{" "}
-            {heroPost._embedded?.author?.[0]
-              ?.name || "ClearFact News"}
+            {heroPost._embedded?.author?.[0]?.name || "ClearFact News"}
           </p>
 
           <div
@@ -190,120 +143,161 @@ async function Home() {
               __html: heroPost.excerpt.rendered,
             }}
           />
-
         </div>
-
       </section>
 
-      <div className="mb-10">
+      {topStories.length > 0 && (
+        <section className="mb-16">
+          <h2 className="text-4xl font-black mb-8">Top Stories</h2>
 
-  <input
-    type="text"
-    placeholder="🔍 Search ClearFact News..."
-    className="w-full border rounded-xl p-4 text-lg"
-  />
-
-</div>
-      
-     {/* LATEST NEWS */}
-<section className="mb-16">
-  <h2 className="text-4xl font-black mb-8">
-    Latest News
-  </h2>
-
-  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {latestPosts.map((post: any) => (
-      <article
-        key={post.id}
-        className="border rounded-2xl overflow-hidden"
-      >
-        <a href={`/post/${post.slug}`}>
-          <img
-            src={
-              post._embedded?.["wp:featuredmedia"]?.[0]
-                ?.source_url ||
-              "https://via.placeholder.com/800x500"
-            }
-            alt=""
-            className="w-full h-56 object-cover"
-          />
-        </a>
-
-        <div className="p-5">
-          <div className="flex gap-2 flex-wrap mb-3">
-            {post._embedded?.["wp:term"]?.[0]?.map(
-              (cat: any) => (
-                <span
-                  key={cat.id}
-                  className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
-                >
-                  {cat.name}
-                </span>
-              )
-            )}
-
-            {post.acf?.verification_status && (
-              <span
-                className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
-                  post.acf.verification_status
-                )}`}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topStories.map((post: any) => (
+              <article
+                key={post.id}
+                className="border rounded-2xl overflow-hidden"
               >
-                {post.acf.verification_status}
-              </span>
-            )}
-          </div>
+                <Link to="/post/$slug" params={{ slug: post.slug }}>
+                  <img
+                    src={
+                      post._embedded?.["wp:featuredmedia"]?.[0]
+                        ?.source_url ||
+                      "https://via.placeholder.com/800x500"
+                    }
+                    alt=""
+                    className="w-full h-40 object-cover"
+                  />
 
-          <h3
-            className="text-2xl font-bold leading-tight"
-            dangerouslySetInnerHTML={{
-              __html: post.title.rendered,
-            }}
+                  <div className="p-4">
+                    <h3
+                      className="text-lg font-bold leading-tight"
+                      dangerouslySetInnerHTML={{
+                        __html: post.title.rendered,
+                      }}
+                    />
+                  </div>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="mb-10">
+        <input
+          type="text"
+          placeholder="🔍 Search ClearFact News..."
+          className="w-full border rounded-xl p-4 text-lg"
+        />
+      </div>
+
+      <section className="mb-16">
+        <h2 className="text-4xl font-black mb-8">Latest News</h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {latestPosts.map((post: any) => (
+            <article
+              key={post.id}
+              className="border rounded-2xl overflow-hidden"
+            >
+              <Link to="/post/$slug" params={{ slug: post.slug }}>
+                <img
+                  src={
+                    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+                    "https://via.placeholder.com/800x500"
+                  }
+                  alt=""
+                  className="w-full h-56 object-cover"
+                />
+
+                <div className="p-5">
+                  <h3
+                    className="text-2xl font-bold leading-tight"
+                    dangerouslySetInnerHTML={{
+                      __html: post.title.rendered,
+                    }}
+                  />
+
+                  <p className="text-sm text-gray-500 mt-3">
+                    {new Date(post.date).toDateString()}
+                  </p>
+                </div>
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {trendingPosts.length > 0 && (
+        <section className="mb-16">
+          <h2 className="text-4xl font-black mb-8">Trending News</h2>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {trendingPosts.slice(0, 3).map((post: any) => (
+              <article key={post.id} className="border rounded-2xl p-5">
+                <Link to="/post/$slug" params={{ slug: post.slug }}>
+                  <h3
+                    className="text-xl font-bold"
+                    dangerouslySetInnerHTML={{
+                      __html: post.title.rendered,
+                    }}
+                  />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <CategorySection title="Politics" slug="politics" posts={posts} />
+      <CategorySection title="Business" slug="business" posts={posts} />
+      <CategorySection title="Education" slug="education" posts={posts} />
+      <CategorySection title="Technology" slug="technology" posts={posts} />
+      <CategorySection title="Features" slug="features" posts={posts} />
+      <CategorySection
+        title="Investigations"
+        slug="investigations"
+        posts={posts}
+      />
+      <CategorySection title="Fact Check" slug="fact-check" posts={posts} />
+      <CategorySection
+        title="Opportunities"
+        slug="opportunities"
+        posts={posts}
+      />
+      <CategorySection
+        title="Climate & Environment"
+        slug="climate-environment"
+        posts={posts}
+      />
+      <CategorySection
+        title="Data & Research"
+        slug="data-research"
+        posts={posts}
+      />
+      <CategorySection title="Video" slug="video" posts={posts} />
+
+      <section className="mb-16 border rounded-2xl p-8 bg-gray-50">
+        <h2 className="text-4xl font-black mb-4">
+          Subscribe to ClearFact Newsletter
+        </h2>
+
+        <p className="text-gray-600 mb-6">
+          Get verified news, fact checks, investigations and opportunities
+          directly in your inbox.
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-3">
+          <input
+            type="email"
+            placeholder="Enter your email address"
+            className="border rounded-xl p-4 flex-1"
           />
 
-          <p className="text-sm text-gray-500 mt-3">
-            {new Date(post.date).toDateString()}
-          </p>
+          <button className="bg-red-600 text-white px-6 py-4 rounded-xl font-bold">
+            Subscribe
+          </button>
         </div>
-      </article>
-    ))}
-  </div>
-</section>
-
-{trendingPosts.length > 0 && (
-  <section className="mb-16">
-    <h2 className="text-4xl font-black mb-8">
-      Trending News
-    </h2>
-
-    <div className="grid md:grid-cols-3 gap-6">
-      {trendingPosts.slice(0, 3).map((post: any) => (
-        <article key={post.id}>
-          <a href={`/post/${post.slug}`}>
-            <h3
-              className="text-xl font-bold"
-              dangerouslySetInnerHTML={{
-                __html: post.title.rendered,
-              }}
-            />
-          </a>
-        </article>
-      ))}
-    </div>
-  </section>
-)}
-
- <CategorySection title="Politics" slug="politics" posts={posts} />
-<CategorySection title="Business" slug="business" posts={posts} />
-<CategorySection title="Education" slug="education" posts={posts} />
-<CategorySection title="Technology" slug="technology" posts={posts} />
-<CategorySection title="Features" slug="features" posts={posts} />
-<CategorySection title="Investigations" slug="investigations" posts={posts} />
-<CategorySection title="Fact Check" slug="fact-check" posts={posts} />
-<CategorySection title="Opportunities" slug="opportunities" posts={posts} />
-<CategorySection title="Climate & Environment" slug="climate-environment" posts={posts} />
-<CategorySection title="Data & Research" slug="data-research" posts={posts} />
-<CategorySection title="Video" slug="video" posts={posts} />
-
-</main>
-);
+      </section>
+    </main>
+  );
 }
