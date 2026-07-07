@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Search, Menu, ShieldCheck } from "lucide-react";
 import { getPosts, getCategories } from "@/lib/wordpress";
 import { ThemeToggle } from "./ThemeToggle";
-import logo from "@/assets/clearfact-logo.jpg";
+import logo from "@/assets/logo.jpg";
 
 function Logo() {
   return (

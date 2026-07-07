@@ -93,14 +93,16 @@ export const Route =
   }>()({
     head: () => ({
       meta: [
-        {
-          charSet: "utf-8",
-        },
-        {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1",
-        },
-      ],
+  { charSet: "utf-8" },
+  {
+    name: "viewport",
+    content: "width=device-width, initial-scale=1",
+  },
+  {
+    name: "robots",
+    content: "index,follow,max-image-preview:large",
+  },
+],
 
       links: [
         {

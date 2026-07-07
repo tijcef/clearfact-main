@@ -4,7 +4,7 @@ import { SimplePage } from "@/components/site/SimplePage";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — ClearFact News" },
+      { title: "About — ClearFact" },
       { name: "description", content: "ClearFact News is an independent Nigerian newsroom committed to verified, transparent journalism." },
       { property: "og:title", content: "About ClearFact News" },
       { property: "og:description", content: "Independent. Verified. Nigerian." },

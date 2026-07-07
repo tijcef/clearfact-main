@@ -36,22 +36,18 @@ head: ({ loaderData }) => {
       ?.slice(0, 160) || "";
 
   const image =
-    post._embedded?.["wp:featuredmedia"]?.[0]
-      ?.source_url || "";
+    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "";
+
+  const title = post.title.rendered.replace(/<[^>]+>/g, "");
 
   const schema = {
-  "@context": "https://schema.org",
-  "@type": "NewsArticle",
-
-  headline: post.title.rendered.replace(/<[^>]+>/g, ""),
-
-  description,
-
-  image: [image],
-
-  datePublished: post.date,
-
-  dateModified: post.modified,
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: title,
+    description,
+    image: image ? [image] : [],
+    datePublished: post.date,
+    dateModified: post.modified,
     author: {
       "@type": "Person",
       name:
@@ -59,14 +55,14 @@ head: ({ loaderData }) => {
         "Emmanuel Sunday Tijwun",
     },
     publisher: {
-  "@type": "Organization",
-  name: "ClearFact News",
-  url: "https://clearfact.ng",
-  logo: {
-    "@type": "ImageObject",
-    url: "https://clearfact.ng/clearfact-logo.jpg",
-  },
-},
+      "@type": "Organization",
+      name: "ClearFact News",
+      url: "https://clearfact.ng",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://clearfact.ng/logo.png",
+      },
+    },
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `https://clearfact.ng/post/${post.slug}`,
@@ -74,71 +70,63 @@ head: ({ loaderData }) => {
   };
 
   return {
-    title: `${post.title.rendered} | ClearFact News`,
+    title: `${title} | ClearFact News`,
 
     meta: [
+      {
+        name: "robots",
+        content: "index,follow,max-image-preview:large",
+      },
       {
         name: "description",
         content: description,
       },
-
       {
         property: "og:type",
         content: "article",
       },
-
       {
         property: "og:title",
-        content: post.title.rendered,
+        content: title,
       },
-
       {
         property: "og:description",
         content: description,
       },
-
       {
         property: "og:url",
         content: `https://clearfact.ng/post/${post.slug}`,
       },
-
       {
         property: "og:image",
         content: image,
       },
-
       {
         property: "article:published_time",
         content: post.date,
       },
-
       {
         property: "article:modified_time",
         content: post.modified,
       },
-
       {
         property: "article:author",
         content:
           post._embedded?.author?.[0]?.name ||
           "Emmanuel Sunday Tijwun",
       },
-
       {
         name: "twitter:card",
         content: "summary_large_image",
       },
-
       {
         name: "twitter:title",
-        content: post.title.rendered,
+        content: title,
       },
-
       {
         name: "twitter:description",
         content: description,
       },
-
       {
         name: "twitter:image",
         content: image,
@@ -285,7 +273,7 @@ return (
   }}
 />
 
-    <AdSense />
+    
 
     <div className="mt-8 border-t pt-6">
   <h3 className="font-semibold mb-4">
@@ -368,6 +356,8 @@ return (
 </div>
 </section>
 )}
+
+{typeof window !== "undefined" && <AdSense />}
 
 <div className="mt-10">
   <Link
