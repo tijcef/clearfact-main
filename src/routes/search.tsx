@@ -72,7 +72,7 @@ function SearchPage() {
               <li>
                 <Link to="/search" search={{ q, category: "", tag }} className={`block px-2 py-1 rounded-sm ${!category ? "bg-accent font-semibold" : "hover:bg-accent"}`}>All</Link>
               </li>
-              {categories.map((c) => (
+              {moreCategories.map((c) => (
                 <li key={c.slug}>
                   <Link to="/search" search={{ q, category: c.label, tag }}
                     className={`block px-2 py-1 rounded-sm ${category === c.label ? "bg-accent font-semibold" : "hover:bg-accent"}`}>

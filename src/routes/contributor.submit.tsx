@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { screenSubmission } from "@/lib/contributor.functions";
-import { CATEGORIES } from "@/lib/news-data";
+import { categories, moreCategories } from "@/lib/news-data";
 import { toast } from "sonner";
 import { Loader2, MapPin, Plus, UploadCloud, X, Sparkles, Send, Save } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -174,7 +174,7 @@ function SubmitForm() {
         <div className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Metadata</div>
           <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full px-3 rounded-sm border border-border bg-background">
-            {CATEGORIES.map((c) => <option key={c.slug}>{c.label}</option>)}
+            {categories.map((c) => <option key={c.slug}>{c.name}</option>)}
           </select>
           <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="tags, comma, separated" className="h-10 w-full px-3 rounded-sm border border-border bg-background text-sm" />
           <button onClick={captureGeo} className="w-full h-9 rounded-sm border border-border text-sm inline-flex items-center justify-center gap-1.5"><MapPin className="h-4 w-4" /> {geo ? `${geo.lat.toFixed(3)}, ${geo.lng.toFixed(3)}` : "Add geo-tag"}</button>

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Save, Send, Calendar, FileText, Loader2, UploadCloud, X, Eye, Pencil, History, Bold, Italic, Link2, List, Heading2, Quote, Sparkles, ShieldCheck, Plus, Trash2, AlertTriangle } from "lucide-react";
-import { CATEGORIES } from "@/lib/news-data";
+import { categories, moreCategories } from "@/lib/news-data";
 import { analyzeArticle, type ArticleAnalysis } from "@/lib/ai-analysis.functions";
 
 type Source = { title: string; url: string; note?: string };
