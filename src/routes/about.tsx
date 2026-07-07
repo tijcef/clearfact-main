@@ -14,7 +14,9 @@ export const Route = createFileRoute("/about")({
     <SimplePage
       eyebrow="Our story"
       title="An independent newsroom built on verification."
-      intro="Founded by Emmanuel Sunday Tijwun and a team of Nigerian journalists, ClearFact News exists to deliver verified, transparent, fact-based information to the public — without fear and without favour."
+      intro="ClearFact News is an independent Nigerian digital newsroom committed to delivering verified, transparent, and fact-based journalism that informs, educates, and empowers the public. We believe that accurate information is essential to democracy, accountability, and informed decision-making.
+
+Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide credible reporting free from misinformation, sensationalism, and undue influence. Our newsroom is dedicated to publishing stories that are thoroughly verified, responsibly reported, and presented with fairness, accuracy, and context."
     >
       <h2>Mission</h2>
       <p>To provide verified, transparent, unbiased and fact-based information to the Nigerian and global public.</p>

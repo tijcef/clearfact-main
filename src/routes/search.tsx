@@ -2,7 +2,7 @@ import { getPosts, searchPosts } from "@/lib/wordpress";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, Loader2, TrendingUp } from "lucide-react";
-import { CATEGORIES } from "@/lib/news-data";
+import { categories, moreCategories } from "@/lib/news-data";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -72,7 +72,7 @@ function SearchPage() {
               <li>
                 <Link to="/search" search={{ q, category: "", tag }} className={`block px-2 py-1 rounded-sm ${!category ? "bg-accent font-semibold" : "hover:bg-accent"}`}>All</Link>
               </li>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <li key={c.slug}>
                   <Link to="/search" search={{ q, category: c.label, tag }}
                     className={`block px-2 py-1 rounded-sm ${category === c.label ? "bg-accent font-semibold" : "hover:bg-accent"}`}>

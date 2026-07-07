@@ -271,7 +271,7 @@ export function ArticleEditor({ existing }: { existing?: Article }) {
           <h3 className="font-serif text-lg">Metadata & SEO</h3>
           <Field label="Category">
             <select value={form.category ?? "Politics"} onChange={(e) => set("category", e.target.value)} className="w-full h-10 px-2 border border-border rounded-sm bg-background">
-              {CATEGORIES.map((c) => <option key={c.slug}>{c.label}</option>)}
+              {CATEGORIES.map((c) => <option key={c.slug}>{c.name}</option>)}
             </select>
           </Field>
           <Field label="Verification">

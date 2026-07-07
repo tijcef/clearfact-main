@@ -16,6 +16,10 @@ export type Verification =
 export type ContentFormat =
   | "Article"
   | "Feature"
+  | "Profile"
+  | "Interview"
+  | "Explainer"
+  | "Special Report"
   | "Top Story"
   | "Featured"
   | "Trending"
@@ -48,28 +52,29 @@ export interface Article {
   tags?: string[];
 }
 
-export const CATEGORIES = [
-  { slug: "breaking", label: "Breaking" },
-  { slug: "politics", label: "Politics" },
-  { slug: "business", label: "Business" },
-  { slug: "technology", label: "Technology" },
-  { slug: "education", label: "Education" },
-  { slug: "health", label: "Health" },
-  { slug: "security", label: "Security" },
-  { slug: "fact-check", label: "Fact Check" },
-  { slug: "investigations", label: "Investigations" },
-  { slug: "opportunities", label: "Opportunities" },
-  { slug: "world", label: "World" },
+export const categories = [
+  { name: "Breaking", slug: "breaking" },
+  { name: "Politics", slug: "politics" },
+  { name: "Business", slug: "business" },
+  { name: "Education", slug: "education" },
+  { name: "Health", slug: "health" },
+  { name: "Security", slug: "security" },
+  { name: "Technology", slug: "technology" },
+  { name: "World", slug: "world" },
+  { name: "Investigations", slug: "investigations" },
+  { name: "Fact Check", slug: "fact-check" },
+  { name: "Features", slug: "features" },
+  { name: "Opportunities", slug: "opportunities" },
 ];
 
-export const MORE_CATEGORIES = [
-  { slug: "metro", label: "Metro" },
-  { slug: "sports", label: "Sports" },
-  { slug: "entertainment", label: "Entertainment" },
-  { slug: "opinion", label: "Opinion" },
-  { slug: "climate-environment", label: "Climate & Environment" },
-  { slug: "data-research", label: "Data & Research" },
-  { slug: "video", label: "Video" },
+export const moreCategories = [
+  { name: "Climate & Environment", slug: "climate-environment" },
+  { name: "Data & Research", slug: "data-research" },
+  { name: "Metro", slug: "metro" },
+  { name: "Entertainment", slug: "entertainment" },
+  { name: "Sports", slug: "sports" },
+  { name: "Opinion", slug: "opinion" },
+  { name: "Video", slug: "video" },
 ];
 
 export const ARTICLES: Article[] = [

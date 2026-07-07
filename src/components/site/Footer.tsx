@@ -9,7 +9,7 @@ import {
   FaLinkedin,
   FaWhatsapp,
 } from "react-icons/fa6";
-import { CATEGORIES } from "@/lib/news-data";
+import { categories, moreCategories } from "@/lib/news-data";
 
 const policy = [
   { to: "/about", label: "About Us" },
@@ -119,14 +119,14 @@ export function Footer() {
           <h4 className="font-serif text-lg mb-3">Sections</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {CATEGORIES.slice(0, 8).map((c) => (
+            {moreCategories.map((c) => (
               <li key={c.slug}>
                 <Link
                   to="/category/$slug"
                   params={{ slug: c.slug }}
                   className="hover:text-gold"
                 >
-                  {c.label}
+                  {c.name}
                 </Link>
               </li>
             ))}
@@ -138,14 +138,14 @@ export function Footer() {
           <h4 className="font-serif text-lg mb-3">More</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {CATEGORIES.slice(8).map((c) => (
+            {moreCategories.map((c) => (
               <li key={c.slug}>
                 <Link
                   to="/category/$slug"
                   params={{ slug: c.slug }}
                   className="hover:text-gold"
                 >
-                  {c.label}
+                  {c.name}
                 </Link>
               </li>
             ))}
