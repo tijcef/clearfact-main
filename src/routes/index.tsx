@@ -3,38 +3,135 @@ import { getPosts } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+ head: () => {
+  const schema = {
+    "@context": "https://schema.org",
+
+    "@graph": [
+      {
+        "@type": "NewsMediaOrganization",
+        "@id": "https://clearfact.ng/#organization",
+
+        name: "ClearFact News",
+        legalName: "Clearfact Media Ltd",
+        url: "https://clearfact.ng/",
+
+        logo: {
+          "@type": "ImageObject",
+          url: "https://clearfact.ng/logo.jpg",
+        },
+
+        description:
+          "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
+
+        email: "clearfactmedia@gmail.com",
+
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "32 Demsawo, Jimeta",
+          addressLocality: "Yola",
+          addressRegion: "Adamawa State",
+          addressCountry: "NG",
+        },
+
+        sameAs: [
+          "https://facebook.com/clearfactng",
+          "https://x.com/clearfactng",
+          "https://instagram.com/clearfactng",
+          "https://youtube.com/@clearfactng",
+          "https://linkedin.com/company/clearfact-news",
+        ],
+      },
+
+     {
+  "@type": "WebSite",
+  "@id": "https://clearfact.ng/#website",
+
+  url: "https://clearfact.ng/",
+  name: "ClearFact News",
+  alternateName: "ClearFact",
+
+  inLanguage: "en-NG",
+
+  publisher: {
+    "@id": "https://clearfact.ng/#organization",
+  },
+
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://clearfact.ng/search?q={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+}
+    ],
+  };
+
+  return {
     title: "ClearFact News | Verified Journalism From Nigeria",
+
     meta: [
       {
         name: "description",
         content:
           "ClearFact News delivers verified, transparent and timely journalism from Nigeria.",
       },
-      { property: "og:title", content: "ClearFact News" },
+      {
+        name: "robots",
+        content: "index,follow,max-image-preview:large",
+      },
+      {
+        property: "og:title",
+        content: "ClearFact News",
+      },
       {
         property: "og:description",
         content: "Verified journalism from Nigeria.",
       },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://clearfact.ng/" },
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        property: "og:url",
+        content: "https://clearfact.ng/",
+      },
       {
         property: "og:image",
-        content: "https://clearfact.ng/clearfact-logo.jpg",
+        content: "https://clearfact.ng/logo.jpg",
       },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "ClearFact News" },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+      {
+        name: "twitter:title",
+        content: "ClearFact News",
+      },
       {
         name: "twitter:description",
         content: "Verified journalism from Nigeria.",
       },
       {
         name: "twitter:image",
-        content: "https://clearfact.ng/clearfact-logo.jpg",
+        content: "https://clearfact.ng/logo.jpg",
       },
     ],
-    links: [{ rel: "canonical", href: "https://clearfact.ng/" }],
-  }),
+
+    links: [
+      {
+        rel: "canonical",
+        href: "https://clearfact.ng/",
+      },
+    ],
+
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(schema),
+      },
+    ],
+  };
+},
 
   component: Home,
 });
