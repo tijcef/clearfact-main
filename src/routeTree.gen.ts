@@ -37,6 +37,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContributorIndexRouteImport } from './routes/contributor.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as PostSlugRouteImport } from './routes/post.$slug'
+import { Route as NewsSitemapXmlRouteImport } from './routes/news-sitemap.xml'
 import { Route as ContributorWalletRouteImport } from './routes/contributor.wallet'
 import { Route as ContributorSubmitRouteImport } from './routes/contributor.submit'
 import { Route as ContributorSubmissionsRouteImport } from './routes/contributor.submissions'
@@ -195,6 +196,11 @@ const PostSlugRoute = PostSlugRouteImport.update({
   path: '/post/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsSitemapXmlRoute = NewsSitemapXmlRouteImport.update({
+  id: '/news-sitemap/xml',
+  path: '/news-sitemap/xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContributorWalletRoute = ContributorWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/news-sitemap/xml': typeof NewsSitemapXmlRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/contributor/': typeof ContributorIndexRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/news-sitemap/xml': typeof NewsSitemapXmlRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin': typeof AdminIndexRoute
   '/contributor': typeof ContributorIndexRoute
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/contributor/submissions': typeof ContributorSubmissionsRoute
   '/contributor/submit': typeof ContributorSubmitRoute
   '/contributor/wallet': typeof ContributorWalletRoute
+  '/news-sitemap/xml': typeof NewsSitemapXmlRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/contributor/': typeof ContributorIndexRoute
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/news-sitemap/xml'
     | '/post/$slug'
     | '/admin/'
     | '/contributor/'
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/news-sitemap/xml'
     | '/post/$slug'
     | '/admin'
     | '/contributor'
@@ -557,6 +568,7 @@ export interface FileRouteTypes {
     | '/contributor/submissions'
     | '/contributor/submit'
     | '/contributor/wallet'
+    | '/news-sitemap/xml'
     | '/post/$slug'
     | '/admin/'
     | '/contributor/'
@@ -592,6 +604,7 @@ export interface RootRouteChildren {
   WhistleblowerRoute: typeof WhistleblowerRoute
   AuthorIdRoute: typeof AuthorIdRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  NewsSitemapXmlRoute: typeof NewsSitemapXmlRoute
   PostSlugRoute: typeof PostSlugRoute
   ArticleSlugRevisionsRoute: typeof ArticleSlugRevisionsRoute
 }
@@ -794,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news-sitemap/xml': {
+      id: '/news-sitemap/xml'
+      path: '/news-sitemap/xml'
+      fullPath: '/news-sitemap/xml'
+      preLoaderRoute: typeof NewsSitemapXmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contributor/wallet': {
       id: '/contributor/wallet'
       path: '/wallet'
@@ -994,6 +1014,7 @@ const rootRouteChildren: RootRouteChildren = {
   WhistleblowerRoute: WhistleblowerRoute,
   AuthorIdRoute: AuthorIdRoute,
   CategorySlugRoute: CategorySlugRoute,
+  NewsSitemapXmlRoute: NewsSitemapXmlRoute,
   PostSlugRoute: PostSlugRoute,
   ArticleSlugRevisionsRoute: ArticleSlugRevisionsRoute,
 }
