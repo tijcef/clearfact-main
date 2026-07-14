@@ -1,6 +1,7 @@
 import {
   getCategories,
   getPosts,
+  getPostsByCategory,
   searchPosts,
 } from "@/lib/wordpress";
 
@@ -104,64 +105,70 @@ function SearchPage() {
   }, []);
 
   useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setResults(null);
+  const loadPosts = async () => {
+    try {
+      setResults(null);
 
-        const posts = q
-          ? await searchPosts(q)
-          : await getPosts();
-
-        const filteredPosts = Array.isArray(posts)
-          ? posts.filter((post: any) => {
-              const selectedCategory =
-                wordpressCategories.find(
-                  (item: any) =>
-                    item.slug === category
-                );
-
-              const matchesCategory =
-                !category ||
-                (selectedCategory &&
-                  post.categories?.includes(
-                    selectedCategory.id
-                  ));
-
-              const matchesTag =
-                !tag ||
-                post._embedded?.[
-                  "wp:term"
-                ]?.[1]?.some(
-                  (postTag: any) =>
-                    postTag.slug === tag ||
-                    postTag.name
-                      ?.toLowerCase()
-                      .replace(/\s+/g, "-") ===
-                      tag.toLowerCase()
-                );
-
-              return matchesCategory && matchesTag;
-            })
-          : [];
-
-        setResults(filteredPosts);
-      } catch (error) {
-        console.error(
-          "Search failed:",
-          error
+      const selectedCategory =
+        wordpressCategories.find(
+          (item: any) => item.slug === category
         );
 
-        setResults([]);
-      }
-    };
+      let posts: any[] = [];
 
+      if (selectedCategory) {
+        posts = await getPostsByCategory(
+          selectedCategory.id
+        );
+      } else if (q) {
+        posts = await searchPosts(q);
+      } else {
+        posts = await getPosts();
+      }
+
+      const filteredPosts = Array.isArray(posts)
+        ? posts.filter((post: any) => {
+            const cleanTitle =
+              post.title?.rendered
+                ?.replace(/<[^>]+>/g, "")
+                .toLowerCase() || "";
+
+            const cleanExcerpt =
+              post.excerpt?.rendered
+                ?.replace(/<[^>]+>/g, "")
+                .toLowerCase() || "";
+
+            const searchTerm = q
+              .trim()
+              .toLowerCase();
+
+            const matchesSearch =
+              !searchTerm ||
+              cleanTitle.includes(searchTerm) ||
+              cleanExcerpt.includes(searchTerm);
+
+            const matchesTag =
+              !tag ||
+              post._embedded?.["wp:term"]?.[1]?.some(
+                (postTag: any) =>
+                  postTag.slug === tag
+              );
+
+            return matchesSearch && matchesTag;
+          })
+        : [];
+
+      setResults(filteredPosts);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setResults([]);
+    }
+  };
+
+  if (!category || wordpressCategories.length > 0) {
     loadPosts();
-  }, [
-    q,
-    category,
-    tag,
-    wordpressCategories,
-  ]);
+  }
+}, [q, category, tag, wordpressCategories]);
 
   const submit = (
     event: React.FormEvent

@@ -2,8 +2,12 @@ export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 
 export async function getPosts() {
   const res = await fetch(
-    `${WP_API}/posts?_embed&acf_format=standard`
+    `${WP_API}/posts?per_page=100&_embed&acf_format=standard`
   );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch posts");
+  }
 
   return res.json();
 }
