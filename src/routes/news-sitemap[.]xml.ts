@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 
-export const Route = createFileRoute("/news-sitemap/xml")({
+export const Route = createFileRoute("/news-sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {

@@ -1,143 +1,143 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getPosts } from "../lib/wordpress";
+import { getFeaturedImageUrl, getPosts } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 
 export const Route = createFileRoute("/")({
- head: () => {
-  const schema = {
-    "@context": "https://schema.org",
+  head: () => {
+    const schema = {
+      "@context": "https://schema.org",
 
-    "@graph": [
-      {
-        "@type": "NewsMediaOrganization",
-        "@id": "https://clearfact.ng/#organization",
+      "@graph": [
+        {
+          "@type": "NewsMediaOrganization",
+          "@id": "https://clearfact.ng/#organization",
 
-        name: "ClearFact News",
-        legalName: "Clearfact Media Ltd",
-        url: "https://clearfact.ng/",
+          name: "ClearFact News",
+          legalName: "Clearfact Media Ltd",
+          url: "https://clearfact.ng/",
 
-        logo: {
-          "@type": "ImageObject",
-          url: "https://clearfact.ng/logo.jpg",
+          logo: {
+            "@type": "ImageObject",
+            url: "https://clearfact.ng/logo.jpg",
+          },
+
+          description:
+            "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
+
+          email: "clearfactmedia@gmail.com",
+
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "32 Demsawo, Jimeta",
+            addressLocality: "Yola",
+            addressRegion: "Adamawa State",
+            addressCountry: "NG",
+          },
+
+          sameAs: [
+            "https://facebook.com/clearfactng",
+            "https://x.com/clearfactng",
+            "https://instagram.com/clearfactng",
+            "https://youtube.com/@clearfactng",
+            "https://linkedin.com/company/clearfact-news",
+          ],
         },
 
-        description:
-          "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
+        {
+          "@type": "WebSite",
+          "@id": "https://clearfact.ng/#website",
 
-        email: "clearfactmedia@gmail.com",
+          url: "https://clearfact.ng/",
+          name: "ClearFact News",
+          alternateName: "ClearFact",
 
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "32 Demsawo, Jimeta",
-          addressLocality: "Yola",
-          addressRegion: "Adamawa State",
-          addressCountry: "NG",
+          inLanguage: "en-NG",
+
+          publisher: {
+            "@id": "https://clearfact.ng/#organization",
+          },
+
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://clearfact.ng/search?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
         },
+      ],
+    };
 
-        sameAs: [
-          "https://facebook.com/clearfactng",
-          "https://x.com/clearfactng",
-          "https://instagram.com/clearfactng",
-          "https://youtube.com/@clearfactng",
-          "https://linkedin.com/company/clearfact-news",
-        ],
-      },
+    return {
+      title: "ClearFact News | Verified Journalism From Nigeria",
 
-     {
-  "@type": "WebSite",
-  "@id": "https://clearfact.ng/#website",
+      meta: [
+        {
+          name: "description",
+          content:
+            "ClearFact News delivers verified, transparent and timely journalism from Nigeria.",
+        },
+        {
+          name: "robots",
+          content: "index,follow,max-image-preview:large",
+        },
+        {
+          property: "og:title",
+          content: "ClearFact News",
+        },
+        {
+          property: "og:description",
+          content: "Verified journalism from Nigeria.",
+        },
+        {
+          property: "og:type",
+          content: "website",
+        },
+        {
+          property: "og:url",
+          content: "https://clearfact.ng/",
+        },
+        {
+          property: "og:image",
+          content: "https://clearfact.ng/logo.jpg",
+        },
+        {
+          name: "twitter:card",
+          content: "summary_large_image",
+        },
+        {
+          name: "twitter:title",
+          content: "ClearFact News",
+        },
+        {
+          name: "twitter:description",
+          content: "Verified journalism from Nigeria.",
+        },
+        {
+          name: "twitter:image",
+          content: "https://clearfact.ng/logo.jpg",
+        },
+      ],
 
-  url: "https://clearfact.ng/",
-  name: "ClearFact News",
-  alternateName: "ClearFact",
+      links: [
+        {
+          rel: "canonical",
+          href: "https://clearfact.ng/",
+        },
+      ],
 
-  inLanguage: "en-NG",
-
-  publisher: {
-    "@id": "https://clearfact.ng/#organization",
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(schema),
+        },
+      ],
+    };
   },
-
-  potentialAction: {
-    "@type": "SearchAction",
-    target: "https://clearfact.ng/search?q={search_term_string}",
-    "query-input": "required name=search_term_string",
-  },
-}
-    ],
-  };
-
-  return {
-    title: "ClearFact News | Verified Journalism From Nigeria",
-
-    meta: [
-      {
-        name: "description",
-        content:
-          "ClearFact News delivers verified, transparent and timely journalism from Nigeria.",
-      },
-      {
-        name: "robots",
-        content: "index,follow,max-image-preview:large",
-      },
-      {
-        property: "og:title",
-        content: "ClearFact News",
-      },
-      {
-        property: "og:description",
-        content: "Verified journalism from Nigeria.",
-      },
-      {
-        property: "og:type",
-        content: "website",
-      },
-      {
-        property: "og:url",
-        content: "https://clearfact.ng/",
-      },
-      {
-        property: "og:image",
-        content: "https://clearfact.ng/logo.jpg",
-      },
-      {
-        name: "twitter:card",
-        content: "summary_large_image",
-      },
-      {
-        name: "twitter:title",
-        content: "ClearFact News",
-      },
-      {
-        name: "twitter:description",
-        content: "Verified journalism from Nigeria.",
-      },
-      {
-        name: "twitter:image",
-        content: "https://clearfact.ng/logo.jpg",
-      },
-    ],
-
-    links: [
-      {
-        rel: "canonical",
-        href: "https://clearfact.ng/",
-      },
-    ],
-
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(schema),
-      },
-    ],
-  };
-},
 
   component: Home,
 });
 
 async function Home() {
-  const posts = await getPosts();
+  const posts = await getPosts(36);
 
   if (!posts || posts.length === 0) {
     return (
@@ -152,9 +152,7 @@ async function Home() {
   const topStories = posts.slice(1, 5);
   const latestPosts = posts.slice(0, 6);
 
-  const trendingPosts = posts.filter(
-    (post: any) => post.acf?.trending
-  );
+  const trendingPosts = posts.filter((post: any) => post.acf?.trending);
 
   const getVerificationColor = (status: string) => {
     switch (status) {
@@ -178,29 +176,25 @@ async function Home() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
       <div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
-        🚨 BREAKING NEWS:{" "}
-        {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
+        🚨 BREAKING NEWS: {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
       </div>
 
       <section className="mb-16">
         <Link to="/post/$slug" params={{ slug: heroPost.slug }}>
           <img
-            src={
-              heroPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
-              "https://via.placeholder.com/1200x700"
-            }
-            alt=""
+            src={getFeaturedImageUrl(heroPost, "/logo.jpg")}
+            alt={heroPost.title.rendered.replace(/<[^>]*>/g, "")}
             className="w-full rounded-3xl aspect-video object-cover"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
         </Link>
 
         <div className="mt-8">
           <div className="flex gap-2 flex-wrap mb-4">
             {heroPost._embedded?.["wp:term"]?.[0]?.map((cat: any) => (
-              <span
-                key={cat.id}
-                className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full"
-              >
+              <span key={cat.id} className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
                 {cat.name}
               </span>
             ))}
@@ -208,7 +202,7 @@ async function Home() {
             {heroPost.acf?.verification_status && (
               <span
                 className={`text-xs px-3 py-1 rounded-full font-semibold ${getVerificationColor(
-                  heroPost.acf.verification_status
+                  heroPost.acf.verification_status,
                 )}`}
               >
                 {heroPost.acf.verification_status}
@@ -225,13 +219,13 @@ async function Home() {
             />
           </Link>
 
-          <p className="text-sm text-gray-500 mt-5">
-            {new Date(heroPost.date).toDateString()}
-          </p>
+          <p className="text-sm text-gray-500 mt-5">{new Date(heroPost.date).toDateString()}</p>
 
           <p className="text-sm text-gray-500 mt-1">
             By{" "}
-            {heroPost._embedded?.author?.[0]?.name || "ClearFact News"}
+            {heroPost._embedded?.author?.[0]?.name ||
+              heroPost.authors?.[0]?.display_name ||
+              "ClearFact News"}
           </p>
 
           <div
@@ -249,19 +243,14 @@ async function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {topStories.map((post: any) => (
-              <article
-                key={post.id}
-                className="border rounded-2xl overflow-hidden"
-              >
+              <article key={post.id} className="border rounded-2xl overflow-hidden">
                 <Link to="/post/$slug" params={{ slug: post.slug }}>
                   <img
-                    src={
-                      post._embedded?.["wp:featuredmedia"]?.[0]
-                        ?.source_url ||
-                      "https://via.placeholder.com/800x500"
-                    }
-                    alt=""
+                    src={getFeaturedImageUrl(post, "/logo.jpg")}
+                    alt={post.title.rendered.replace(/<[^>]*>/g, "")}
                     className="w-full h-40 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
 
                   <div className="p-4">
@@ -292,18 +281,14 @@ async function Home() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {latestPosts.map((post: any) => (
-            <article
-              key={post.id}
-              className="border rounded-2xl overflow-hidden"
-            >
+            <article key={post.id} className="border rounded-2xl overflow-hidden">
               <Link to="/post/$slug" params={{ slug: post.slug }}>
                 <img
-                  src={
-                    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
-                    "https://via.placeholder.com/800x500"
-                  }
-                  alt=""
+                  src={getFeaturedImageUrl(post, "/logo.jpg")}
+                  alt={post.title.rendered.replace(/<[^>]*>/g, "")}
                   className="w-full h-56 object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
 
                 <div className="p-5">
@@ -314,9 +299,7 @@ async function Home() {
                     }}
                   />
 
-                  <p className="text-sm text-gray-500 mt-3">
-                    {new Date(post.date).toDateString()}
-                  </p>
+                  <p className="text-sm text-gray-500 mt-3">{new Date(post.date).toDateString()}</p>
                 </div>
               </Link>
             </article>
@@ -350,37 +333,18 @@ async function Home() {
       <CategorySection title="Education" slug="education" posts={posts} />
       <CategorySection title="Technology" slug="technology" posts={posts} />
       <CategorySection title="Features" slug="features" posts={posts} />
-      <CategorySection
-        title="Investigations"
-        slug="investigations"
-        posts={posts}
-      />
+      <CategorySection title="Investigations" slug="investigations" posts={posts} />
       <CategorySection title="Fact Check" slug="fact-check" posts={posts} />
-      <CategorySection
-        title="Opportunities"
-        slug="opportunities"
-        posts={posts}
-      />
-      <CategorySection
-        title="Climate & Environment"
-        slug="climate-environment"
-        posts={posts}
-      />
-      <CategorySection
-        title="Data & Research"
-        slug="data-research"
-        posts={posts}
-      />
+      <CategorySection title="Opportunities" slug="opportunities" posts={posts} />
+      <CategorySection title="Climate & Environment" slug="climate-environment" posts={posts} />
+      <CategorySection title="Data & Research" slug="data-research" posts={posts} />
       <CategorySection title="Video" slug="video" posts={posts} />
 
       <section className="mb-16 border rounded-2xl p-8 bg-gray-50">
-        <h2 className="text-4xl font-black mb-4">
-          Subscribe to ClearFact Newsletter
-        </h2>
+        <h2 className="text-4xl font-black mb-4">Subscribe to ClearFact Newsletter</h2>
 
         <p className="text-gray-600 mb-6">
-          Get verified news, fact checks, investigations and opportunities
-          directly in your inbox.
+          Get verified news, fact checks, investigations and opportunities directly in your inbox.
         </p>
 
         <div className="flex flex-col md:flex-row gap-3">
