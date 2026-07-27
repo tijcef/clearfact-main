@@ -67,14 +67,14 @@ async function requestJson<T>(
       return cached.value as T;
     }
 
-    const pending = inflightRequests.get(cacheKey);
+    const pendingRequest = inflightRequests.get(cacheKey);
 
-    if (pending) {
-      return pending as Promise<T>;
+    if (pendingRequest) {
+      return pendingRequest as Promise<T>;
     }
   }
 
-  const request = async () => {
+  const request = async (): Promise<T> => {
     const init: CloudflareRequestInit = {
       ...options,
       headers: {
@@ -92,22 +92,40 @@ async function requestJson<T>(
       };
     }
 
-    const response = await fetch(endpoint, init);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
 
-    if (!response.ok) {
-      throw new Error(`WordPress request failed (${response.status} ${response.statusText})`);
-    }
-
-    const value = (await response.json()) as T;
-
-    if (method === "GET") {
-      memoryCache.set(cacheKey, {
-        expiresAt: Date.now() + cacheTtl * 1_000,
-        value,
+    try {
+      const response = await fetch(endpoint, {
+        ...init,
+        signal: controller.signal,
       });
-    }
 
-    return value;
+      if (!response.ok) {
+        throw new Error(
+          `WordPress request failed (${response.status} ${response.statusText})`,
+        );
+      }
+
+      const value = (await response.json()) as T;
+
+      if (method === "GET") {
+        memoryCache.set(cacheKey, {
+          expiresAt: Date.now() + cacheTtl * 1_000,
+          value,
+        });
+      }
+
+      return value;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("WordPress request timed out after 12 seconds");
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   const pending = request();

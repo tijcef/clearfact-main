@@ -3,6 +3,22 @@ import { getFeaturedImageUrl, getPosts } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    try {
+      const posts = await getPosts(36);
+
+      return {
+        posts: Array.isArray(posts) ? posts : [],
+      };
+    } catch (error) {
+      console.error("Homepage posts failed to load:", error);
+
+      return {
+        posts: [],
+      };
+    }
+  },
+
   head: () => {
     const schema = {
       "@context": "https://schema.org",
@@ -136,21 +152,26 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-async function Home() {
-  const posts = await getPosts(36);
+function Home() {
+  const { posts } = Route.useLoaderData();
 
-  if (!posts || posts.length === 0) {
-    return (
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <h1 className="text-5xl font-bold">ClearFact News</h1>
-        <p className="mt-6 text-xl">No posts found from WordPress</p>
-      </main>
-    );
-  }
+  if (!posts.length) {
+  return (
+    <main className="max-w-7xl mx-auto px-4 py-8">
+      <section className="border rounded-2xl p-8 text-center bg-gray-50">
+        <h1 className="text-3xl font-black">ClearFact News</h1>
+
+        <p className="mt-4 text-gray-600">
+          Latest stories are temporarily unavailable. Please refresh the page.
+        </p>
+      </section>
+    </main>
+  );
+}
 
   const heroPost = posts[0];
   const topStories = posts.slice(1, 5);
-  const latestPosts = posts.slice(0, 6);
+  const latestPosts = posts.slice(5, 11);
 
   const trendingPosts = posts.filter((post: any) => post.acf?.trending);
 
@@ -174,17 +195,14 @@ async function Home() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10">
-      <div className="bg-red-600 text-white px-5 py-3 rounded-xl mb-8 font-bold">
-        🚨 BREAKING NEWS: {heroPost.title.rendered.replace(/<[^>]*>/g, "")}
-      </div>
+    <main className="max-w-7xl mx-auto px-4 py-6">
 
       <section className="mb-16">
         <Link to="/post/$slug" params={{ slug: heroPost.slug }}>
           <img
             src={getFeaturedImageUrl(heroPost, "/logo.jpg")}
             alt={heroPost.title.rendered.replace(/<[^>]*>/g, "")}
-            className="w-full rounded-3xl aspect-video object-cover"
+            className="w-full rounded-2xl aspect-[16/9] object-cover bg-gray-100"
             loading="eager"
             decoding="async"
             fetchPriority="high"
@@ -212,7 +230,7 @@ async function Home() {
 
           <Link to="/post/$slug" params={{ slug: heroPost.slug }}>
             <h1
-              className="text-5xl md:text-6xl font-black leading-tight hover:underline"
+              className="text-3xl sm:text-4xl md:text-6xl font-black leading-tight hover:underline"
               dangerouslySetInnerHTML={{
                 __html: heroPost.title.rendered,
               }}
