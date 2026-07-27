@@ -328,23 +328,39 @@ async function Home() {
         </section>
       )}
 
-      <CategorySection title="Politics" slug="politics" posts={posts} />
-      <CategorySection title="Business" slug="business" posts={posts} />
-      <CategorySection title="Education" slug="education" posts={posts} />
-      <CategorySection title="Technology" slug="technology" posts={posts} />
-      <CategorySection title="Features" slug="features" posts={posts} />
-      <CategorySection title="Investigations" slug="investigations" posts={posts} />
-      <CategorySection title="Fact Check" slug="fact-check" posts={posts} />
-      <CategorySection title="Opportunities" slug="opportunities" posts={posts} />
-      <CategorySection title="Climate & Environment" slug="climate-environment" posts={posts} />
-      <CategorySection title="Data & Research" slug="data-research" posts={posts} />
-      <CategorySection title="Video" slug="video" posts={posts} />
+      <CategorySection title="News" slug="news" posts={posts} />
+<CategorySection title="Politics" slug="politics" posts={posts} />
+<CategorySection title="Crime & Security" slug="crime-security" posts={posts} />
+<CategorySection title="Law & Judiciary" slug="law-judiciary" posts={posts} />
+<CategorySection title="Business" slug="business" posts={posts} />
+<CategorySection title="Investigations" slug="investigations" posts={posts} />
+<CategorySection
+  title="Accountability Journalism"
+  slug="accountability-journalism"
+  posts={posts}
+/>
+<CategorySection title="Education" slug="education" posts={posts} />
+<CategorySection title="Health" slug="health" posts={posts} />
+<CategorySection title="Technology" slug="technology" posts={posts} />
+<CategorySection title="Opportunities" slug="opportunities" posts={posts} />
+<CategorySection
+  title="Climate & Environment"
+  slug="climate-environment"
+  posts={posts}
+/>
+<CategorySection title="Data & Research" slug="data-research" posts={posts} />
+<CategorySection title="Metro" slug="metro" posts={posts} />
+<CategorySection title="World" slug="world" posts={posts} />
+<CategorySection title="Opinion" slug="opinion" posts={posts} />
+<CategorySection title="Entertainment" slug="entertainment" posts={posts} />
+<CategorySection title="Sports" slug="sports" posts={posts} />
+<CategorySection title="Video" slug="video" posts={posts} />
 
       <section className="mb-16 border rounded-2xl p-8 bg-gray-50">
         <h2 className="text-4xl font-black mb-4">Subscribe to ClearFact Newsletter</h2>
 
         <p className="text-gray-600 mb-6">
-          Get verified news, fact checks, investigations and opportunities directly in your inbox.
+          Get verified news, accountability journalism, investigations and opportunities directly in your inbox.
         </p>
 
         <div className="flex flex-col md:flex-row gap-3">
