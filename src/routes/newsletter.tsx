@@ -5,7 +5,11 @@ export const Route = createFileRoute("/newsletter")({
   head: () => ({
     meta: [
       { title: "Newsletter — ClearFact News" },
-      { name: "description", content: "Subscribe to The Morning Verify — five verified stories shaping Nigeria, every weekday." },
+      {
+        name: "description",
+        content:
+          "Subscribe to The Morning Verify — five verified stories shaping Nigeria, every weekday.",
+      },
       { property: "og:title", content: "The Morning Verify Newsletter" },
       { property: "og:description", content: "Five verified stories, every weekday." },
     ],
@@ -17,7 +21,8 @@ export const Route = createFileRoute("/newsletter")({
         The Morning Verify — verified Nigeria news, before 7am.
       </h1>
       <p className="text-muted-foreground mt-3 max-w-2xl">
-        A short, sourced briefing curated by the ClearFact editorial team. Free, ad-light, and never sold.
+        A short, sourced briefing curated by the ClearFact editorial team. Free, ad-light, and never
+        sold.
       </p>
       <div className="mt-10">
         <Newsletter />

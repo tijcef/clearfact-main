@@ -1,4 +1,11 @@
-import { ShieldCheck, AlertTriangle, Clock, Search, MessageSquareQuote, Megaphone } from "lucide-react";
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  Search,
+  MessageSquareQuote,
+  Megaphone,
+} from "lucide-react";
 import type { Verification } from "@/lib/news-data";
 
 const map: Record<Verification, { cls: string; icon: typeof ShieldCheck }> = {
@@ -6,7 +13,10 @@ const map: Record<Verification, { cls: string; icon: typeof ShieldCheck }> = {
   "Fact-Checked": { cls: "bg-verified text-verified-foreground", icon: Search },
   "Under Review": { cls: "bg-muted text-foreground border border-border", icon: AlertTriangle },
   Developing: { cls: "bg-breaking text-breaking-foreground", icon: Clock },
-  Opinion: { cls: "bg-accent text-accent-foreground border border-border", icon: MessageSquareQuote },
+  Opinion: {
+    cls: "bg-accent text-accent-foreground border border-border",
+    icon: MessageSquareQuote,
+  },
   Sponsored: { cls: "bg-gold text-gold-foreground", icon: Megaphone },
 };
 

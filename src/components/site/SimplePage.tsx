@@ -12,7 +12,11 @@ export function SimplePage({ eyebrow, title, intro, children }: SimplePageProps)
     <div>
       <section className="bg-accent border-b border-border">
         <div className="container-news py-12 md:py-16">
-          {eyebrow && <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{eyebrow}</div>}
+          {eyebrow && (
+            <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
+              {eyebrow}
+            </div>
+          )}
           <h1 className="font-serif text-4xl md:text-5xl mt-2 text-balance">{title}</h1>
           {intro && <p className="text-muted-foreground mt-3 max-w-2xl text-lg">{intro}</p>}
         </div>
@@ -22,7 +26,9 @@ export function SimplePage({ eyebrow, title, intro, children }: SimplePageProps)
           {children}
         </div>
         <div className="mt-10">
-          <Link to="/" className="text-sm font-semibold text-primary hover:underline">← Back to homepage</Link>
+          <Link to="/" className="text-sm font-semibold text-primary hover:underline">
+            ← Back to homepage
+          </Link>
         </div>
       </section>
     </div>

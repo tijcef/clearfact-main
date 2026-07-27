@@ -2,25 +2,16 @@ import {
   getCategories,
   getPosts,
   getPostsByCategory,
+  normalizeWpSlug,
   searchPosts,
+  stripHtml,
 } from "@/lib/wordpress";
 
-import {
-  createFileRoute,
-  Link,
-} from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  Loader2,
-  Search as SearchIcon,
-  Tag,
-  TrendingUp,
-} from "lucide-react";
+import { Loader2, Search as SearchIcon, Tag, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -30,9 +21,10 @@ export const Route = createFileRoute("/search")({
   }),
 
   head: () => ({
-    title: "Search — ClearFact News",
-
     meta: [
+      {
+        title: "Search — ClearFact News",
+      },
       {
         name: "description",
         content:
@@ -55,15 +47,7 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-const TRENDING = [
-  "election",
-  "naira",
-  "fact-check",
-  "tinubu",
-  "lagos",
-  "agriculture",
-  "security",
-];
+const TRENDING = ["election", "naira", "fact-check", "tinubu", "lagos", "agriculture", "security"];
 
 function SearchPage() {
   const { q, category, tag } = Route.useSearch();
@@ -71,8 +55,7 @@ function SearchPage() {
 
   const [input, setInput] = useState(q);
   const [results, setResults] = useState<any[] | null>(null);
-  const [wordpressCategories, setWordpressCategories] =
-    useState<any[]>([]);
+  const [wordpressCategories, setWordpressCategories] = useState<any[]>([]);
 
   useEffect(() => {
     setInput(q);
@@ -84,18 +67,10 @@ function SearchPage() {
         const data = await getCategories();
 
         setWordpressCategories(
-          Array.isArray(data)
-            ? data.filter(
-                (item: any) =>
-                  item.slug !== "uncategorized"
-              )
-            : []
+          Array.isArray(data) ? data.filter((item: any) => item.slug !== "uncategorized") : [],
         );
       } catch (error) {
-        console.error(
-          "Failed to load categories:",
-          error
-        );
+        console.error("Failed to load categories:", error);
 
         setWordpressCategories([]);
       }
@@ -105,74 +80,55 @@ function SearchPage() {
   }, []);
 
   useEffect(() => {
-  const loadPosts = async () => {
-    try {
-      setResults(null);
+    const loadPosts = async () => {
+      try {
+        setResults(null);
 
-      const selectedCategory =
-        wordpressCategories.find(
-          (item: any) => item.slug === category
-        );
+        const selectedCategory = wordpressCategories.find((item: any) => item.slug === category);
 
-      let posts: any[] = [];
+        let posts: any[] = [];
 
-      if (selectedCategory) {
-        posts = await getPostsByCategory(
-          selectedCategory.id
-        );
-      } else if (q) {
-        posts = await searchPosts(q);
-      } else {
-        posts = await getPosts();
+        if (selectedCategory) {
+          posts = await getPostsByCategory(selectedCategory.id);
+        } else if (q) {
+          posts = await searchPosts(q);
+        } else {
+          posts = await getPosts();
+        }
+
+        const filteredPosts = Array.isArray(posts)
+          ? posts.filter((post: any) => {
+              const cleanTitle = post.title?.rendered?.replace(/<[^>]+>/g, "").toLowerCase() || "";
+
+              const cleanExcerpt =
+                post.excerpt?.rendered?.replace(/<[^>]+>/g, "").toLowerCase() || "";
+
+              const searchTerm = q.trim().toLowerCase();
+
+              const matchesSearch =
+                !searchTerm || cleanTitle.includes(searchTerm) || cleanExcerpt.includes(searchTerm);
+
+              const matchesTag =
+                !tag ||
+                post._embedded?.["wp:term"]?.[1]?.some((postTag: any) => postTag.slug === tag);
+
+              return matchesSearch && matchesTag;
+            })
+          : [];
+
+        setResults(filteredPosts);
+      } catch (error) {
+        console.error("Search failed:", error);
+        setResults([]);
       }
+    };
 
-      const filteredPosts = Array.isArray(posts)
-        ? posts.filter((post: any) => {
-            const cleanTitle =
-              post.title?.rendered
-                ?.replace(/<[^>]+>/g, "")
-                .toLowerCase() || "";
-
-            const cleanExcerpt =
-              post.excerpt?.rendered
-                ?.replace(/<[^>]+>/g, "")
-                .toLowerCase() || "";
-
-            const searchTerm = q
-              .trim()
-              .toLowerCase();
-
-            const matchesSearch =
-              !searchTerm ||
-              cleanTitle.includes(searchTerm) ||
-              cleanExcerpt.includes(searchTerm);
-
-            const matchesTag =
-              !tag ||
-              post._embedded?.["wp:term"]?.[1]?.some(
-                (postTag: any) =>
-                  postTag.slug === tag
-              );
-
-            return matchesSearch && matchesTag;
-          })
-        : [];
-
-      setResults(filteredPosts);
-    } catch (error) {
-      console.error("Search failed:", error);
-      setResults([]);
+    if (!category || wordpressCategories.length > 0) {
+      loadPosts();
     }
-  };
+  }, [q, category, tag, wordpressCategories]);
 
-  if (!category || wordpressCategories.length > 0) {
-    loadPosts();
-  }
-}, [q, category, tag, wordpressCategories]);
-
-  const submit = (
-    event: React.FormEvent
-  ) => {
+  const submit = (event: React.FormEvent) => {
     event.preventDefault();
 
     navigate({
@@ -187,22 +143,15 @@ function SearchPage() {
 
   return (
     <div className="container-news py-10">
-      <h1 className="font-serif text-3xl">
-        Search ClearFact
-      </h1>
+      <h1 className="font-serif text-3xl">Search ClearFact</h1>
 
-      <form
-        onSubmit={submit}
-        className="mt-4 flex gap-2 max-w-2xl"
-      >
+      <form onSubmit={submit} className="mt-4 flex gap-2 max-w-2xl">
         <label className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
           <input
             value={input}
-            onChange={(event) =>
-              setInput(event.target.value)
-            }
+            onChange={(event) => setInput(event.target.value)}
             placeholder="Search news, investigations, reports and topics…"
             className="w-full h-11 pl-9 pr-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
           />
@@ -233,36 +182,30 @@ function SearchPage() {
                     tag,
                   }}
                   className={`block px-2 py-1 rounded-sm ${
-                    !category
-                      ? "bg-accent font-semibold"
-                      : "hover:bg-accent"
+                    !category ? "bg-accent font-semibold" : "hover:bg-accent"
                   }`}
                 >
                   All
                 </Link>
               </li>
 
-              {wordpressCategories.map(
-                (item: any) => (
-                  <li key={item.id}>
-                    <Link
-                      to="/search"
-                      search={{
-                        q,
-                        category: item.slug,
-                        tag,
-                      }}
-                      className={`block px-2 py-1 rounded-sm ${
-                        category === item.slug
-                          ? "bg-accent font-semibold"
-                          : "hover:bg-accent"
-                      }`}
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                )
-              )}
+              {wordpressCategories.map((item: any) => (
+                <li key={item.id}>
+                  <Link
+                    to="/search"
+                    search={{
+                      q,
+                      category: item.slug,
+                      tag,
+                    }}
+                    className={`block px-2 py-1 rounded-sm ${
+                      category === item.slug ? "bg-accent font-semibold" : "hover:bg-accent"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -305,10 +248,8 @@ function SearchPage() {
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-primary text-primary-foreground"
                 >
                   Category:{" "}
-                  {wordpressCategories.find(
-                    (item: any) =>
-                      item.slug === category
-                  )?.name || category}{" "}
+                  {wordpressCategories.find((item: any) => item.slug === category)?.name ||
+                    category}{" "}
                   ✕
                 </Link>
               )}
@@ -342,53 +283,34 @@ function SearchPage() {
           ) : (
             <>
               <p className="mb-6 text-sm text-muted-foreground">
-                {results.length}{" "}
-                {results.length === 1
-                  ? "result"
-                  : "results"}{" "}
-                found
+                {results.length} {results.length === 1 ? "result" : "results"} found
               </p>
 
               <ul className="space-y-6">
                 {results.map((post: any) => (
-                  <li
-                    key={post.id}
-                    className="pb-6 border-b border-border last:border-0"
-                  >
+                  <li key={post.id} className="pb-6 border-b border-border last:border-0">
                     <Link
                       to="/post/$slug"
                       params={{
-                        slug: post.slug,
+                        slug: normalizeWpSlug(post.slug),
                       }}
                     >
-                      <h3
-                        className="font-serif text-xl hover:underline decoration-gold underline-offset-4"
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            post.title.rendered,
-                        }}
-                      />
+                      <h3 className="font-serif text-xl hover:underline decoration-gold underline-offset-4">
+                        {stripHtml(post.title.rendered)}
+                      </h3>
                     </Link>
 
-                    <div
-                      className="text-sm text-muted-foreground mt-2"
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          post.excerpt.rendered,
-                      }}
-                    />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {stripHtml(post.excerpt.rendered)}
+                    </p>
 
                     <div className="text-xs text-muted-foreground mt-2">
-                      {new Date(
-                        post.date
-                      ).toLocaleDateString(
-                        "en-NG",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        }
-                      )}
+                      {new Date(post.date).toLocaleDateString("en-NG", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        timeZone: "Africa/Lagos",
+                      })}
                     </div>
                   </li>
                 ))}

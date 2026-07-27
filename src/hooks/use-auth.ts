@@ -20,7 +20,10 @@ export function useAuth(): AuthState {
       if (s) {
         // defer role check
         setTimeout(async () => {
-          const { data } = await supabase.from("user_roles").select("role").eq("user_id", s.user.id);
+          const { data } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", s.user.id);
           setIsEditor(!!data?.some((r) => r.role === "editor" || r.role === "admin"));
         }, 0);
       } else {
@@ -38,6 +41,8 @@ export function useAuth(): AuthState {
     session,
     loading,
     isEditor,
-    signOut: async () => { await supabase.auth.signOut(); },
+    signOut: async () => {
+      await supabase.auth.signOut();
+    },
   };
 }

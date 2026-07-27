@@ -165,6 +165,7 @@
   }
 
   img {
+    height: auto;
     max-width: 100%;
   }
 }
@@ -181,17 +182,34 @@
     text-wrap: balance;
   }
 
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
+  }
+
+  .ticker-viewport {
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      black 1.5rem,
+      black calc(100% - 1.5rem),
+      transparent
+    );
+  }
+
   .ticker-track {
     display: flex;
     align-items: center;
     flex-shrink: 0;
     width: max-content;
     min-width: max-content;
-    animation: clearfact-ticker 40s linear infinite;
+    animation: clearfact-ticker 52s linear infinite;
+    contain: layout paint;
     will-change: transform;
   }
 
-  .ticker-track:hover {
+  .ticker-track:hover,
+  .ticker-track:focus-within {
     animation-play-state: paused;
   }
 
@@ -212,9 +230,19 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .ticker-viewport {
+      overflow-x: auto;
+      mask-image: none;
+    }
+
     .ticker-track {
       animation: none;
       transform: none;
+      will-change: auto;
     }
   }
 }

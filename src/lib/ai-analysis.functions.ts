@@ -10,7 +10,9 @@ const analysisSchema = z.object({
   hate_speech_risk: z.enum(["none", "low", "medium", "high"]),
   propaganda_risk: z.enum(["none", "low", "medium", "high"]),
   fake_news_indicators: z.array(z.string()).describe("Specific signals of misinformation"),
-  duplicate_risk: z.enum(["none", "low", "medium", "high"]).describe("Risk of duplicating recent coverage based on the title"),
+  duplicate_risk: z
+    .enum(["none", "low", "medium", "high"])
+    .describe("Risk of duplicating recent coverage based on the title"),
   emotional_manipulation: z.array(z.string()).describe("Emotional or sensational phrases detected"),
   unverified_claims: z.array(z.string()).describe("Specific claims that need a cited source"),
   headline_alternatives: z.array(z.string()).describe("3 professional, neutral headline rewrites"),
@@ -22,7 +24,13 @@ export type ArticleAnalysis = z.infer<typeof analysisSchema>;
 export const analyzeArticle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ title: z.string().min(3), body: z.string().default(""), excerpt: z.string().default("") }).parse(data),
+    z
+      .object({
+        title: z.string().min(3),
+        body: z.string().default(""),
+        excerpt: z.string().default(""),
+      })
+      .parse(data),
   )
   .handler(async ({ data }) => {
     const key = process.env.LOVABLE_API_KEY;

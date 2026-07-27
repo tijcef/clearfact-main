@@ -1,18 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ShieldCheck,
-  FileSearch,
-  Users,
-  Megaphone,
-  BadgeCheck,
-  RefreshCw,
-} from "lucide-react";
+import { ShieldCheck, FileSearch, Users, Megaphone, BadgeCheck, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/trust-center")({
   head: () => ({
-    title: "Trust Center | ClearFact News",
-
     meta: [
+      {
+        title: "Trust Center | ClearFact News",
+      },
       {
         name: "description",
         content:
@@ -85,15 +79,11 @@ function TrustCenter() {
               Public Accountability
             </div>
 
-            <h1 className="font-serif text-4xl md:text-6xl mt-2">
-              Trust Center
-            </h1>
+            <h1 className="font-serif text-4xl md:text-6xl mt-2">Trust Center</h1>
 
             <p className="mt-4 text-lg text-primary-foreground/80">
-              ClearFact News is committed to accurate,
-              transparent, independent and responsible
-              journalism. Public trust is earned through
-              verification, accountability and openness.
+              ClearFact News is committed to accurate, transparent, independent and responsible
+              journalism. Public trust is earned through verification, accountability and openness.
             </p>
           </div>
 
@@ -105,13 +95,9 @@ function TrustCenter() {
               >
                 <s.icon className="h-5 w-5 text-gold" />
 
-                <div className="font-serif text-3xl mt-3">
-                  {s.value}
-                </div>
+                <div className="font-serif text-3xl mt-3">{s.value}</div>
 
-                <div className="text-xs text-primary-foreground/70">
-  verification category
-</div>
+                <div className="text-xs text-primary-foreground/70">verification category</div>
               </div>
             ))}
           </div>
@@ -162,32 +148,22 @@ function TrustCenter() {
             d: "ClearFact News operates independently. Sponsored content and commercial partnerships are clearly disclosed.",
           },
         ].map((b) => (
-          <div
-            key={b.t}
-            className="rounded-sm border border-border p-6"
-          >
+          <div key={b.t} className="rounded-sm border border-border p-6">
             <b.i className="h-6 w-6 text-gold" />
 
-            <h3 className="font-serif text-xl mt-3">
-              {b.t}
-            </h3>
+            <h3 className="font-serif text-xl mt-3">{b.t}</h3>
 
-            <p className="text-muted-foreground mt-2 text-sm">
-              {b.d}
-            </p>
+            <p className="text-muted-foreground mt-2 text-sm">{b.d}</p>
           </div>
         ))}
       </section>
 
       <section className="container-news pb-16">
         <div className="rounded-lg border border-border p-8 text-center">
-          <h2 className="font-serif text-3xl mb-4">
-            Help Us Improve
-          </h2>
+          <h2 className="font-serif text-3xl mb-4">Help Us Improve</h2>
 
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            If you spot an error, have concerns about a
-            story, or want to request a correction, we
+            If you spot an error, have concerns about a story, or want to request a correction, we
             encourage you to contact our editorial team.
           </p>
 

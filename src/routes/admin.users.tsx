@@ -8,8 +8,16 @@ export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
 });
 
-const ROLES = ["super_admin", "admin", "editor", "journalist", "fact_checker", "moderator", "contributor_manager"] as const;
-type Role = typeof ROLES[number];
+const ROLES = [
+  "super_admin",
+  "admin",
+  "editor",
+  "journalist",
+  "fact_checker",
+  "moderator",
+  "contributor_manager",
+] as const;
+type Role = (typeof ROLES)[number];
 
 type Row = {
   user_id: string;
@@ -34,16 +42,24 @@ function AdminUsers() {
     setRows((profiles ?? []).map((p) => ({ ...p, roles: map.get(p.user_id) ?? [] })));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const toggle = async (userId: string, role: Role, has: boolean) => {
     setBusy(`${userId}:${role}`);
     if (has) {
-      const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
-      if (error) toast.error(error.message); else toast.success(`Removed ${role}`);
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", role);
+      if (error) toast.error(error.message);
+      else toast.success(`Removed ${role}`);
     } else {
       const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-      if (error) toast.error(error.message); else toast.success(`Granted ${role}`);
+      if (error) toast.error(error.message);
+      else toast.success(`Granted ${role}`);
     }
     setBusy(null);
     load();
@@ -51,18 +67,28 @@ function AdminUsers() {
 
   return (
     <div className="container-news py-8">
-      <h1 className="font-serif text-3xl flex items-center gap-2"><UserCog className="h-7 w-7 text-primary" /> User & role management</h1>
-      <p className="text-sm text-muted-foreground mt-1">Assign newsroom roles. Only Super Admins and Admins should manage roles.</p>
+      <h1 className="font-serif text-3xl flex items-center gap-2">
+        <UserCog className="h-7 w-7 text-primary" /> User & role management
+      </h1>
+      <p className="text-sm text-muted-foreground mt-1">
+        Assign newsroom roles. Only Super Admins and Admins should manage roles.
+      </p>
 
       <div className="mt-6 rounded-sm border border-border overflow-x-auto">
         {rows === null ? (
-          <div className="p-10 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading users…</div>
+          <div className="p-10 flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading users…
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-muted text-left">
               <tr>
                 <th className="p-3">User</th>
-                {ROLES.map((r) => <th key={r} className="p-3 text-center capitalize">{r.replace("_", " ")}</th>)}
+                {ROLES.map((r) => (
+                  <th key={r} className="p-3 text-center capitalize">
+                    {r.replace("_", " ")}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -70,18 +96,29 @@ function AdminUsers() {
                 <tr key={u.user_id} className="border-t border-border">
                   <td className="p-3">
                     <div className="font-semibold">{u.display_name || "Unnamed user"}</div>
-                    <div className="text-[11px] font-mono text-muted-foreground">{u.user_id.slice(0, 8)}…</div>
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      {u.user_id.slice(0, 8)}…
+                    </div>
                   </td>
                   {ROLES.map((r) => {
                     const has = u.roles.includes(r);
                     const id = `${u.user_id}:${r}`;
                     return (
                       <td key={r} className="p-3 text-center">
-                        <button onClick={() => toggle(u.user_id, r, has)} disabled={busy === id}
+                        <button
+                          onClick={() => toggle(u.user_id, r, has)}
+                          disabled={busy === id}
                           className={`inline-flex items-center justify-center h-7 w-7 rounded-sm transition ${
-                            has ? "bg-primary text-primary-foreground" : "bg-background border border-border hover:bg-accent"
-                          }`}>
-                          {busy === id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Shield className="h-3.5 w-3.5" />}
+                            has
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background border border-border hover:bg-accent"
+                          }`}
+                        >
+                          {busy === id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Shield className="h-3.5 w-3.5" />
+                          )}
                         </button>
                       </td>
                     );
@@ -89,7 +126,11 @@ function AdminUsers() {
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td className="p-6 text-muted-foreground" colSpan={ROLES.length + 1}>No users yet.</td></tr>
+                <tr>
+                  <td className="p-6 text-muted-foreground" colSpan={ROLES.length + 1}>
+                    No users yet.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

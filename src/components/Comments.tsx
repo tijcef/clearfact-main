@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getComments, submitComment } from "@/lib/wordpress";
 
 export default function Comments({ postId }: { postId: number }) {
@@ -10,6 +10,19 @@ export default function Comments({ postId }: { postId: number }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [content, setContent] = useState("");
+
+  const loadComments = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const data = await getComments(postId);
+      setComments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [postId]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -37,20 +50,7 @@ export default function Comments({ postId }: { postId: number }) {
     if (shouldLoad) {
       void loadComments();
     }
-  }, [postId, shouldLoad]);
-
-  const loadComments = async () => {
-    setLoading(true);
-
-    try {
-      const data = await getComments(postId);
-      setComments(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadComments, shouldLoad]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

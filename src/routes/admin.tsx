@@ -2,7 +2,16 @@ import { createFileRoute, Link, useNavigate, Outlet } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
-import { LogOut, PenSquare, LayoutDashboard, Loader2, Users, MessageSquare, BarChart3, Banknote } from "lucide-react";
+import {
+  LogOut,
+  PenSquare,
+  LayoutDashboard,
+  Loader2,
+  Users,
+  MessageSquare,
+  BarChart3,
+  Banknote,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/admin")({
@@ -32,7 +41,9 @@ function AdminLayout() {
   useEffect(() => {
     if (!session) return;
     (async () => {
-      const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true });
+      const { count } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true });
       setHasAnyRole((count ?? 0) > 0);
     })();
   }, [session]);
@@ -70,13 +81,21 @@ function AdminLayout() {
             <p className="text-sm text-muted-foreground mt-1">
               No admin exists yet. As the first user, you can claim the admin and editor roles.
             </p>
-            <button onClick={claimAdmin} disabled={grantBusy}
-              className="mt-3 h-10 px-4 rounded-sm bg-primary text-primary-foreground font-semibold disabled:opacity-60">
+            <button
+              onClick={claimAdmin}
+              disabled={grantBusy}
+              className="mt-3 h-10 px-4 rounded-sm bg-primary text-primary-foreground font-semibold disabled:opacity-60"
+            >
               {grantBusy ? "Granting…" : "Claim admin role"}
             </button>
           </div>
         )}
-        <button onClick={signOut} className="mt-6 text-sm font-semibold text-primary hover:underline">Sign out</button>
+        <button
+          onClick={signOut}
+          className="mt-6 text-sm font-semibold text-primary hover:underline"
+        >
+          Sign out
+        </button>
       </div>
     );
   }
@@ -89,32 +108,75 @@ function AdminLayout() {
           <div className="flex items-center gap-6">
             <span className="font-serif text-lg">Newsroom</span>
             <nav className="flex items-center gap-1 text-sm flex-wrap">
-              <Link to="/admin/dashboard" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/dashboard"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <BarChart3 className="h-4 w-4" /> Overview
               </Link>
-              <Link to="/admin" activeOptions={{ exact: true }} className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin"
+                activeOptions={{ exact: true }}
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <LayoutDashboard className="h-4 w-4" /> Articles
               </Link>
-              <Link to="/admin/new" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/new"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <PenSquare className="h-4 w-4" /> New
               </Link>
-              <Link to="/admin/users" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/users"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <Users className="h-4 w-4" /> Users
               </Link>
-              <Link to="/admin/submissions" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/submissions"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <PenSquare className="h-4 w-4" /> Submissions
               </Link>
-              <Link to="/admin/moderation" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/moderation"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <MessageSquare className="h-4 w-4" /> Moderation
               </Link>
-              <Link to="/admin/payouts" className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
-                activeProps={{ className: "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold" }}>
+              <Link
+                to="/admin/payouts"
+                className="px-3 py-1.5 rounded-sm hover:bg-primary-foreground/10 inline-flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-1.5 rounded-sm bg-primary-foreground/15 inline-flex items-center gap-1.5 font-semibold",
+                }}
+              >
                 <Banknote className="h-4 w-4" /> Payouts
               </Link>
             </nav>

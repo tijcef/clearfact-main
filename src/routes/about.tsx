@@ -5,7 +5,11 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — ClearFact" },
-      { name: "description", content: "ClearFact News is an independent Nigerian newsroom committed to verified, transparent journalism." },
+      {
+        name: "description",
+        content:
+          "ClearFact News is an independent Nigerian newsroom committed to verified, transparent journalism.",
+      },
       { property: "og:title", content: "About ClearFact News" },
       { property: "og:description", content: "Independent. Verified. Nigerian." },
     ],
@@ -19,9 +23,15 @@ export const Route = createFileRoute("/about")({
 Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide credible reporting free from misinformation, sensationalism, and undue influence. Our newsroom is dedicated to publishing stories that are thoroughly verified, responsibly reported, and presented with fairness, accuracy, and context."
     >
       <h2>Mission</h2>
-      <p>To provide verified, transparent, unbiased and fact-based information to the Nigerian and global public.</p>
+      <p>
+        To provide verified, transparent, unbiased and fact-based information to the Nigerian and
+        global public.
+      </p>
       <h2>Vision</h2>
-      <p>To become Africa's leading trusted digital news platform for truthful journalism and public enlightenment.</p>
+      <p>
+        To become Africa's leading trusted digital news platform for truthful journalism and public
+        enlightenment.
+      </p>
       <h2>Core values</h2>
       <ul>
         <li>Transparency · Accuracy · Accountability</li>

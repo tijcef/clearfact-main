@@ -5,15 +5,22 @@ export const Route = createFileRoute("/robots.txt")({
     handlers: {
       GET: async () => {
         return new Response(
-`User-agent: *
+          `User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /contributor
+Disallow: /dashboard
+Disallow: /login
 
-Sitemap: https://clearfact.ng/sitemap.xml`,
+Sitemap: https://clearfact.ng/sitemap.xml
+Sitemap: https://clearfact.ng/news-sitemap.xml`,
           {
             headers: {
-              "Content-Type": "text/plain",
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "public, max-age=3600, s-maxage=86400",
             },
-          }
+          },
         );
       },
     },

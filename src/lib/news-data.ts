@@ -27,10 +27,7 @@ export type ContentFormat =
   | "Most Read"
   | "Video Post";
 
-export type Confidence =
-  | "High"
-  | "Medium"
-  | "Preliminary";
+export type Confidence = "High" | "Medium" | "Preliminary";
 
 export interface Article {
   slug: string;
@@ -55,37 +52,11 @@ export interface Article {
   tags?: string[];
 }
 
-export const categories = [
-  { name: "Breaking", slug: "breaking" },
-  { name: "Politics", slug: "politics" },
-  { name: "Business", slug: "business" },
-  { name: "Education", slug: "education" },
-  { name: "Health", slug: "health" },
-  { name: "Security", slug: "security" },
-  { name: "Technology", slug: "technology" },
-  { name: "World", slug: "world" },
-  { name: "Investigations", slug: "investigations" },
-  { name: "Fact Check", slug: "fact-check" },
-  { name: "Features", slug: "features" },
-  { name: "Opportunities", slug: "opportunities" },
-];
-
-export const moreCategories = [
-  { name: "Climate & Environment", slug: "climate-environment" },
-  { name: "Data & Research", slug: "data-research" },
-  { name: "Metro", slug: "metro" },
-  { name: "Entertainment", slug: "entertainment" },
-  { name: "Sports", slug: "sports" },
-  { name: "Opinion", slug: "opinion" },
-  { name: "Video", slug: "video" },
-];
-
 export const ARTICLES: Article[] = [
   {
     slug: "fec-approves-2026-federal-budget-framework",
 
-    title:
-      "FEC approves 2026 federal budget framework with focus on infrastructure and security",
+    title: "FEC approves 2026 federal budget framework with focus on infrastructure and security",
 
     excerpt:
       "The Federal Executive Council endorsed a multi-trillion naira spending plan, prioritising road, rail and national security investments ahead of the National Assembly review.",
@@ -106,8 +77,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Top Story",
 
-    body:
-      "The Federal Executive Council approved the 2026 budget framework during a high-level meeting in Abuja. Officials say the proposal focuses heavily on national infrastructure, transport expansion and improved security funding across the federation.",
+    body: "The Federal Executive Council approved the 2026 budget framework during a high-level meeting in Abuja. Officials say the proposal focuses heavily on national infrastructure, transport expansion and improved security funding across the federation.",
 
     confidence: "High",
 
@@ -117,8 +87,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "naira-strengthens-against-dollar-cbn-reforms",
 
-    title:
-      "Naira strengthens against the dollar as CBN reforms take hold",
+    title: "Naira strengthens against the dollar as CBN reforms take hold",
 
     excerpt:
       "Forex liquidity improves following a coordinated CBN intervention; analysts urge cautious optimism.",
@@ -137,8 +106,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Featured",
 
-    body:
-      "Financial analysts say recent Central Bank reforms are beginning to stabilise the foreign exchange market as liquidity gradually improves.",
+    body: "Financial analysts say recent Central Bank reforms are beginning to stabilise the foreign exchange market as liquidity gradually improves.",
 
     confidence: "High",
 
@@ -148,8 +116,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "lagos-startups-raise-record-funding",
 
-    title:
-      "Lagos-based startups raise record funding in Q1 as African VC rebounds",
+    title: "Lagos-based startups raise record funding in Q1 as African VC rebounds",
 
     excerpt:
       "Fintech and climate-tech ventures led the surge, signalling renewed investor appetite for African innovation.",
@@ -168,8 +135,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Trending",
 
-    body:
-      "Technology startups across Lagos recorded increased venture capital investment during the first quarter of the year.",
+    body: "Technology startups across Lagos recorded increased venture capital investment during the first quarter of the year.",
 
     confidence: "High",
 
@@ -179,8 +145,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "fact-check-viral-rice-import-ban",
 
-    title:
-      "FACT CHECK: Did the federal government ban all rice imports this week?",
+    title: "FACT CHECK: Did the federal government ban all rice imports this week?",
 
     excerpt:
       "A viral WhatsApp message claims an outright ban took effect on Monday. Our review of official gazettes and CBN circulars finds the claim misleading.",
@@ -199,8 +164,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Article",
 
-    body:
-      "ClearFact reviewed multiple government publications and found no evidence supporting claims of a total rice import ban.",
+    body: "ClearFact reviewed multiple government publications and found no evidence supporting claims of a total rice import ban.",
 
     confidence: "High",
 
@@ -210,11 +174,9 @@ export const ARTICLES: Article[] = [
   {
     slug: "super-eagles-friendly-preview",
 
-    title:
-      "Super Eagles name strong squad ahead of international friendlies",
+    title: "Super Eagles name strong squad ahead of international friendlies",
 
-    excerpt:
-      "Coach unveils 25-man list with three uncapped players in line for debuts.",
+    excerpt: "Coach unveils 25-man list with three uncapped players in line for debuts.",
 
     category: "Sports",
 
@@ -230,8 +192,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Most Read",
 
-    body:
-      "The Nigerian national team has released a strong squad list ahead of upcoming international fixtures.",
+    body: "The Nigerian national team has released a strong squad list ahead of upcoming international fixtures.",
 
     confidence: "High",
   },
@@ -239,8 +200,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "developing-flooding-niger-state",
 
-    title:
-      "DEVELOPING: Heavy flooding displaces hundreds in Niger State communities",
+    title: "DEVELOPING: Heavy flooding displaces hundreds in Niger State communities",
 
     excerpt:
       "NEMA officials are on ground; ClearFact is verifying casualty figures with multiple independent sources.",
@@ -259,8 +219,7 @@ export const ARTICLES: Article[] = [
 
     contentFormat: "Top Story",
 
-    body:
-      "Emergency officials say rescue efforts are ongoing after severe flooding affected several communities in Niger State.",
+    body: "Emergency officials say rescue efforts are ongoing after severe flooding affected several communities in Niger State.",
 
     confidence: "Preliminary",
 

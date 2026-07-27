@@ -9,7 +9,7 @@ import {
   FaLinkedin,
   FaWhatsapp,
 } from "react-icons/fa6";
-import { categories, moreCategories } from "@/lib/news-data";
+import { categories, moreCategories } from "@/lib/site-navigation";
 
 const policy = [
   { to: "/about", label: "About Us" },
@@ -33,9 +33,8 @@ export function Footer() {
           </div>
 
           <p className="mt-3 text-sm text-primary-foreground/80">
-            An independent Nigerian newsroom delivering verified,
-            transparent and timely journalism to a national and
-            global audience.
+            An independent Nigerian newsroom delivering verified, transparent and timely journalism
+            to a national and global audience.
           </p>
 
           <div className="mt-4 space-y-2 text-sm">
@@ -119,13 +118,9 @@ export function Footer() {
           <h4 className="font-serif text-lg mb-3">Sections</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {moreCategories.map((c) => (
+            {categories.slice(0, 8).map((c) => (
               <li key={c.slug}>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: c.slug }}
-                  className="hover:text-gold"
-                >
+                <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}
                 </Link>
               </li>
@@ -140,11 +135,7 @@ export function Footer() {
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {moreCategories.map((c) => (
               <li key={c.slug}>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: c.slug }}
-                  className="hover:text-gold"
-                >
+                <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}
                 </Link>
               </li>
@@ -166,9 +157,7 @@ export function Footer() {
 
         {/* Policies */}
         <div>
-          <h4 className="font-serif text-lg mb-3">
-            About & Policies
-          </h4>
+          <h4 className="font-serif text-lg mb-3">About & Policies</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {policy.map((p) => (
@@ -185,15 +174,9 @@ export function Footer() {
       {/* Bottom */}
       <div className="border-t border-primary-foreground/10">
         <div className="container-news py-4 flex flex-col md:flex-row gap-2 items-center justify-between text-xs text-primary-foreground/70">
-          <span>
-            © {new Date().getFullYear()} ClearFact News.
-            All rights reserved.
-          </span>
+          <span>© {new Date().getFullYear()} ClearFact News. All rights reserved.</span>
 
-          <span>
-            Truth over speed · Verification over virality ·
-            Transparency over secrecy.
-          </span>
+          <span>Truth over speed · Verification over virality · Transparency over secrecy.</span>
         </div>
       </div>
     </footer>

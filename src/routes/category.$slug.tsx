@@ -1,24 +1,58 @@
 import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { getCategories, getFeaturedImageUrl, getPostsByCategory } from "@/lib/wordpress";
+import {
+  getCategories,
+  getFeaturedImageUrl,
+  getPostsByCategory,
+  normalizeWpSlug,
+  stripHtml,
+} from "@/lib/wordpress";
+
+const CATEGORY_ALIASES: Record<string, string[]> = {
+  "accountability-journalism": ["accountability-journalism", "accountability"],
+};
+
+function categoryLabel(slug: string) {
+  return slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 export const Route = createFileRoute("/category/$slug")({
   loader: async ({ params }) => {
-    const categories = await getCategories();
-    const category = categories.find(
-      (item: any) => item.slug.toLowerCase() === params.slug.toLowerCase(),
-    );
+    try {
+      const categories = await getCategories();
+      const acceptedSlugs = CATEGORY_ALIASES[params.slug] ?? [params.slug];
+      const category = categories.find((item: any) =>
+        acceptedSlugs.includes(item.slug.toLowerCase()),
+      );
 
-    if (!category) {
-      return { category: null, posts: [] };
+      if (!category) {
+        return { category: null, posts: [], unavailable: false };
+      }
+
+      const posts = await getPostsByCategory(category.id, 24);
+
+      return {
+        category,
+        posts: Array.isArray(posts) ? posts : [],
+        unavailable: false,
+      };
+    } catch (error) {
+      console.error(`Category ${params.slug} failed to load:`, error);
+
+      return {
+        category: {
+          id: 0,
+          name: categoryLabel(params.slug),
+          slug: params.slug,
+          description: "",
+        },
+        posts: [],
+        unavailable: true,
+      };
     }
-
-    const posts = await getPostsByCategory(category.id, 24);
-
-    return {
-      category,
-      posts: Array.isArray(posts) ? posts : [],
-    };
   },
 
   head: ({ loaderData, params }) => {
@@ -30,8 +64,8 @@ export const Route = createFileRoute("/category/$slug")({
     const canonical = `https://clearfact.ng/category/${params.slug}`;
 
     return {
-      title: `${categoryName} News | ClearFact News`,
       meta: [
+        { title: `${categoryName} News | ClearFact News` },
         { name: "description", content: description },
         { name: "robots", content: "index,follow,max-image-preview:large" },
         { property: "og:title", content: `${categoryName} News` },
@@ -48,17 +82,18 @@ export const Route = createFileRoute("/category/$slug")({
 });
 
 function CategoryPage() {
-  const { category, posts } = Route.useLoaderData();
+  const { category, posts, unavailable } = Route.useLoaderData();
+  const categoryName = category?.name ?? "News";
 
   return (
     <div className="container-news py-8 md:py-12">
       <div className="border-b-2 border-primary pb-3 mb-8">
         <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">Section</div>
 
-        <h1 className="font-serif text-4xl md:text-5xl mt-1">{category?.name}</h1>
+        <h1 className="font-serif text-4xl md:text-5xl mt-1">{categoryName}</h1>
 
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          Latest stories from the {category?.name} desk.
+          Latest stories from the {categoryName} desk.
         </p>
       </div>
 
@@ -71,22 +106,20 @@ function CategoryPage() {
             >
               {getFeaturedImageUrl(post) && (
                 <img
-                  src={getFeaturedImageUrl(post)}
-                  alt={post.title?.rendered || ""}
+                  src={getFeaturedImageUrl(post, "", "medium_large")}
+                  alt={stripHtml(post.title?.rendered)}
                   className="w-full h-48 object-cover"
                   loading="lazy"
                   decoding="async"
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                 />
               )}
 
               <div className="p-4">
-                <Link to="/post/$slug" params={{ slug: post.slug }}>
-                  <h2
-                    className="font-serif text-xl hover:text-primary transition-colors"
-                    dangerouslySetInnerHTML={{
-                      __html: post.title.rendered,
-                    }}
-                  />
+                <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
+                  <h2 className="font-serif text-xl hover:text-primary transition-colors">
+                    {stripHtml(post.title.rendered)}
+                  </h2>
                 </Link>
 
                 <div
@@ -102,10 +135,14 @@ function CategoryPage() {
 
       {posts.length === 0 && (
         <div className="text-center py-16">
-          <h3 className="text-2xl font-semibold mb-2">No articles found</h3>
+          <h3 className="text-2xl font-semibold mb-2">
+            {unavailable ? "The newsroom feed is reconnecting" : "No articles found"}
+          </h3>
 
           <p className="text-muted-foreground">
-            There are currently no published posts in this category.
+            {unavailable
+              ? "Please try again shortly. ClearFact will restore this section automatically."
+              : "There are currently no published posts in this category."}
           </p>
         </div>
       )}

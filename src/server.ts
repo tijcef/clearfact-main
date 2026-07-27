@@ -25,6 +25,9 @@ type CloudflareRequestInit = RequestInit & {
 const WP_REST_ORIGIN = "https://cms.tijcef.org/wp-json/wp/v2";
 const WP_MEDIA_ORIGIN = "https://cms.tijcef.org/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
+const ONE_WEEK = 604_800;
+const API_ORIGIN_TIMEOUT_MS = 6_000;
+const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -98,15 +101,104 @@ function runInBackground(ctx: ExecutionContextLike, promise: Promise<unknown>) {
   void promise;
 }
 
-function withCacheStatus(response: Response, status: "HIT" | "MISS") {
+function withCacheStatus(response: Response, status: "HIT" | "MISS" | "STALE") {
   const headers = new Headers(response.headers);
   headers.set("x-clearfact-cache", status);
+  headers.append("server-timing", `clearfact-cache;desc="${status}"`);
 
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   });
+}
+
+function withSecurityHeaders(response: Response, isHttps = true) {
+  const headers = new Headers(response.headers);
+
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("x-frame-options", "SAMEORIGIN");
+  headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  headers.set("permissions-policy", "camera=(), geolocation=(), microphone=(), payment=(), usb=()");
+
+  if (isHttps) {
+    headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: CloudflareRequestInit,
+  timeoutMs: number,
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function staleCacheKey(request: Request, namespace: "page" | "wp") {
+  const url = new URL(request.url);
+  url.searchParams.set("__clearfact_stale", namespace);
+
+  return new Request(url.toString(), {
+    method: "GET",
+    headers: {
+      accept: request.headers.get("accept") ?? "*/*",
+    },
+  });
+}
+
+async function getStaleResponse(
+  cache: Cache | undefined,
+  request: Request,
+  namespace: "page" | "wp",
+) {
+  if (!cache) return undefined;
+
+  const stale = await cache.match(staleCacheKey(request, namespace));
+  return stale ? withCacheStatus(stale, "STALE") : undefined;
+}
+
+function cacheFreshAndStale(
+  cache: Cache,
+  request: Request,
+  response: Response,
+  namespace: "page" | "wp",
+  ctx: ExecutionContextLike,
+) {
+  const staleHeaders = new Headers(response.headers);
+  staleHeaders.set(
+    "cache-control",
+    `public, max-age=0, s-maxage=${ONE_WEEK}, stale-while-revalidate=${ONE_WEEK}`,
+  );
+
+  const staleResponse = new Response(response.clone().body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: staleHeaders,
+  });
+
+  runInBackground(
+    ctx,
+    Promise.all([
+      cache.put(request, response.clone()),
+      cache.put(staleCacheKey(request, namespace), staleResponse),
+    ]),
+  );
 }
 
 function apiCacheTtl(pathname: string) {
@@ -118,7 +210,13 @@ function apiCacheTtl(pathname: string) {
 
 async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike) {
   const incomingUrl = new URL(request.url);
-  const restPath = incomingUrl.pathname.slice("/api/wp".length);
+  let restPath = incomingUrl.pathname.slice("/api/wp".length);
+
+  // Keep older cached frontend bundles working while they still request
+  // /api/wp/wp/v2/posts.
+  if (restPath.startsWith("/wp/v2/")) {
+    restPath = restPath.slice("/wp/v2".length);
+  }
 
   if (!/^\/(?:posts|categories|tags|comments)(?:\/|$)/.test(restPath)) {
     return new Response("Not found", { status: 404 });
@@ -126,6 +224,14 @@ async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike
 
   const method = request.method.toUpperCase();
   const cache = method === "GET" ? getDefaultCache() : undefined;
+  const isCommentWrite = method === "POST" && restPath === "/comments";
+
+  if (!["GET", "HEAD"].includes(method) && !isCommentWrite) {
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: { allow: restPath === "/comments" ? "GET, HEAD, POST" : "GET, HEAD" },
+    });
+  }
 
   if (cache) {
     const cached = await cache.match(request);
@@ -158,7 +264,37 @@ async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike
     };
   }
 
-  const originResponse = await fetch(originUrl, init);
+  let originResponse: Response;
+
+  try {
+    originResponse = await fetchWithTimeout(originUrl, init, API_ORIGIN_TIMEOUT_MS);
+  } catch (error) {
+    console.error("WordPress origin request failed:", error);
+
+    const stale = await getStaleResponse(cache, request, "wp");
+    if (stale) return stale;
+
+    return new Response(
+      JSON.stringify({
+        code: "clearfact_wordpress_unavailable",
+        message: "The newsroom feed is temporarily unavailable.",
+      }),
+      {
+        status: 503,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "retry-after": "30",
+        },
+      },
+    );
+  }
+
+  if (originResponse.status >= 500) {
+    const stale = await getStaleResponse(cache, request, "wp");
+    if (stale) return stale;
+  }
+
   const responseHeaders = new Headers();
 
   responseHeaders.set(
@@ -182,7 +318,7 @@ async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike
   });
 
   if (cache && originResponse.ok) {
-    runInBackground(ctx, cache.put(request, response.clone()));
+    cacheFreshAndStale(cache, request, response, "wp", ctx);
   }
 
   return withCacheStatus(response, "MISS");
@@ -217,15 +353,34 @@ async function proxyWordPressMedia(request: Request, ctx: ExecutionContextLike) 
   const originUrl = new URL(mediaPath, WP_MEDIA_ORIGIN);
   originUrl.search = incomingUrl.search;
 
-  const originResponse = await fetch(originUrl, {
-    headers: {
-      accept: request.headers.get("accept") ?? "image/avif,image/webp,image/*,*/*",
-    },
-    cf: {
-      cacheEverything: true,
-      cacheTtl: ONE_YEAR,
-    },
-  } as CloudflareRequestInit);
+  let originResponse: Response;
+
+  try {
+    originResponse = await fetchWithTimeout(
+      originUrl,
+      {
+        headers: {
+          accept: request.headers.get("accept") ?? "image/avif,image/webp,image/*,*/*",
+        },
+        cf: {
+          cacheEverything: true,
+          cacheTtl: ONE_YEAR,
+        },
+      },
+      MEDIA_ORIGIN_TIMEOUT_MS,
+    );
+  } catch (error) {
+    console.error("WordPress media origin request failed:", error);
+
+    return new Response("Image temporarily unavailable", {
+      status: 503,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "retry-after": "30",
+      },
+    });
+  }
 
   const contentType = originResponse.headers.get("content-type") ?? "";
 
@@ -297,9 +452,25 @@ async function servePage(request: Request, env: unknown, ctx: ExecutionContextLi
     }
   }
 
-  const handler = await getServerEntry();
-  const rendered = await handler.fetch(request, env, ctx);
-  const response = await normalizeCatastrophicSsrResponse(rendered);
+  let response: Response;
+
+  try {
+    const handler = await getServerEntry();
+    const rendered = await handler.fetch(request, env, ctx);
+    response = await normalizeCatastrophicSsrResponse(rendered);
+  } catch (error) {
+    console.error("Page render failed:", error);
+
+    const stale = await getStaleResponse(cache, request, "page");
+    if (stale) return stale;
+
+    throw error;
+  }
+
+  if (!response.ok) {
+    const stale = await getStaleResponse(cache, request, "page");
+    if (stale) return stale;
+  }
 
   if (
     !cache ||
@@ -320,28 +491,44 @@ async function servePage(request: Request, env: unknown, ctx: ExecutionContextLi
     headers,
   });
 
-  runInBackground(ctx, cache.put(request, cacheableResponse.clone()));
+  cacheFreshAndStale(cache, request, cacheableResponse, "page", ctx);
   return withCacheStatus(cacheableResponse, "MISS");
 }
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const url = new URL(request.url);
+
     try {
-      const url = new URL(request.url);
       const executionContext = ctx as ExecutionContextLike;
+      let response: Response;
 
-      if (url.pathname.startsWith("/api/wp/")) {
-        return await proxyWordPressRequest(request, executionContext);
+      if (url.pathname === "/api/health") {
+        response = new Response(
+          JSON.stringify({
+            status: "ok",
+            service: "clearfact-edge",
+            timestamp: new Date().toISOString(),
+          }),
+          {
+            headers: {
+              "content-type": "application/json; charset=utf-8",
+              "cache-control": "no-store",
+            },
+          },
+        );
+      } else if (url.pathname.startsWith("/api/wp/")) {
+        response = await proxyWordPressRequest(request, executionContext);
+      } else if (url.pathname.startsWith("/media/")) {
+        response = await proxyWordPressMedia(request, executionContext);
+      } else {
+        response = await servePage(request, env, executionContext);
       }
 
-      if (url.pathname.startsWith("/media/")) {
-        return await proxyWordPressMedia(request, executionContext);
-      }
-
-      return await servePage(request, env, executionContext);
+      return withSecurityHeaders(response, url.protocol === "https:");
     } catch (error) {
       console.error(error);
-      return brandedErrorResponse();
+      return withSecurityHeaders(brandedErrorResponse(), url.protocol === "https:");
     }
   },
 };

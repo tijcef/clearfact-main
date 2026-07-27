@@ -19,13 +19,30 @@ function EditArticle() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.from("articles").select("*").eq("id", id).maybeSingle();
-      if (error) { toast.error(error.message); navigate({ to: "/admin" }); return; }
-      if (!data) { toast.error("Not found"); navigate({ to: "/admin" }); return; }
+      const { data, error } = await supabase
+        .from("articles")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) {
+        toast.error(error.message);
+        navigate({ to: "/admin" });
+        return;
+      }
+      if (!data) {
+        toast.error("Not found");
+        navigate({ to: "/admin" });
+        return;
+      }
       setArticle(data);
     })();
   }, [id, navigate]);
 
-  if (!article) return <div className="container-news py-12 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading article…</div>;
+  if (!article)
+    return (
+      <div className="container-news py-12 flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading article…
+      </div>
+    );
   return <ArticleEditor existing={article} />;
 }

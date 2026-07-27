@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
   getFeaturedImageUrl,
+  getPublicPostPath,
   getPostBySlug,
   getRelatedPosts,
+  normalizeWpSlug,
   proxyWpMediaInHtml,
+  stripHtml,
 } from "@/lib/wordpress";
 import Comments from "@/components/Comments";
 
@@ -36,9 +39,9 @@ export const Route = createFileRoute("/post/$slug")({
 
     const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "";
 
-    const title = post.title.rendered.replace(/<[^>]+>/g, "");
+    const title = stripHtml(post.title.rendered);
 
-    const articleUrl = `https://clearfact.ng/post/${post.slug}`;
+    const articleUrl = `https://clearfact.ng${getPublicPostPath(post.slug)}`;
 
     const category = post._embedded?.["wp:term"]?.[0]?.[0];
 
@@ -118,8 +121,8 @@ export const Route = createFileRoute("/post/$slug")({
     };
 
     return {
-      title: `${title} | ClearFact News`,
       meta: [
+        { title: `${title} | ClearFact News` },
         { name: "description", content: description },
         { name: "robots", content: "index,follow,max-image-preview:large" },
         { property: "og:title", content: title },
@@ -192,7 +195,7 @@ function ArticlePage() {
     throw notFound();
   }
 
-  const featuredImage = getFeaturedImageUrl(post);
+  const featuredImage = getFeaturedImageUrl(post, "", "large");
 
   const cleanContent = proxyWpMediaInHtml(
     post.content.rendered
@@ -200,9 +203,9 @@ function ArticlePage() {
       .replace(/style="height:[^"]*"/gi, ""),
   );
 
-  const articleUrl = `https://clearfact.ng/post/${post.slug}`;
+  const articleUrl = `https://clearfact.ng${getPublicPostPath(post.slug)}`;
 
-  const articleTitle = post.title.rendered.replace(/<[^>]+>/g, "");
+  const articleTitle = stripHtml(post.title.rendered);
 
   const categoryName = post._embedded?.["wp:term"]?.[0]?.[0]?.name || "News";
 
@@ -219,7 +222,7 @@ function ArticlePage() {
   const headings = Array.from(cleanContent.matchAll(/<h2[^>]*>(.*?)<\/h2>/g)).map(
     (match, index) => ({
       id: `section-${index + 1}`,
-      title: match[1].replace(/<[^>]+>/g, ""),
+      title: stripHtml(match[1]),
     }),
   );
 
@@ -253,12 +256,9 @@ function ArticlePage() {
           </span>
         </div>
 
-        <h1
-          className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-6"
-          dangerouslySetInnerHTML={{
-            __html: post.title.rendered,
-          }}
-        />
+        <h1 className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-6">
+          {articleTitle}
+        </h1>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
           <span>
@@ -294,6 +294,7 @@ function ArticlePage() {
             loading="eager"
             decoding="async"
             fetchPriority="high"
+            sizes="(min-width: 1024px) 960px, 100vw"
           />
         )}
 
@@ -394,26 +395,22 @@ function ArticlePage() {
                 <Link
                   key={item.id}
                   to="/post/$slug"
-                  params={{ slug: item.slug }}
+                  params={{ slug: normalizeWpSlug(item.slug) }}
                   className="block border border-border rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 bg-card"
                 >
                   {getFeaturedImageUrl(item) && (
                     <img
-                      src={getFeaturedImageUrl(item)}
-                      alt={item.title.rendered.replace(/<[^>]*>/g, "")}
+                      src={getFeaturedImageUrl(item, "", "medium_large")}
+                      alt={stripHtml(item.title.rendered)}
                       className="w-full h-40 object-cover"
                       loading="lazy"
                       decoding="async"
+                      sizes="(min-width: 768px) 50vw, 100vw"
                     />
                   )}
 
                   <div className="p-5">
-                    <h3
-                      className="font-semibold"
-                      dangerouslySetInnerHTML={{
-                        __html: item.title.rendered,
-                      }}
-                    />
+                    <h3 className="font-semibold">{stripHtml(item.title.rendered)}</h3>
                   </div>
                 </Link>
               ))}
@@ -426,40 +423,30 @@ function ArticlePage() {
             {previousPost && (
               <Link
                 to="/post/$slug"
-                params={{ slug: previousPost.slug }}
+                params={{ slug: normalizeWpSlug(previousPost.slug) }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md"
               >
                 <span className="text-sm text-muted-foreground">← Previous Article</span>
 
-                <h3
-                  className="font-semibold mt-2"
-                  dangerouslySetInnerHTML={{
-                    __html: previousPost.title.rendered,
-                  }}
-                />
+                <h3 className="font-semibold mt-2">{stripHtml(previousPost.title.rendered)}</h3>
               </Link>
             )}
 
             {nextPost && (
               <Link
                 to="/post/$slug"
-                params={{ slug: nextPost.slug }}
+                params={{ slug: normalizeWpSlug(nextPost.slug) }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md md:text-right"
               >
                 <span className="text-sm text-muted-foreground">Next Article →</span>
 
-                <h3
-                  className="font-semibold mt-2"
-                  dangerouslySetInnerHTML={{
-                    __html: nextPost.title.rendered,
-                  }}
-                />
+                <h3 className="font-semibold mt-2">{stripHtml(nextPost.title.rendered)}</h3>
               </Link>
             )}
           </div>
         )}
 
-        {typeof window !== "undefined" && <AdSense />}
+        <AdSense />
 
         <div className="mt-10">
           <Link to="/" className="text-sm font-semibold text-primary hover:underline">

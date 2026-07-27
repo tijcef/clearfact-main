@@ -3,36 +3,11 @@ import { Link } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/logo.jpg";
-
-
-const MAIN_CATEGORIES = [
-  { name: "News", slug: "news" },
-  { name: "Politics", slug: "politics" },
-  { name: "Security", slug: "crime-security" },
-  { name: "Judiciary", slug: "law-judiciary" },
-  { name: "Business", slug: "business" },
-  { name: "Investigations", slug: "investigations" },
-  { name: "Accountability", slug: "accountability" },
-  { name: "Education", slug: "education" },
-  { name: "Health", slug: "health" },
-  { name: "Technology", slug: "technology" },
-  { name: "Opportunities", slug: "opportunities" },
-];
-
-const MORE_CATEGORIES = [
-  { name: "Features", slug: "features" },
-  { name: "Metro", slug: "metro" },
-  { name: "World", slug: "world" },
-  { name: "Opinion", slug: "opinion" },
-  { name: "Entertainment", slug: "entertainment" },
-  { name: "Sports", slug: "sports" },
-  {
-    name: "Climate",
-    slug: "climate-environment",
-  },
-  { name: "Research", slug: "data-research" },
-  { name: "Video", slug: "video" },
-];
+import { normalizeWpSlug, stripHtml } from "@/lib/wordpress";
+import {
+  mainCategories as MAIN_CATEGORIES,
+  moreCategories as MORE_CATEGORIES,
+} from "@/lib/site-navigation";
 
 type TickerPost = {
   id: number;
@@ -42,23 +17,38 @@ type TickerPost = {
   };
 };
 
+const TICKER_CACHE_KEY = "clearfact:ticker:v1";
+const TICKER_REFRESH_MS = 5 * 60 * 1_000;
+
+function isTickerPostList(value: unknown): value is TickerPost[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (post) =>
+        post &&
+        typeof post === "object" &&
+        typeof post.id === "number" &&
+        typeof post.slug === "string",
+    )
+  );
+}
+
 function Logo() {
   return (
-    <Link
-      to="/"
-      className="flex items-center gap-3 md:gap-4"
-      aria-label="ClearFact News home"
-    >
+    <Link to="/" className="flex items-center gap-3 md:gap-4" aria-label="ClearFact News home">
       <img
         src={logo}
         alt="ClearFact News Logo"
-        className="h-12 md:h-14 w-auto object-contain"
+        className="h-11 w-auto object-contain md:h-12"
+        width="120"
+        height="120"
+        decoding="async"
       />
 
       <div>
-        <h1 className="text-3xl md:text-5xl font-black tracking-tight hover:text-red-600 transition-colors">
+        <div className="text-3xl font-black tracking-tight transition-colors hover:text-red-600 md:text-4xl">
           ClearFact
-        </h1>
+        </div>
 
         <p className="hidden sm:block text-xs md:text-base text-muted-foreground">
           Verified journalism from Nigeria
@@ -74,119 +64,107 @@ export function Header() {
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>([]);
   const [tickerLoading, setTickerLoading] = useState(true);
 
-useEffect(() => {
-  let active = true;
-  const controller = new AbortController();
-
-  async function loadTickerPosts() {
-    setTickerLoading(true);
+  useEffect(() => {
+    let active = true;
+    let currentController: AbortController | undefined;
 
     try {
-      const response = await fetch(
-        "/api/wp/wp/v2/posts?per_page=8&orderby=date&order=desc&_fields=id,slug,title",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        },
-      );
+      const cached = JSON.parse(window.localStorage.getItem(TICKER_CACHE_KEY) ?? "null");
 
-      if (!response.ok) {
-        throw new Error(
-          `Ticker request failed with status ${response.status}`,
-        );
-      }
-
-      const posts = await response.json();
-
-      if (!active) {
-        return;
-      }
-
-      if (Array.isArray(posts)) {
-        setTickerPosts(posts);
-      } else {
-        console.error("Ticker response is not an array:", posts);
-        setTickerPosts([]);
-      }
-    } catch (error) {
-      if (!active) {
-        return;
-      }
-
-      if (
-        error instanceof Error &&
-        error.name !== "AbortError"
-      ) {
-        console.error("Unable to load ticker posts:", error);
-      }
-
-      setTickerPosts([]);
-    } finally {
-      if (active) {
+      if (isTickerPostList(cached) && cached.length) {
+        setTickerPosts(cached);
         setTickerLoading(false);
       }
+    } catch {
+      window.localStorage.removeItem(TICKER_CACHE_KEY);
     }
-  }
 
-  void loadTickerPosts();
+    async function loadTickerPosts() {
+      currentController?.abort();
+      currentController = new AbortController();
+      const timeout = window.setTimeout(() => currentController?.abort(), 5_000);
 
-  return () => {
-    active = false;
-    controller.abort();
-  };
-}, []);
+      try {
+        const response = await fetch(
+          "/api/wp/posts?per_page=8&orderby=date&order=desc&_fields=id,slug,title",
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: currentController.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Ticker request failed with status ${response.status}`);
+        }
+
+        const posts: unknown = await response.json();
+
+        if (!active || !isTickerPostList(posts)) {
+          return;
+        }
+
+        setTickerPosts(posts);
+        window.localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(posts));
+      } catch (error) {
+        if (active && error instanceof Error && error.name !== "AbortError") {
+          console.error("Unable to refresh ticker posts:", error);
+        }
+      } finally {
+        window.clearTimeout(timeout);
+
+        if (active) {
+          setTickerLoading(false);
+        }
+      }
+    }
+
+    void loadTickerPosts();
+    const refresh = window.setInterval(() => void loadTickerPosts(), TICKER_REFRESH_MS);
+
+    return () => {
+      active = false;
+      currentController?.abort();
+      window.clearInterval(refresh);
+    };
+  }, []);
 
   const date = new Date().toLocaleDateString("en-NG", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "Africa/Lagos",
   });
 
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/98 shadow-sm">
       {/* Utility bar */}
       <div className="bg-primary text-primary-foreground text-xs">
         <div className="container-news flex min-h-8 items-center justify-between gap-3">
           <span className="hidden md:inline">{date} · Nigeria</span>
 
           <div className="flex items-center gap-3 md:gap-4 overflow-x-auto whitespace-nowrap py-2">
-            <Link
-              to="/trust-center"
-              className="inline-flex items-center gap-1 hover:text-gold"
-            >
+            <Link to="/trust-center" className="inline-flex items-center gap-1 hover:text-gold">
               <ShieldCheck className="h-3.5 w-3.5" />
               Trust Center
             </Link>
 
-            <Link
-              to="/newsletter"
-              className="hover:text-gold"
-            >
+            <Link to="/newsletter" className="hover:text-gold">
               Newsletter
             </Link>
 
-            <Link
-              to="/contribute"
-              className="hidden lg:inline hover:text-gold"
-            >
+            <Link to="/contribute" className="hidden lg:inline hover:text-gold">
               Become a Contributor
             </Link>
 
-            <Link
-              to="/whistleblower"
-              className="hidden sm:inline hover:text-gold"
-            >
+            <Link to="/whistleblower" className="hidden sm:inline hover:text-gold">
               Tip Line
             </Link>
 
-            <Link
-              to="/dashboard"
-              className="hidden sm:inline hover:text-gold"
-            >
+            <Link to="/dashboard" className="hidden sm:inline hover:text-gold">
               My Account
             </Link>
 
@@ -196,7 +174,7 @@ useEffect(() => {
       </div>
 
       {/* Main bar */}
-      <div className="container-news flex min-h-24 md:h-28 items-center justify-between gap-4 py-3">
+      <div className="container-news flex min-h-20 items-center justify-between gap-4 py-3 md:min-h-24">
         <div className="flex items-center gap-3 md:gap-4">
           <button
             type="button"
@@ -204,11 +182,7 @@ useEffect(() => {
             className="lg:hidden p-2 -ml-2 rounded-sm hover:bg-accent"
             onClick={() => setOpen((value) => !value)}
           >
-            {open ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
           <Logo />
@@ -219,9 +193,7 @@ useEffect(() => {
           onSubmit={(event) => {
             event.preventDefault();
 
-            const input = event.currentTarget.elements.namedItem(
-              "q",
-            ) as HTMLInputElement | null;
+            const input = event.currentTarget.elements.namedItem("q") as HTMLInputElement | null;
 
             const query = input?.value.trim() ?? "";
 
@@ -248,7 +220,7 @@ useEffect(() => {
 
         <Link
           to="/category/$slug"
-          params={{ slug: "accountability" }}
+          params={{ slug: "accountability-journalism" }}
           className="hidden sm:inline-flex shrink-0 items-center gap-1.5 h-9 px-3 rounded-sm bg-gold text-gold-foreground text-sm font-semibold hover:opacity-90"
         >
           <ShieldCheck className="h-4 w-4" />
@@ -258,9 +230,7 @@ useEffect(() => {
 
       {/* Category navigation */}
       <nav
-        className={`border-t border-border ${
-          open ? "block" : "hidden lg:block"
-        }`}
+        className={`border-t border-border ${open ? "block" : "hidden lg:block"}`}
         aria-label="News sections"
       >
         <div className="container-news flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 py-2 text-sm">
@@ -277,7 +247,7 @@ useEffect(() => {
                 }}
                 onClick={() => setOpen(false)}
               >
-                {category.name}
+                {"shortName" in category ? category.shortName : category.name}
               </Link>
             ))}
           </div>
@@ -314,33 +284,33 @@ useEffect(() => {
         </div>
       </nav>
 
-            {/* Live ticker */}
-      <div className="overflow-hidden border-y border-slate-700 bg-[#0f172a] text-white">
+      {/* Live ticker */}
+      <div
+        className="ticker-shell overflow-hidden border-y border-slate-700 bg-[#0f172a] text-white"
+        role="region"
+        aria-label="Latest ClearFact headlines"
+      >
         <div className="container-news flex items-center gap-3 py-2.5">
           <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-red-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
             <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
             Breaking News
           </span>
 
-          <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="ticker-viewport min-w-0 flex-1 overflow-hidden" aria-live="polite">
             {tickerPosts.length > 0 ? (
               <div className="ticker-track gap-6 whitespace-nowrap md:gap-8">
                 {[...tickerPosts, ...tickerPosts].map((post, index) => (
                   <Link
                     key={`${post.id}-${index}`}
                     to="/post/$slug"
-                    params={{ slug: post.slug }}
+                    params={{ slug: normalizeWpSlug(post.slug) }}
                     className="inline-flex shrink-0 items-center gap-3 text-sm font-semibold transition-colors hover:text-amber-400"
                   >
                     <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
 
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          post.title?.rendered ??
-                          "Latest ClearFact verified report",
-                      }}
-                    />
+                    <span>
+                      {stripHtml(post.title?.rendered ?? "Latest ClearFact verified report")}
+                    </span>
 
                     <span className="text-slate-500">•</span>
                   </Link>
@@ -349,8 +319,8 @@ useEffect(() => {
             ) : (
               <p className="whitespace-nowrap text-sm font-medium text-slate-300">
                 {tickerLoading
-                  ? "Loading the latest verified reports…"
-                  : "Latest reports are temporarily unavailable."}
+                  ? "Connecting to the live newsroom…"
+                  : "Live updates will resume automatically · Browse the latest verified reports below."}
               </p>
             )}
           </div>

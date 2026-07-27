@@ -2,9 +2,7 @@ import PostCard from "./PostCard";
 
 export default function Hero({ posts }: any) {
   const breakingPost = posts.find((post: any) =>
-    post._embedded?.["wp:term"]?.[0]?.some(
-      (cat: any) => cat.slug === "breaking"
-    )
+    post._embedded?.["wp:term"]?.[0]?.some((cat: any) => cat.slug === "breaking"),
   );
 
   const heroPost = breakingPost || posts[0];

@@ -3,20 +3,38 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Toaster, toast } from "sonner";
-import { Bookmark, History, MessageSquare, ThumbsUp, LogOut, Loader2, UserCircle2, Trash2 } from "lucide-react";
+import {
+  Bookmark,
+  History,
+  MessageSquare,
+  ThumbsUp,
+  LogOut,
+  Loader2,
+  UserCircle2,
+  Trash2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Your Dashboard — ClearFact News" },
-      { name: "description", content: "Your saved articles, comments, reactions and reading history." },
+      {
+        name: "description",
+        content: "Your saved articles, comments, reactions and reading history.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: Dashboard,
 });
 
-type ArticleStub = { id: string; slug: string; title: string; category: string; published_at: string | null };
+type ArticleStub = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  published_at: string | null;
+};
 type SavedRow = { id: string; created_at: string; articles: ArticleStub | null };
 type HistoryRow = { read_at: string; articles: ArticleStub | null };
 type ReactionRow = { id: string; type: string; created_at: string; articles: ArticleStub | null };
@@ -41,7 +59,10 @@ function Dashboard() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [reactions, setReactions] = useState<ReactionRow[]>([]);
   const [comments, setComments] = useState<CommentRow[]>([]);
-  const [profile, setProfile] = useState<{ display_name: string; bio: string }>({ display_name: "", bio: "" });
+  const [profile, setProfile] = useState<{ display_name: string; bio: string }>({
+    display_name: "",
+    bio: "",
+  });
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -53,11 +74,29 @@ function Dashboard() {
     const cols = "id,slug,title,category,published_at";
     (async () => {
       const [s, h, r, c, p] = await Promise.all([
-        supabase.from("saved_articles").select(`id,created_at,articles(${cols})`).order("created_at", { ascending: false }),
-        supabase.from("reading_history").select(`read_at,articles(${cols})`).order("read_at", { ascending: false }).limit(50),
-        supabase.from("reactions").select(`id,type,created_at,articles(${cols})`).order("created_at", { ascending: false }),
-        supabase.from("comments").select(`id,body,created_at,articles(${cols})`).eq("user_id", session.user.id).order("created_at", { ascending: false }),
-        supabase.from("profiles").select("display_name,bio").eq("user_id", session.user.id).maybeSingle(),
+        supabase
+          .from("saved_articles")
+          .select(`id,created_at,articles(${cols})`)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("reading_history")
+          .select(`read_at,articles(${cols})`)
+          .order("read_at", { ascending: false })
+          .limit(50),
+        supabase
+          .from("reactions")
+          .select(`id,type,created_at,articles(${cols})`)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("comments")
+          .select(`id,body,created_at,articles(${cols})`)
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("display_name,bio")
+          .eq("user_id", session.user.id)
+          .maybeSingle(),
       ]);
       setSaved((s.data ?? []) as unknown as SavedRow[]);
       setHistory((h.data ?? []) as unknown as HistoryRow[]);
@@ -89,11 +128,14 @@ function Dashboard() {
     e.preventDefault();
     if (!session) return;
     setSavingProfile(true);
-    const { error } = await supabase.from("profiles").upsert({
-      user_id: session.user.id,
-      display_name: profile.display_name,
-      bio: profile.bio,
-    }, { onConflict: "user_id" });
+    const { error } = await supabase.from("profiles").upsert(
+      {
+        user_id: session.user.id,
+        display_name: profile.display_name,
+        bio: profile.bio,
+      },
+      { onConflict: "user_id" },
+    );
     setSavingProfile(false);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
@@ -124,7 +166,10 @@ function Dashboard() {
             <div className="font-serif text-2xl">My ClearFact</div>
             <div className="text-xs opacity-80">{session.user.email}</div>
           </div>
-          <button onClick={signOut} className="inline-flex items-center gap-1.5 text-sm hover:text-gold">
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-1.5 text-sm hover:text-gold"
+          >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
@@ -134,12 +179,17 @@ function Dashboard() {
         <aside>
           <nav className="space-y-1">
             {tabs.map(({ id, label, Icon, count }) => (
-              <button key={id} onClick={() => setTab(id)}
+              <button
+                key={id}
+                onClick={() => setTab(id)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-sm text-sm text-left ${
                   tab === id ? "bg-accent text-primary font-semibold" : "hover:bg-accent"
-                }`}>
+                }`}
+              >
                 <Icon className="h-4 w-4" /> {label}
-                {id !== "profile" && <span className="ml-auto text-xs text-muted-foreground">{count}</span>}
+                {id !== "profile" && (
+                  <span className="ml-auto text-xs text-muted-foreground">{count}</span>
+                )}
               </button>
             ))}
           </nav>
@@ -149,16 +199,31 @@ function Dashboard() {
           {tab === "saved" && (
             <Section title="Saved articles" empty="You haven't saved any articles yet.">
               {saved.map((s) => (
-                <Row key={s.id} a={s.articles} meta={`Saved ${new Date(s.created_at).toLocaleDateString()}`}
-                  onRemove={() => removeSaved(s.id)} />
+                <Row
+                  key={s.id}
+                  a={s.articles}
+                  meta={`Saved ${new Date(s.created_at).toLocaleDateString()}`}
+                  onRemove={() => removeSaved(s.id)}
+                />
               ))}
             </Section>
           )}
 
           {tab === "history" && (
-            <Section title="Reading history"
+            <Section
+              title="Reading history"
               empty="No reading history yet — start exploring."
-              action={history.length ? <button onClick={clearHistory} className="text-sm text-destructive hover:underline">Clear all</button> : null}>
+              action={
+                history.length ? (
+                  <button
+                    onClick={clearHistory}
+                    className="text-sm text-destructive hover:underline"
+                  >
+                    Clear all
+                  </button>
+                ) : null
+              }
+            >
               {history.map((h, i) => (
                 <Row key={i} a={h.articles} meta={`Read ${new Date(h.read_at).toLocaleString()}`} />
               ))}
@@ -169,9 +234,14 @@ function Dashboard() {
             <Section title="Your comments" empty="You haven't commented on any articles yet.">
               {comments.map((c) => (
                 <li key={c.id} className="border border-border rounded-sm p-4">
-                  <div className="text-xs text-muted-foreground"><ArticleLink a={c.articles} /> · {new Date(c.created_at).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">
+                    <ArticleLink a={c.articles} /> · {new Date(c.created_at).toLocaleString()}
+                  </div>
                   <p className="mt-2 text-sm whitespace-pre-wrap">{c.body}</p>
-                  <button onClick={() => removeComment(c.id)} className="mt-2 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
+                  <button
+                    onClick={() => removeComment(c.id)}
+                    className="mt-2 inline-flex items-center gap-1 text-xs text-destructive hover:underline"
+                  >
                     <Trash2 className="h-3 w-3" /> Delete
                   </button>
                 </li>
@@ -182,9 +252,12 @@ function Dashboard() {
           {tab === "reactions" && (
             <Section title="Your reactions" empty="You haven't reacted to any articles yet.">
               {reactions.map((r) => (
-                <Row key={r.id} a={r.articles}
+                <Row
+                  key={r.id}
+                  a={r.articles}
                   meta={`${r.type} · ${new Date(r.created_at).toLocaleDateString()}`}
-                  onRemove={() => removeReaction(r.id)} />
+                  onRemove={() => removeReaction(r.id)}
+                />
               ))}
             </Section>
           )}
@@ -194,18 +267,27 @@ function Dashboard() {
               <h2 className="font-serif text-2xl">Profile</h2>
               <label className="block text-sm">
                 <span className="font-semibold">Display name</span>
-                <input value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                <input
+                  value={profile.display_name}
+                  onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
                   maxLength={80}
-                  className="mt-1 h-10 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary" />
+                  className="mt-1 h-10 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
+                />
               </label>
               <label className="block text-sm">
                 <span className="font-semibold">Bio</span>
-                <textarea value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  maxLength={300} rows={3}
-                  className="mt-1 w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary" />
+                <textarea
+                  value={profile.bio}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                  maxLength={300}
+                  rows={3}
+                  className="mt-1 w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
+                />
               </label>
-              <button disabled={savingProfile}
-                className="h-10 px-4 rounded-sm bg-primary text-primary-foreground font-semibold disabled:opacity-60">
+              <button
+                disabled={savingProfile}
+                className="h-10 px-4 rounded-sm bg-primary text-primary-foreground font-semibold disabled:opacity-60"
+              >
                 {savingProfile ? "Saving…" : "Save profile"}
               </button>
             </form>
@@ -216,8 +298,16 @@ function Dashboard() {
   );
 }
 
-function Section({ title, empty, children, action }: {
-  title: string; empty: string; children: React.ReactNode; action?: React.ReactNode;
+function Section({
+  title,
+  empty,
+  children,
+  action,
+}: {
+  title: string;
+  empty: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   const items = Array.isArray(children) ? children : [children];
   return (
@@ -235,16 +325,32 @@ function Section({ title, empty, children, action }: {
   );
 }
 
-function Row({ a, meta, onRemove }: { a: ArticleStub | null; meta: string; onRemove?: () => void }) {
+function Row({
+  a,
+  meta,
+  onRemove,
+}: {
+  a: ArticleStub | null;
+  meta: string;
+  onRemove?: () => void;
+}) {
   return (
     <li className="border border-border rounded-sm p-4 flex items-start justify-between gap-4">
       <div>
-        <div className="text-[11px] uppercase tracking-wider text-primary font-semibold">{a?.category ?? ""}</div>
-        <div className="mt-1"><ArticleLink a={a} /></div>
+        <div className="text-[11px] uppercase tracking-wider text-primary font-semibold">
+          {a?.category ?? ""}
+        </div>
+        <div className="mt-1">
+          <ArticleLink a={a} />
+        </div>
         <div className="mt-1 text-xs text-muted-foreground">{meta}</div>
       </div>
       {onRemove && (
-        <button onClick={onRemove} aria-label="Remove" className="text-muted-foreground hover:text-destructive">
+        <button
+          onClick={onRemove}
+          aria-label="Remove"
+          className="text-muted-foreground hover:text-destructive"
+        >
           <Trash2 className="h-4 w-4" />
         </button>
       )}

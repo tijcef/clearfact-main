@@ -58,18 +58,33 @@ function computeFraudScore(opts: {
 export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({
-      payoutAccountId: z.string().uuid(),
-      amountKobo: z.number().int().min(MIN_WITHDRAWAL_KOBO).max(MAX_WITHDRAWAL_KOBO),
-    }).parse(data),
+    z
+      .object({
+        payoutAccountId: z.string().uuid(),
+        amountKobo: z.number().int().min(MIN_WITHDRAWAL_KOBO).max(MAX_WITHDRAWAL_KOBO),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
 
     const [{ data: account }, { data: profile }, { data: recent }] = await Promise.all([
-      supabase.from("payout_accounts").select("*").eq("id", data.payoutAccountId).eq("contributor_id", userId).maybeSingle(),
-      supabase.from("contributor_profiles").select("wallet_balance_kobo,trust_score").eq("user_id", userId).maybeSingle(),
-      supabase.from("withdrawal_requests").select("id").eq("contributor_id", userId).gte("requested_at", new Date(Date.now() - 7 * 86400_000).toISOString()),
+      supabase
+        .from("payout_accounts")
+        .select("*")
+        .eq("id", data.payoutAccountId)
+        .eq("contributor_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("contributor_profiles")
+        .select("wallet_balance_kobo,trust_score")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("withdrawal_requests")
+        .select("id")
+        .eq("contributor_id", userId)
+        .gte("requested_at", new Date(Date.now() - 7 * 86400_000).toISOString()),
     ]);
 
     if (!account) throw new Error("Payout account not found");
@@ -94,22 +109,29 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       account_verified: !!account.verified,
     });
 
-    const { data: req, error } = await supabase.from("withdrawal_requests").insert({
-      contributor_id: userId,
-      payout_account_id: account.id,
-      amount_kobo: data.amountKobo,
-      fee_kobo: fee,
-      tax_kobo: tax,
-      fraud_score: fraud.score,
-      fraud_flags: fraud.flags,
-      status: "pending",
-    }).select("*").single();
+    const { data: req, error } = await supabase
+      .from("withdrawal_requests")
+      .insert({
+        contributor_id: userId,
+        payout_account_id: account.id,
+        amount_kobo: data.amountKobo,
+        fee_kobo: fee,
+        tax_kobo: tax,
+        fraud_score: fraud.score,
+        fraud_flags: fraud.flags,
+        status: "pending",
+      })
+      .select("*")
+      .single();
     if (error || !req) throw new Error(error?.message ?? "Failed to create withdrawal");
 
     // Hold the funds: deduct from balance and log a pending ledger entry.
-    await supabase.from("contributor_profiles").update({
-      wallet_balance_kobo: balance - data.amountKobo,
-    }).eq("user_id", userId);
+    await supabase
+      .from("contributor_profiles")
+      .update({
+        wallet_balance_kobo: balance - data.amountKobo,
+      })
+      .eq("user_id", userId);
 
     await supabase.from("wallet_ledger").insert({
       contributor_id: userId,
@@ -124,12 +146,14 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
 export const decideWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({
-      withdrawalId: z.string().uuid(),
-      decision: z.enum(["approve", "reject", "mark_paid", "mark_failed"]),
-      note: z.string().max(2000).optional(),
-      gatewayReference: z.string().max(255).optional(),
-    }).parse(data),
+    z
+      .object({
+        withdrawalId: z.string().uuid(),
+        decision: z.enum(["approve", "reject", "mark_paid", "mark_failed"]),
+        note: z.string().max(2000).optional(),
+        gatewayReference: z.string().max(255).optional(),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -141,17 +165,28 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
     );
     if (!allowed) throw new Error("Forbidden");
 
-    const { data: w } = await supabase.from("withdrawal_requests").select("*").eq("id", data.withdrawalId).single();
+    const { data: w } = await supabase
+      .from("withdrawal_requests")
+      .select("*")
+      .eq("id", data.withdrawalId)
+      .single();
     if (!w) throw new Error("Not found");
 
     const now = new Date().toISOString();
 
     if (data.decision === "reject") {
       // Refund the held amount back to the wallet
-      const { data: prof } = await supabase.from("contributor_profiles").select("wallet_balance_kobo").eq("user_id", w.contributor_id).maybeSingle();
-      await supabase.from("contributor_profiles").update({
-        wallet_balance_kobo: (prof?.wallet_balance_kobo ?? 0) + w.amount_kobo,
-      }).eq("user_id", w.contributor_id);
+      const { data: prof } = await supabase
+        .from("contributor_profiles")
+        .select("wallet_balance_kobo")
+        .eq("user_id", w.contributor_id)
+        .maybeSingle();
+      await supabase
+        .from("contributor_profiles")
+        .update({
+          wallet_balance_kobo: (prof?.wallet_balance_kobo ?? 0) + w.amount_kobo,
+        })
+        .eq("user_id", w.contributor_id);
 
       await supabase.from("wallet_ledger").insert({
         contributor_id: w.contributor_id,
@@ -161,9 +196,15 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
         created_by: userId,
       });
 
-      await supabase.from("withdrawal_requests").update({
-        status: "rejected", reviewer_id: userId, reviewer_note: data.note ?? null, reviewed_at: now,
-      }).eq("id", w.id);
+      await supabase
+        .from("withdrawal_requests")
+        .update({
+          status: "rejected",
+          reviewer_id: userId,
+          reviewer_note: data.note ?? null,
+          reviewed_at: now,
+        })
+        .eq("id", w.id);
 
       await supabase.from("notifications").insert({
         user_id: w.contributor_id,
@@ -176,9 +217,15 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
     }
 
     if (data.decision === "approve") {
-      await supabase.from("withdrawal_requests").update({
-        status: "approved", reviewer_id: userId, reviewer_note: data.note ?? null, reviewed_at: now,
-      }).eq("id", w.id);
+      await supabase
+        .from("withdrawal_requests")
+        .update({
+          status: "approved",
+          reviewer_id: userId,
+          reviewer_note: data.note ?? null,
+          reviewed_at: now,
+        })
+        .eq("id", w.id);
       await supabase.from("notifications").insert({
         user_id: w.contributor_id,
         kind: "withdrawal_approved",
@@ -195,7 +242,7 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
         contributor_id: w.contributor_id,
         kind: "payout",
         amount_kobo: w.amount_kobo,
-        note: `Paid via ${data.gatewayReference ?? "manual"}${w.fee_kobo ? ` (fee ₦${(w.fee_kobo/100).toLocaleString()})` : ""}`,
+        note: `Paid via ${data.gatewayReference ?? "manual"}${w.fee_kobo ? ` (fee ₦${(w.fee_kobo / 100).toLocaleString()})` : ""}`,
         created_by: userId,
       });
       if (w.tax_kobo > 0) {
@@ -207,9 +254,16 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
           created_by: userId,
         });
       }
-      await supabase.from("withdrawal_requests").update({
-        status: "paid", paid_at: now, gateway_reference: data.gatewayReference ?? null, reviewer_id: userId, reviewer_note: data.note ?? null,
-      }).eq("id", w.id);
+      await supabase
+        .from("withdrawal_requests")
+        .update({
+          status: "paid",
+          paid_at: now,
+          gateway_reference: data.gatewayReference ?? null,
+          reviewer_id: userId,
+          reviewer_note: data.note ?? null,
+        })
+        .eq("id", w.id);
       await supabase.from("notifications").insert({
         user_id: w.contributor_id,
         kind: "withdrawal_paid",
@@ -221,10 +275,17 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
     }
 
     // mark_failed → refund + log
-    const { data: prof } = await supabase.from("contributor_profiles").select("wallet_balance_kobo").eq("user_id", w.contributor_id).maybeSingle();
-    await supabase.from("contributor_profiles").update({
-      wallet_balance_kobo: (prof?.wallet_balance_kobo ?? 0) + w.amount_kobo,
-    }).eq("user_id", w.contributor_id);
+    const { data: prof } = await supabase
+      .from("contributor_profiles")
+      .select("wallet_balance_kobo")
+      .eq("user_id", w.contributor_id)
+      .maybeSingle();
+    await supabase
+      .from("contributor_profiles")
+      .update({
+        wallet_balance_kobo: (prof?.wallet_balance_kobo ?? 0) + w.amount_kobo,
+      })
+      .eq("user_id", w.contributor_id);
     await supabase.from("wallet_ledger").insert({
       contributor_id: w.contributor_id,
       kind: "payout_failed",
@@ -232,19 +293,27 @@ export const decideWithdrawal = createServerFn({ method: "POST" })
       note: `Gateway failure — refund (${data.note ?? ""})`.trim(),
       created_by: userId,
     });
-    await supabase.from("withdrawal_requests").update({
-      status: "failed", reviewer_id: userId, reviewer_note: data.note ?? null, reviewed_at: now,
-    }).eq("id", w.id);
+    await supabase
+      .from("withdrawal_requests")
+      .update({
+        status: "failed",
+        reviewer_id: userId,
+        reviewer_note: data.note ?? null,
+        reviewed_at: now,
+      })
+      .eq("id", w.id);
     return { ok: true, status: "failed" as const };
   });
 
 export const claimReferral = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({
-      referralCode: z.string().min(4).max(32),
-      kind: z.enum(["contributor", "reader"]).default("reader"),
-    }).parse(data),
+    z
+      .object({
+        referralCode: z.string().min(4).max(32),
+        kind: z.enum(["contributor", "reader"]).default("reader"),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
@@ -269,11 +338,18 @@ export const claimReferral = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Credit the referrer wallet
-    const { data: rprof } = await supabase.from("contributor_profiles").select("wallet_balance_kobo").eq("user_id", referrer.user_id).maybeSingle();
+    const { data: rprof } = await supabase
+      .from("contributor_profiles")
+      .select("wallet_balance_kobo")
+      .eq("user_id", referrer.user_id)
+      .maybeSingle();
     if (rprof) {
-      await supabase.from("contributor_profiles").update({
-        wallet_balance_kobo: (rprof.wallet_balance_kobo ?? 0) + reward,
-      }).eq("user_id", referrer.user_id);
+      await supabase
+        .from("contributor_profiles")
+        .update({
+          wallet_balance_kobo: (rprof.wallet_balance_kobo ?? 0) + reward,
+        })
+        .eq("user_id", referrer.user_id);
       await supabase.from("wallet_ledger").insert({
         contributor_id: referrer.user_id,
         kind: "referral_bonus",

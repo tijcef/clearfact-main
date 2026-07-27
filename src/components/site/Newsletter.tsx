@@ -8,10 +8,7 @@ export function Newsletter() {
             Five verified stories shaping Nigeria, in your inbox before 7am. No spam, ever.
           </p>
         </div>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex flex-col sm:flex-row gap-2"
-        >
+        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
             required

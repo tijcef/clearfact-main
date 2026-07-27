@@ -5,9 +5,10 @@ import { ArticleCard } from "@/components/site/ArticleCard";
 
 export const Route = createFileRoute("/fact-check")({
   head: () => ({
-    title: "Fact Check Center | ClearFact News",
-
     meta: [
+      {
+        title: "Fact Check Center | ClearFact News",
+      },
       {
         name: "description",
         content:
@@ -21,8 +22,7 @@ export const Route = createFileRoute("/fact-check")({
 
       {
         property: "og:description",
-        content:
-          "Verifying claims. Citing sources. Showing our work.",
+        content: "Verifying claims. Citing sources. Showing our work.",
       },
 
       {
@@ -86,9 +86,7 @@ function FactCheck() {
               Verification Desk
             </span>
 
-            <h1 className="font-serif text-4xl md:text-6xl mt-4">
-              Fact Check Center
-            </h1>
+            <h1 className="font-serif text-4xl md:text-6xl mt-4">Fact Check Center</h1>
 
             <p className="mt-4 text-lg text-primary-foreground/80">
               Every claim we publish is reviewed, verified and supported with evidence.
@@ -118,9 +116,7 @@ function FactCheck() {
                   {r.label}
                 </div>
 
-                <div className="font-serif text-2xl mt-3">
-                  {r.count}
-                </div>
+                <div className="font-serif text-2xl mt-3">{r.count}</div>
               </div>
             ))}
           </div>
@@ -128,16 +124,11 @@ function FactCheck() {
       </section>
 
       <section className="container-news py-12">
-        <h2 className="font-serif text-2xl border-b-2 border-primary pb-2">
-          Latest Fact Checks
-        </h2>
+        <h2 className="font-serif text-2xl border-b-2 border-primary pb-2">Latest Fact Checks</h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {checks.map((article) => (
-            <ArticleCard
-              key={article.slug}
-              article={article}
-            />
+            <ArticleCard key={article.slug} article={article} />
           ))}
         </div>
       </section>

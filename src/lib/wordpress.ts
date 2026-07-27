@@ -3,12 +3,14 @@ export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
+const GET_TIMEOUT_MS = 4_500;
+const WRITE_TIMEOUT_MS = 10_000;
+const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
 
 const LIST_FIELDS = [
   "id",
   "slug",
   "date",
-  "modified",
   "title",
   "excerpt",
   "categories",
@@ -21,6 +23,7 @@ const LIST_FIELDS = [
 
 type CacheEntry = {
   expiresAt: number;
+  staleUntil: number;
   value: unknown;
 };
 
@@ -59,12 +62,19 @@ async function requestJson<T>(
   const endpoint = resolveEndpoint(path);
   const cacheKey = `${method}:${endpoint}`;
   const now = Date.now();
+  let staleEntry: CacheEntry | undefined;
 
   if (method === "GET") {
     const cached = memoryCache.get(cacheKey);
 
     if (cached && cached.expiresAt > now) {
       return cached.value as T;
+    }
+
+    if (cached && cached.staleUntil > now) {
+      staleEntry = cached;
+    } else if (cached) {
+      memoryCache.delete(cacheKey);
     }
 
     const pendingRequest = inflightRequests.get(cacheKey);
@@ -93,7 +103,8 @@ async function requestJson<T>(
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12_000);
+    const timeoutMs = method === "GET" ? GET_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(endpoint, {
@@ -102,9 +113,7 @@ async function requestJson<T>(
       });
 
       if (!response.ok) {
-        throw new Error(
-          `WordPress request failed (${response.status} ${response.statusText})`,
-        );
+        throw new Error(`WordPress request failed (${response.status} ${response.statusText})`);
       }
 
       const value = (await response.json()) as T;
@@ -112,14 +121,20 @@ async function requestJson<T>(
       if (method === "GET") {
         memoryCache.set(cacheKey, {
           expiresAt: Date.now() + cacheTtl * 1_000,
+          staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
           value,
         });
       }
 
       return value;
     } catch (error) {
+      if (method === "GET" && staleEntry) {
+        console.warn(`Using cached WordPress data after ${endpoint} failed.`);
+        return staleEntry.value as T;
+      }
+
       if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("WordPress request timed out after 12 seconds");
+        throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
       }
 
       throw error;
@@ -190,17 +205,30 @@ export async function searchPosts(query: string, limit = 24) {
 }
 
 export async function getPostBySlug(slug: string) {
-  const posts = await requestJson<any[]>(
-    `/posts${buildQuery({
-      slug,
-      per_page: 1,
-      _embed: "wp:featuredmedia,wp:term,author",
-      acf_format: "standard",
-    })}`,
-    { cacheTtl: 300 },
+  const publicSlug = normalizeWpSlug(slug);
+  const containsUnicode = [...publicSlug].some(
+    (character) => (character.codePointAt(0) ?? 0) > 127,
   );
+  const wordpressSlug = containsUnicode ? encodeURIComponent(publicSlug).toLowerCase() : publicSlug;
+  const candidates = [...new Set([wordpressSlug, slug])];
 
-  return posts.length ? posts[0] : null;
+  for (const candidate of candidates) {
+    const posts = await requestJson<any[]>(
+      `/posts${buildQuery({
+        slug: candidate,
+        per_page: 1,
+        _embed: "wp:featuredmedia,wp:term,author",
+        acf_format: "standard",
+      })}`,
+      { cacheTtl: 300 },
+    );
+
+    if (posts.length) {
+      return posts[0];
+    }
+  }
+
+  return null;
 }
 
 export async function getPostsByCategory(categoryId: number, limit = 24) {
@@ -287,6 +315,114 @@ export async function submitComment(postId: number, name: string, email: string,
   });
 }
 
+export type SitemapPost = {
+  id: number;
+  slug: string;
+  date: string;
+  modified?: string;
+  title?: {
+    rendered?: string;
+  };
+};
+
+export async function getSitemapPosts(maxPages = 10) {
+  const posts: SitemapPost[] = [];
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    let batch: SitemapPost[];
+
+    try {
+      batch = await requestJson<SitemapPost[]>(
+        `/posts${buildQuery({
+          per_page: 100,
+          page,
+          status: "publish",
+          orderby: "date",
+          order: "desc",
+          _fields: "id,slug,date,modified,title",
+        })}`,
+        { cacheTtl: 900 },
+      );
+    } catch (error) {
+      if (posts.length) {
+        console.warn("A later WordPress sitemap page failed; returning the pages already loaded.");
+        break;
+      }
+
+      throw error;
+    }
+
+    posts.push(...batch);
+
+    if (batch.length < 100) {
+      break;
+    }
+  }
+
+  return posts;
+}
+
+export function normalizeWpSlug(slug: string) {
+  let value = slug.trim();
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const decoded = decodeURIComponent(value);
+
+      if (decoded === value) {
+        break;
+      }
+
+      value = decoded;
+    } catch {
+      break;
+    }
+  }
+
+  return value;
+}
+
+export function getPublicPostPath(slug: string) {
+  return `/post/${encodeURIComponent(normalizeWpSlug(slug))}`;
+}
+
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  apos: "'",
+  gt: ">",
+  hellip: "…",
+  ldquo: "“",
+  lsquo: "‘",
+  lt: "<",
+  mdash: "—",
+  nbsp: " ",
+  ndash: "–",
+  quot: '"',
+  rdquo: "”",
+  rsquo: "’",
+};
+
+export function decodeHtmlEntities(value = "") {
+  return value.replace(
+    /&#(\d+);|&#x([\da-f]+);|&([a-z]+);/gi,
+    (entity, decimal: string | undefined, hexadecimal: string | undefined, named: string) => {
+      if (decimal) {
+        return String.fromCodePoint(Number(decimal));
+      }
+
+      if (hexadecimal) {
+        return String.fromCodePoint(Number.parseInt(hexadecimal, 16));
+      }
+
+      return HTML_ENTITIES[named.toLowerCase()] ?? entity;
+    },
+  );
+}
+
+export function stripHtml(value = "") {
+  return decodeHtmlEntities(value.replace(/<[^>]*>/g, "")).trim();
+}
+
 export function proxyWpMediaUrl(sourceUrl?: string) {
   if (!sourceUrl) return "";
 
@@ -304,8 +440,28 @@ export function proxyWpMediaUrl(sourceUrl?: string) {
   return sourceUrl;
 }
 
-export function getFeaturedImageUrl(post: any, fallback = "") {
-  const sourceUrl = post?._embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? "";
+type PreferredImageSize = "full" | "large" | "medium_large" | "medium";
+
+export function getFeaturedImageUrl(
+  post: any,
+  fallback = "",
+  preferredSize: PreferredImageSize = "large",
+) {
+  const media = post?._embedded?.["wp:featuredmedia"]?.[0];
+  const sizes = media?.media_details?.sizes ?? {};
+  const sizePriority: PreferredImageSize[] =
+    preferredSize === "full"
+      ? ["full", "large", "medium_large", "medium"]
+      : preferredSize === "large"
+        ? ["large", "medium_large", "medium", "full"]
+        : preferredSize === "medium_large"
+          ? ["medium_large", "large", "medium", "full"]
+          : ["medium", "medium_large", "large", "full"];
+
+  const sourceUrl =
+    sizePriority
+      .map((size) => (size === "full" ? media?.source_url : sizes?.[size]?.source_url))
+      .find(Boolean) ?? "";
 
   return proxyWpMediaUrl(sourceUrl) || fallback;
 }
