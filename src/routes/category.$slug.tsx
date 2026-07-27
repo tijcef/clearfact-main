@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
-  getCategories,
+  getCategoryBySlug,
   getFeaturedImageUrl,
   getPostsByCategory,
   normalizeWpSlug,
@@ -22,11 +23,11 @@ function categoryLabel(slug: string) {
 export const Route = createFileRoute("/category/$slug")({
   loader: async ({ params }) => {
     try {
-      const categories = await getCategories();
       const acceptedSlugs = CATEGORY_ALIASES[params.slug] ?? [params.slug];
-      const category = categories.find((item: any) =>
-        acceptedSlugs.includes(item.slug.toLowerCase()),
+      const categoryResults = await Promise.all(
+        acceptedSlugs.map((slug) => getCategoryBySlug(slug)),
       );
+      const category = categoryResults.find(Boolean);
 
       if (!category) {
         return { category: null, posts: [], unavailable: false };
@@ -84,6 +85,25 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { category, posts, unavailable } = Route.useLoaderData();
   const categoryName = category?.name ?? "News";
+  const router = useRouter();
+  const [retryAttempt, setRetryAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!unavailable || posts.length > 0 || retryAttempt >= 2) {
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => {
+        void router.invalidate().finally(() => {
+          setRetryAttempt((attempt) => attempt + 1);
+        });
+      },
+      retryAttempt === 0 ? 400 : 1_200,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [posts.length, retryAttempt, router, unavailable]);
 
   return (
     <div className="container-news py-8 md:py-12">
@@ -136,14 +156,33 @@ function CategoryPage() {
       {posts.length === 0 && (
         <div className="text-center py-16">
           <h3 className="text-2xl font-semibold mb-2">
-            {unavailable ? "The newsroom feed is reconnecting" : "No articles found"}
+            {unavailable && retryAttempt < 2
+              ? `Loading the latest ${categoryName} reports…`
+              : unavailable
+                ? "The newsroom feed needs another moment"
+                : "No articles found"}
           </h3>
 
           <p className="text-muted-foreground">
-            {unavailable
-              ? "Please try again shortly. ClearFact will restore this section automatically."
-              : "There are currently no published posts in this category."}
+            {unavailable && retryAttempt < 2
+              ? "ClearFact is reconnecting automatically. You do not need to refresh the page."
+              : unavailable
+                ? "Please retry this section."
+                : "There are currently no published posts in this category."}
           </p>
+
+          {unavailable && retryAttempt >= 2 && (
+            <button
+              type="button"
+              className="mt-5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+              onClick={() => {
+                setRetryAttempt(0);
+                void router.invalidate();
+              }}
+            >
+              Retry latest reports
+            </button>
+          )}
         </div>
       )}
 

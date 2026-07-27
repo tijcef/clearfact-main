@@ -182,6 +182,19 @@ export async function getCategories() {
   );
 }
 
+export async function getCategoryBySlug(slug: string) {
+  const categories = await requestJson<any[]>(
+    `/categories${buildQuery({
+      slug,
+      per_page: 1,
+      _fields: "id,name,slug,parent,count,description",
+    })}`,
+    { cacheTtl: 900 },
+  );
+
+  return categories[0] ?? null;
+}
+
 export async function getTags() {
   return requestJson<any[]>(
     `/tags${buildQuery({
