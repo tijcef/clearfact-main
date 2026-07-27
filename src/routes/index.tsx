@@ -5,7 +5,7 @@ import CategorySection from "@/components/home/CategorySection";
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {
-      const posts = await getPosts(36);
+      const posts = await getPosts(24);
 
       return {
         posts: Array.isArray(posts) ? posts : [],

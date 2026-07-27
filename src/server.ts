@@ -205,10 +205,14 @@ function apiCacheTtl(pathname: string) {
   if (pathname.startsWith("/api/wp/categories")) return 900;
   if (pathname.startsWith("/api/wp/tags")) return 900;
   if (pathname.startsWith("/api/wp/comments")) return 60;
-  return 300;
+  return 900;
 }
 
-async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike) {
+async function proxyWordPressRequest(
+  request: Request,
+  ctx: ExecutionContextLike,
+  serveStaleImmediately = true,
+) {
   const incomingUrl = new URL(request.url);
   let restPath = incomingUrl.pathname.slice("/api/wp".length);
 
@@ -238,6 +242,18 @@ async function proxyWordPressRequest(request: Request, ctx: ExecutionContextLike
 
     if (cached) {
       return withCacheStatus(cached, "HIT");
+    }
+
+    if (serveStaleImmediately) {
+      const stale = await getStaleResponse(cache, request, "wp");
+
+      if (stale) {
+        runInBackground(
+          ctx,
+          proxyWordPressRequest(request, ctx, false).then(() => undefined),
+        );
+        return stale;
+      }
     }
   }
 
@@ -434,13 +450,18 @@ function pageCacheTtl(request: Request) {
     return null;
   }
 
-  if (url.pathname === "/") return 60;
+  if (url.pathname === "/") return 600;
   if (url.pathname.startsWith("/post/")) return 300;
   if (url.pathname.startsWith("/category/")) return 180;
   return 900;
 }
 
-async function servePage(request: Request, env: unknown, ctx: ExecutionContextLike) {
+async function servePage(
+  request: Request,
+  env: unknown,
+  ctx: ExecutionContextLike,
+  serveStaleImmediately = true,
+) {
   const ttl = pageCacheTtl(request);
   const cache = ttl ? getDefaultCache() : undefined;
 
@@ -449,6 +470,18 @@ async function servePage(request: Request, env: unknown, ctx: ExecutionContextLi
 
     if (cached) {
       return withCacheStatus(cached, "HIT");
+    }
+
+    if (serveStaleImmediately) {
+      const stale = await getStaleResponse(cache, request, "page");
+
+      if (stale) {
+        runInBackground(
+          ctx,
+          servePage(request, env, ctx, false).then(() => undefined),
+        );
+        return stale;
+      }
     }
   }
 

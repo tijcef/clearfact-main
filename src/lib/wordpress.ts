@@ -58,7 +58,7 @@ async function requestJson<T>(
   options: RequestInit & { cacheTtl?: number } = {},
 ): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
-  const cacheTtl = options.cacheTtl ?? 300;
+  const cacheTtl = options.cacheTtl ?? 900;
   const endpoint = resolveEndpoint(path);
   const cacheKey = `${method}:${endpoint}`;
   const now = Date.now();
@@ -237,7 +237,7 @@ export async function getPostsByCategory(categoryId: number, limit = 24) {
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
     })}`,
-    { cacheTtl: 180 },
+    { cacheTtl: 600 },
   );
 }
 

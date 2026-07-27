@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/logo.jpg";
@@ -59,10 +59,20 @@ function Logo() {
 }
 
 export function Header() {
+  const routeTickerPosts = useRouterState({
+    select: (state) =>
+      state.matches
+        .flatMap((match) => {
+          const loaderData = match.loaderData as { posts?: unknown } | undefined;
+          return isTickerPostList(loaderData?.posts) ? loaderData.posts : [];
+        })
+        .slice(0, 8),
+  });
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [tickerPosts, setTickerPosts] = useState<TickerPost[]>([]);
-  const [tickerLoading, setTickerLoading] = useState(true);
+  const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
+  const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
+  const displayedTickerPosts = tickerPosts.length ? tickerPosts : routeTickerPosts;
 
   useEffect(() => {
     let active = true;
@@ -297,9 +307,9 @@ export function Header() {
           </span>
 
           <div className="ticker-viewport min-w-0 flex-1 overflow-hidden" aria-live="polite">
-            {tickerPosts.length > 0 ? (
+            {displayedTickerPosts.length > 0 ? (
               <div className="ticker-track gap-6 whitespace-nowrap md:gap-8">
-                {[...tickerPosts, ...tickerPosts].map((post, index) => (
+                {[...displayedTickerPosts, ...displayedTickerPosts].map((post, index) => (
                   <Link
                     key={`${post.id}-${index}`}
                     to="/post/$slug"
