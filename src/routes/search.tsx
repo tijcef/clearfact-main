@@ -203,7 +203,7 @@ function SearchPage() {
             onChange={(event) =>
               setInput(event.target.value)
             }
-            placeholder="Search verified reports, fact-checks, topics…"
+            placeholder="Search news, investigations, reports and topics…"
             className="w-full h-11 pl-9 pr-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
           />
         </label>

@@ -6,26 +6,26 @@ import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/logo.jpg";
 
 const MAIN_CATEGORIES = [
-  { name: "Breaking", slug: "breaking" },
+  { name: "News", slug: "news" },
   { name: "Politics", slug: "politics" },
+  { name: "Crime & Security", slug: "crime-security" },
+  { name: "Law & Judiciary", slug: "law-judiciary" },
   { name: "Business", slug: "business" },
-  { name: "Technology", slug: "technology" },
+  { name: "Investigations", slug: "investigations" },
+  { name: "Accountability", slug: "accountability" },
   { name: "Education", slug: "education" },
   { name: "Health", slug: "health" },
-  { name: "Security", slug: "security" },
-  { name: "Fact Check", slug: "fact-check" },
-  { name: "Investigations", slug: "investigations" },
+  { name: "Technology", slug: "technology" },
   { name: "Opportunities", slug: "opportunities" },
-  { name: "World", slug: "world" },
 ];
 
 const MORE_CATEGORIES = [
-  { name: "Economy", slug: "economy" },
-  { name: "Metro", slug: "metro" },
-  { name: "Sports", slug: "sports" },
-  { name: "Entertainment", slug: "entertainment" },
-  { name: "Opinion", slug: "opinion" },
   { name: "Features", slug: "features" },
+  { name: "Metro", slug: "metro" },
+  { name: "World", slug: "world" },
+  { name: "Opinion", slug: "opinion" },
+  { name: "Entertainment", slug: "entertainment" },
+  { name: "Sports", slug: "sports" },
   { name: "Climate & Environment", slug: "climate-environment" },
   { name: "Data & Research", slug: "data-research" },
   { name: "Video", slug: "video" },
@@ -108,48 +108,50 @@ export function Header() {
       </div>
 
       {/* Main bar */}
-      <div className="container-news flex h-28 items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button
-            aria-label="Open menu"
-            className="lg:hidden p-2 -ml-2 rounded-sm hover:bg-accent"
-            onClick={() => setOpen((v) => !v)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+<div className="container-news flex h-28 items-center justify-between gap-4">
+  <div className="flex items-center gap-4">
+    <button
+      aria-label="Open menu"
+      className="lg:hidden p-2 -ml-2 rounded-sm hover:bg-accent"
+      onClick={() => setOpen((v) => !v)}
+    >
+      <Menu className="h-5 w-5" />
+    </button>
 
-          <Logo />
-        </div>
+    <Logo />
+  </div>
 
-        <form
-          className="hidden md:flex items-center gap-2 max-w-md w-full"
-          onSubmit={(e) => {
-            e.preventDefault();
+  <form
+    className="hidden md:flex items-center gap-2 max-w-md w-full"
+    onSubmit={(e) => {
+      e.preventDefault();
 
-            const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement)?.value ?? "";
+      const q =
+        (e.currentTarget.elements.namedItem("q") as HTMLInputElement)?.value ?? "";
 
-            window.location.href = `/search?q=${encodeURIComponent(q)}`;
-          }}
-        >
-          <label className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      window.location.href = `/search?q=${encodeURIComponent(q)}`;
+    }}
+  >
+    <label className="relative w-full">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
-            <input
-              name="q"
-              placeholder="Search verified reports, fact-checks, topics…"
-              className="w-full h-10 pl-9 pr-3 text-sm bg-muted rounded-sm border border-transparent focus:border-primary focus:bg-background outline-none"
-            />
-          </label>
-        </form>
+      <input
+        name="q"
+        placeholder="Search news, investigations, reports and topics…"
+        className="w-full h-10 pl-9 pr-3 text-sm bg-muted rounded-sm border border-transparent focus:border-primary focus:bg-background outline-none"
+      />
+    </label>
+  </form>
 
-        <Link
-          to="/fact-check"
-          className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-sm bg-gold text-gold-foreground text-sm font-semibold hover:opacity-90"
-        >
-          <ShieldCheck className="h-4 w-4" />
-          Fact Check
-        </Link>
-      </div>
+  <Link
+    to="/category/$slug"
+    params={{ slug: "accountability" }}
+    className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-sm bg-gold text-gold-foreground text-sm font-semibold hover:opacity-90"
+  >
+    <ShieldCheck className="h-4 w-4" />
+    Accountability
+  </Link>
+</div>
 
       {/* Category nav */}
       <nav
