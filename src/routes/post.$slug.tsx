@@ -1,5 +1,5 @@
 import AdSense from "@/components/AdSense";
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
@@ -17,13 +17,27 @@ import { FaFacebook, FaLinkedin, FaWhatsapp, FaXTwitter } from "react-icons/fa6"
 
 export const Route = createFileRoute("/post/$slug")({
   loader: async ({ params }) => {
-    const post = await getPostBySlug(params.slug);
+    let post;
+
+    try {
+      post = await getPostBySlug(params.slug);
+    } catch (error) {
+      console.error(`Article ${params.slug} failed to load:`, error);
+
+      return {
+        post: null,
+        unavailable: true,
+      };
+    }
 
     if (!post) {
       throw notFound();
     }
 
-    return { post };
+    return {
+      post,
+      unavailable: false,
+    };
   },
 
   component: ArticlePage,
@@ -149,12 +163,14 @@ export const Route = createFileRoute("/post/$slug")({
 });
 
 function ArticlePage() {
-  const { post } = Route.useLoaderData();
+  const { post, unavailable } = Route.useLoaderData();
 
   const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
   const [progress, setProgress] = useState(0);
   const [previousPost, setPreviousPost] = useState<any>(null);
   const [nextPost, setNextPost] = useState<any>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const updateProgress = () => {
@@ -171,6 +187,10 @@ function ArticlePage() {
   }, []);
 
   useEffect(() => {
+    if (!post) {
+      return;
+    }
+
     const loadRelatedAndNavigation = async () => {
       try {
         const [related, adjacent] = await Promise.all([
@@ -191,8 +211,65 @@ function ArticlePage() {
     void loadRelatedAndNavigation();
   }, [post]);
 
-  if (post === null) {
-    throw notFound();
+  useEffect(() => {
+    if (!unavailable || post || retryAttempt >= 2) {
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => {
+        void router.invalidate().finally(() => {
+          setRetryAttempt((attempt) => attempt + 1);
+        });
+      },
+      retryAttempt === 0 ? 500 : 1_500,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [post, retryAttempt, router, unavailable]);
+
+  if (!post) {
+    return (
+      <main className="container-news py-12">
+        <section className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm md:p-12">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-600">
+            ClearFact Newsroom
+          </p>
+
+          <h1 className="mt-3 font-serif text-3xl font-bold">
+            {retryAttempt < 2 ? "Opening this report…" : "This report needs another moment"}
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
+            {retryAttempt < 2
+              ? "The newsroom is reconnecting automatically. You do not need to refresh the page."
+              : "The news server is responding slowly. Try the report again while ClearFact keeps the rest of the site available."}
+          </p>
+
+          {retryAttempt >= 2 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+                onClick={() => {
+                  setRetryAttempt(0);
+                  void router.invalidate();
+                }}
+              >
+                Retry report
+              </button>
+
+              <Link
+                to="/"
+                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold"
+              >
+                Latest news
+              </Link>
+            </div>
+          )}
+        </section>
+      </main>
+    );
   }
 
   const featuredImage = getFeaturedImageUrl(post, "", "large");

@@ -3,7 +3,8 @@ export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
-const GET_TIMEOUT_MS = 4_500;
+const SERVER_GET_TIMEOUT_MS = 6_500;
+const BROWSER_GET_TIMEOUT_MS = 8_000;
 const WRITE_TIMEOUT_MS = 10_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
 
@@ -103,7 +104,12 @@ async function requestJson<T>(
     }
 
     const controller = new AbortController();
-    const timeoutMs = method === "GET" ? GET_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+    const timeoutMs =
+      method === "GET"
+        ? typeof window === "undefined"
+          ? SERVER_GET_TIMEOUT_MS
+          : BROWSER_GET_TIMEOUT_MS
+        : WRITE_TIMEOUT_MS;
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {

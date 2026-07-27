@@ -6,6 +6,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -40,32 +41,91 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
 
   const router = useRouter();
+  const [isRecovering, setIsRecovering] = useState(true);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    const storageKey = `clearfact-route-recovery:${path}`;
+    const now = Date.now();
+    let recovery = { attempts: 0, startedAt: now };
+
+    try {
+      const stored = window.sessionStorage.getItem(storageKey);
+
+      if (stored) {
+        const parsed = JSON.parse(stored) as typeof recovery;
+
+        if (now - parsed.startedAt < 30_000) {
+          recovery = parsed;
+        }
+      }
+    } catch {
+      // Recovery must still work when storage is unavailable.
+    }
+
+    if (recovery.attempts >= 2) {
+      setIsRecovering(false);
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          attempts: recovery.attempts + 1,
+          startedAt: recovery.startedAt,
+        }),
+      );
+    } catch {
+      // Recovery must still work when storage is unavailable.
+    }
+
+    const timeout = window.setTimeout(
+      () => {
+        void router.invalidate().finally(reset);
+      },
+      recovery.attempts === 0 ? 500 : 1_500,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [reset, router]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="font-serif text-2xl">Something went wrong</h1>
+        <h1 className="font-serif text-2xl">
+          {isRecovering ? "Reconnecting to ClearFact…" : "This page needs another moment"}
+        </h1>
 
-        <p className="mt-2 text-sm text-muted-foreground">Refresh to try again.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {isRecovering
+            ? "The page is recovering automatically. You do not need to refresh."
+            : "Please try again, or continue from the latest news."}
+        </p>
 
-        <div className="mt-6 flex justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="h-10 px-4 rounded-sm bg-primary text-primary-foreground text-sm font-semibold"
-          >
-            Try again
-          </button>
+        {!isRecovering && (
+          <div className="mt-6 flex justify-center gap-2">
+            <button
+              onClick={() => {
+                window.sessionStorage.removeItem(
+                  `clearfact-route-recovery:${window.location.pathname}`,
+                );
+                setIsRecovering(true);
+                void router.invalidate().finally(reset);
+              }}
+              className="h-10 px-4 rounded-sm bg-primary text-primary-foreground text-sm font-semibold"
+            >
+              Try again
+            </button>
 
-          <a
-            href="/"
-            className="h-10 px-4 rounded-sm border border-border text-sm font-semibold inline-flex items-center"
-          >
-            Home
-          </a>
-        </div>
+            <a
+              href="/"
+              className="h-10 px-4 rounded-sm border border-border text-sm font-semibold inline-flex items-center"
+            >
+              Latest news
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
