@@ -3,8 +3,8 @@ export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
-const SERVER_GET_TIMEOUT_MS = 6_500;
-const BROWSER_GET_TIMEOUT_MS = 8_000;
+const SERVER_GET_TIMEOUT_MS = 12_500;
+const BROWSER_GET_TIMEOUT_MS = 15_000;
 const WRITE_TIMEOUT_MS = 10_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
 
@@ -12,8 +12,11 @@ const LIST_FIELDS = [
   "id",
   "slug",
   "date",
+  "date_gmt",
+  "modified",
   "title",
   "excerpt",
+  "content",
   "categories",
   "featured_media",
   "acf",
@@ -37,6 +40,24 @@ type CloudflareRequestInit = RequestInit & {
 
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<unknown>>();
+const postDetailCache = new Map<string, any>();
+
+export function primePostCache(posts: unknown) {
+  if (!Array.isArray(posts)) {
+    return;
+  }
+
+  posts.forEach((post) => {
+    if (
+      post &&
+      typeof post === "object" &&
+      typeof post.slug === "string" &&
+      typeof post.content?.rendered === "string"
+    ) {
+      postDetailCache.set(normalizeWpSlug(post.slug), post);
+    }
+  });
+}
 
 function buildQuery(values: Record<string, string | number | undefined>) {
   const params = new URLSearchParams();
@@ -175,7 +196,12 @@ function listQuery(values: Record<string, string | number | undefined> = {}) {
 }
 
 export async function getPosts(limit = DEFAULT_LIST_SIZE) {
-  return requestJson<any[]>(`/posts${listQuery({ per_page: Math.min(Math.max(limit, 1), 100) })}`);
+  const posts = await requestJson<any[]>(
+    `/posts${listQuery({ per_page: Math.min(Math.max(limit, 1), 100) })}`,
+  );
+
+  primePostCache(posts);
+  return posts;
 }
 
 export async function getCategories() {
@@ -214,17 +240,26 @@ export async function getTags() {
 }
 
 export async function searchPosts(query: string, limit = 24) {
-  return requestJson<any[]>(
+  const posts = await requestJson<any[]>(
     `/posts${listQuery({
       search: query,
       per_page: Math.min(Math.max(limit, 1), 100),
     })}`,
     { cacheTtl: 120 },
   );
+
+  primePostCache(posts);
+  return posts;
 }
 
 export async function getPostBySlug(slug: string) {
   const publicSlug = normalizeWpSlug(slug);
+  const cachedPost = postDetailCache.get(publicSlug);
+
+  if (cachedPost) {
+    return cachedPost;
+  }
+
   const containsUnicode = [...publicSlug].some(
     (character) => (character.codePointAt(0) ?? 0) > 127,
   );
@@ -243,6 +278,7 @@ export async function getPostBySlug(slug: string) {
     );
 
     if (posts.length) {
+      primePostCache(posts);
       return posts[0];
     }
   }
@@ -251,13 +287,16 @@ export async function getPostBySlug(slug: string) {
 }
 
 export async function getPostsByCategory(categoryId: number, limit = 24) {
-  return requestJson<any[]>(
+  const posts = await requestJson<any[]>(
     `/posts${listQuery({
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
     })}`,
     { cacheTtl: 600 },
   );
+
+  primePostCache(posts);
+  return posts;
 }
 
 export async function getRelatedPosts(categoryId: number, currentPostId: number, limit = 8) {

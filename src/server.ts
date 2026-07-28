@@ -26,7 +26,7 @@ const WP_REST_ORIGIN = "https://cms.tijcef.org/wp-json/wp/v2";
 const WP_MEDIA_ORIGIN = "https://cms.tijcef.org/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
 const ONE_WEEK = 604_800;
-const API_ORIGIN_TIMEOUT_MS = 6_000;
+const API_ORIGIN_TIMEOUT_MS = 12_000;
 const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -327,7 +327,36 @@ async function proxyWordPressRequest(
     responseHeaders.set("cache-control", "no-store");
   }
 
-  const response = new Response(originResponse.body, {
+  let responseBody: ArrayBuffer | null = null;
+
+  try {
+    responseBody = method === "HEAD" ? null : await originResponse.arrayBuffer();
+  } catch (error) {
+    console.error("WordPress origin response was interrupted:", error);
+
+    const stale = await getStaleResponse(cache, request, "wp");
+    if (stale) return stale;
+
+    return new Response(
+      JSON.stringify({
+        code: "clearfact_wordpress_interrupted",
+        message: "The newsroom feed is temporarily unavailable.",
+      }),
+      {
+        status: 503,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "retry-after": "15",
+        },
+      },
+    );
+  }
+
+  // Buffer the small JSON payload before cloning it into the two edge-cache
+  // entries. Cloning the live WordPress stream can apply backpressure and
+  // leave mobile article requests stalled after only a partial response.
+  const response = new Response(responseBody, {
     status: originResponse.status,
     statusText: originResponse.statusText,
     headers: responseHeaders,

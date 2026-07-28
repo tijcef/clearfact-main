@@ -3,7 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import logo from "@/assets/logo.jpg";
-import { normalizeWpSlug, stripHtml } from "@/lib/wordpress";
+import { normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
   mainCategories as MAIN_CATEGORIES,
   moreCategories as MORE_CATEGORIES,
@@ -59,20 +59,23 @@ function Logo() {
 }
 
 export function Header() {
-  const routeTickerPosts = useRouterState({
+  const routePosts = useRouterState({
     select: (state) =>
-      state.matches
-        .flatMap((match) => {
-          const loaderData = match.loaderData as { posts?: unknown } | undefined;
-          return isTickerPostList(loaderData?.posts) ? loaderData.posts : [];
-        })
-        .slice(0, 8),
+      state.matches.flatMap((match) => {
+        const loaderData = match.loaderData as { posts?: unknown } | undefined;
+        return isTickerPostList(loaderData?.posts) ? loaderData.posts : [];
+      }),
   });
+  const routeTickerPosts = routePosts.slice(0, 8);
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
   const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
   const displayedTickerPosts = tickerPosts.length ? tickerPosts : routeTickerPosts;
+
+  useEffect(() => {
+    primePostCache(routePosts);
+  }, [routePosts]);
 
   useEffect(() => {
     let active = true;
