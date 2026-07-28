@@ -170,8 +170,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <HeadContent />
-      </head>
+  <HeadContent />
+
+  <script
+    async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8967021504063466"
+    crossOrigin="anonymous"
+  ></script>
+</head>
 
       <body>
         {children}

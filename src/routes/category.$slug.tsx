@@ -57,27 +57,34 @@ export const Route = createFileRoute("/category/$slug")({
   },
 
   head: ({ loaderData, params }) => {
-    const category = loaderData?.category;
-    const categoryName = category?.name ?? "News";
-    const description =
-      category?.description?.replace(/<[^>]+>/g, "") ||
-      `Latest verified ${categoryName} reports from ClearFact News.`;
-    const canonical = `https://clearfact.ng/category/${params.slug}`;
+  const category = loaderData?.category;
+  const categoryName = category?.name?.trim() || "News";
 
-    return {
-      meta: [
-        { title: `${categoryName} News | ClearFact News` },
-        { name: "description", content: description },
-        { name: "robots", content: "index,follow,max-image-preview:large" },
-        { property: "og:title", content: `${categoryName} News` },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: canonical },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-      links: [{ rel: "canonical", href: canonical }],
-    };
-  },
+  const categoryTitle =
+    categoryName.toLowerCase() === "news"
+      ? "Latest News | ClearFact News"
+      : `${categoryName} News | ClearFact News`;
+
+  const description =
+    category?.description?.replace(/<[^>]+>/g, "") ||
+    `Latest verified ${categoryName} reports from ClearFact News.`;
+
+  const canonical = `https://clearfact.ng/category/${params.slug}`;
+
+  return {
+    meta: [
+      { title: categoryTitle },
+      { name: "description", content: description },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: categoryTitle },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: canonical }],
+  };
+},
 
   component: CategoryPage,
 });
