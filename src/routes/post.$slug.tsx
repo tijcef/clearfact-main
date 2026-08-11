@@ -44,7 +44,12 @@ export const Route = createFileRoute("/post/$slug")({
 
   head: ({ loaderData }) => {
     if (!loaderData?.post) {
-      return {};
+      return {
+        meta: [
+          { title: "Report temporarily unavailable | ClearFact News" },
+          { name: "robots", content: "noindex,follow" },
+        ],
+      };
     }
 
     const post = loaderData.post;

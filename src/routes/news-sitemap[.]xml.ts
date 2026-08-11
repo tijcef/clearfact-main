@@ -34,6 +34,14 @@ export const Route = createFileRoute("/news-sitemap.xml")({
           posts = await getSitemapPosts(2);
         } catch (error) {
           console.error("WordPress posts were unavailable for the news sitemap:", error);
+          return new Response("News sitemap temporarily unavailable", {
+            status: 503,
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "no-store",
+              "retry-after": "300",
+            },
+          });
         }
 
         const cutoff = Date.now() - FORTY_EIGHT_HOURS;

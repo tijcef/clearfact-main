@@ -32,7 +32,7 @@ export const Route = createFileRoute("/search")({
       },
       {
         name: "robots",
-        content: "index,follow",
+        content: "noindex,follow",
       },
     ],
 

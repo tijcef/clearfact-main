@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import {
   getCategoryBySlug,
   getFeaturedImageUrl,
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/category/$slug")({
       const category = categoryResults.find(Boolean);
 
       if (!category) {
-        return { category: null, posts: [], unavailable: false };
+        throw notFound();
       }
 
       const posts = await getPostsByCategory(category.id, 24);
@@ -70,12 +70,15 @@ export const Route = createFileRoute("/category/$slug")({
     `Latest verified ${categoryName} reports from ClearFact News.`;
 
   const canonical = `https://clearfact.ng/category/${params.slug}`;
+  const robots = loaderData?.unavailable
+    ? "noindex,follow"
+    : "index,follow,max-image-preview:large";
 
   return {
     meta: [
       { title: categoryTitle },
       { name: "description", content: description },
-      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { name: "robots", content: robots },
       { property: "og:title", content: categoryTitle },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
@@ -87,6 +90,15 @@ export const Route = createFileRoute("/category/$slug")({
 },
 
   component: CategoryPage,
+  notFoundComponent: () => (
+    <main className="container-news py-16">
+      <h1 className="font-serif text-4xl font-bold">Section not found</h1>
+      <p className="mt-3 text-muted-foreground">This news section does not exist.</p>
+      <Link to="/" className="mt-6 inline-flex font-semibold text-primary hover:underline">
+        Return to the latest news
+      </Link>
+    </main>
+  ),
 });
 
 function CategoryPage() {

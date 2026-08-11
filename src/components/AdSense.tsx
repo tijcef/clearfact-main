@@ -6,37 +6,7 @@ declare global {
   }
 }
 
-const ADSENSE_SCRIPT_ID = "clearfact-adsense";
 const ADSENSE_CLIENT = "ca-pub-8967021504063466";
-let adsensePromise: Promise<void> | undefined;
-
-function loadAdsense() {
-  if (adsensePromise) {
-    return adsensePromise;
-  }
-
-  adsensePromise = new Promise<void>((resolve, reject) => {
-    const existing = document.getElementById(ADSENSE_SCRIPT_ID) as HTMLScriptElement | null;
-
-    if (existing) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = ADSENSE_SCRIPT_ID;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-    script.addEventListener("load", () => resolve(), { once: true });
-    script.addEventListener("error", () => reject(new Error("AdSense script failed to load")), {
-      once: true,
-    });
-    document.head.appendChild(script);
-  });
-
-  return adsensePromise;
-}
 
 export default function AdSense() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,9 +22,12 @@ export default function AdSense() {
 
     const displayAd = async () => {
       try {
-        await loadAdsense();
-
-        if (active) {
+        if (
+          active &&
+          document.querySelector(
+            'script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]',
+          )
+        ) {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
         }
       } catch {
