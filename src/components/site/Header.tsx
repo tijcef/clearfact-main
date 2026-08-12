@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { SocialFollow } from "./SocialMedia";
 import logo from "@/assets/logo.jpg";
 import { normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
@@ -160,6 +161,9 @@ export function Header() {
           <span className="hidden md:inline">{date} · Nigeria</span>
 
           <div className="flex items-center gap-3 md:gap-4 overflow-x-auto whitespace-nowrap py-2">
+            <SocialFollow compact inverse className="hidden xl:flex" />
+
+            <span className="hidden h-4 w-px bg-primary-foreground/20 xl:block" />
             <Link to="/trust-center" className="inline-flex items-center gap-1 hover:text-gold">
               <ShieldCheck className="h-3.5 w-3.5" />
               Trust Center
@@ -294,6 +298,13 @@ export function Header() {
               </div>
             )}
           </div>
+
+          {open && (
+            <div className="mt-2 border-t border-border px-3 pt-3 lg:hidden">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Follow ClearFact</p>
+              <SocialFollow />
+            </div>
+          )}
         </div>
       </nav>
 
