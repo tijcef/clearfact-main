@@ -2,7 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Mail, MapPin } from "lucide-react";
 
 import { SocialFollow } from "./SocialMedia";
-import { categories, moreCategories } from "@/lib/site-navigation";
+import { useEffect, useState } from "react";
+import { getCategories } from "@/lib/wordpress";
+import { filterNavigationCategories } from "@/lib/site-navigation";
 
 const policy = [
   { to: "/about", label: "About Us" },
@@ -16,6 +18,15 @@ const policy = [
 ];
 
 export function Footer() {
+  const [activeCategories, setActiveCategories] = useState(() => ({ main: [], more: [] }) as ReturnType<typeof filterNavigationCategories>);
+
+  useEffect(() => {
+    let active = true;
+    getCategories().then((available) => {
+      if (active) setActiveCategories(filterNavigationCategories(available));
+    }).catch((error) => console.error("Unable to load active footer categories:", error));
+    return () => { active = false; };
+  }, []);
   return (
     <footer className="mt-16 bg-primary text-primary-foreground">
       <div className="container-news py-12 grid gap-10 md:grid-cols-4">
@@ -51,7 +62,7 @@ export function Footer() {
           <h4 className="font-serif text-lg mb-3">Sections</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {categories.slice(0, 8).map((c) => (
+            {activeCategories.main.slice(0, 8).map((c) => (
               <li key={c.slug}>
                 <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}
@@ -66,7 +77,7 @@ export function Footer() {
           <h4 className="font-serif text-lg mb-3">More</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {moreCategories.map((c) => (
+            {activeCategories.more.map((c) => (
               <li key={c.slug}>
                 <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}

@@ -4,8 +4,9 @@ import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { SocialFollow } from "./SocialMedia";
 import logo from "@/assets/logo.jpg";
-import { normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
+import { getCategories, normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
+  filterNavigationCategories,
   mainCategories as MAIN_CATEGORIES,
   moreCategories as MORE_CATEGORIES,
 } from "@/lib/site-navigation";
@@ -69,6 +70,8 @@ export function Header() {
   });
   const routeTickerPosts = routePosts.slice(0, 8);
   const [open, setOpen] = useState(false);
+  const [activeMainCategories, setActiveMainCategories] = useState<typeof MAIN_CATEGORIES[number][]>([]);
+  const [activeMoreCategories, setActiveMoreCategories] = useState<typeof MORE_CATEGORIES[number][]>([]);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
   const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
@@ -77,6 +80,26 @@ export function Header() {
   useEffect(() => {
     primePostCache(routePosts);
   }, [routePosts]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadActiveCategories() {
+      try {
+        const available = await getCategories();
+        const filtered = filterNavigationCategories(available);
+        if (active) {
+          setActiveMainCategories(filtered.main);
+          setActiveMoreCategories(filtered.more);
+        }
+      } catch (error) {
+        if (active) console.error("Unable to load active categories:", error);
+      }
+    }
+
+    void loadActiveCategories();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -252,7 +275,7 @@ export function Header() {
       >
         <div className="container-news flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 py-2 text-sm">
           <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
-            {MAIN_CATEGORIES.map((category) => (
+            {activeMainCategories.map((category) => (
               <Link
                 key={category.slug}
                 to="/category/$slug"
@@ -270,18 +293,20 @@ export function Header() {
           </div>
 
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMoreOpen((value) => !value)}
-              className="w-full lg:w-auto text-left px-3 py-2 lg:px-2 lg:py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
-              aria-expanded={moreOpen}
-            >
-              More {moreOpen ? "▲" : "▼"}
-            </button>
+            {activeMoreCategories.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setMoreOpen((value) => !value)}
+                className="w-full lg:w-auto text-left px-3 py-2 lg:px-2 lg:py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
+                aria-expanded={moreOpen}
+              >
+                More {moreOpen ? "▲" : "▼"}
+              </button>
+            )}
 
-            {moreOpen && (
+            {activeMoreCategories.length > 0 && moreOpen && (
               <div className="lg:absolute lg:top-full lg:right-0 mt-1 lg:mt-2 w-full lg:w-60 bg-background border border-border rounded-lg shadow-xl z-[999] overflow-hidden">
-                {MORE_CATEGORIES.map((category) => (
+                {activeMoreCategories.map((category) => (
                   <Link
                     key={category.slug}
                     to="/category/$slug"

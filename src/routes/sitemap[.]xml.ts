@@ -40,7 +40,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         let publishedCategories: Array<{ slug: string; count: number }> = [];
 
         try {
-          [posts, publishedCategories] = await Promise.all([getSitemapPosts(), getCategories()]);
+          [posts, publishedCategories] = await Promise.all([getSitemapPosts(50), getCategories()]);
         } catch (error) {
           console.error("WordPress posts were unavailable while generating the sitemap:", error);
           return new Response("Sitemap temporarily unavailable", {

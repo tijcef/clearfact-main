@@ -30,3 +30,19 @@ export const moreCategories = [
   { name: "Research", slug: "data-research" },
   { name: "Video", slug: "video" },
 ] as const;
+
+
+export type NavigationCategory = (typeof categories)[number] | (typeof moreCategories)[number];
+
+export function filterNavigationCategories(available: Array<{ slug: string; count?: number }>) {
+  const active = new Set(
+    available
+      .filter((category) => (category.count ?? 0) > 0)
+      .map((category) => category.slug),
+  );
+
+  return {
+    main: mainCategories.filter((category) => active.has(category.slug)),
+    more: moreCategories.filter((category) => active.has(category.slug)),
+  };
+}

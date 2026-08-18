@@ -22,34 +22,44 @@ function categoryLabel(slug: string) {
 
 export const Route = createFileRoute("/category/$slug")({
   loader: async ({ params }) => {
+    const acceptedSlugs = CATEGORY_ALIASES[params.slug] ?? [params.slug];
+    let category: any = null;
+
     try {
-      const acceptedSlugs = CATEGORY_ALIASES[params.slug] ?? [params.slug];
       const categoryResults = await Promise.all(
         acceptedSlugs.map((slug) => getCategoryBySlug(slug)),
       );
-      const category = categoryResults.find(Boolean);
-
-      if (!category) {
-        throw notFound();
-      }
-
-      const posts = await getPostsByCategory(category.id, 24);
-
-      return {
-        category,
-        posts: Array.isArray(posts) ? posts : [],
-        unavailable: false,
-      };
+      category = categoryResults.find(Boolean) ?? null;
     } catch (error) {
       console.error(`Category ${params.slug} failed to load:`, error);
-
       return {
         category: {
           id: 0,
           name: categoryLabel(params.slug),
           slug: params.slug,
           description: "",
+          count: 0,
         },
+        posts: [],
+        unavailable: true,
+      };
+    }
+
+    if (!category || Number(category.count ?? 0) === 0) {
+      throw notFound();
+    }
+
+    try {
+      const posts = await getPostsByCategory(category.id, 24);
+      return {
+        category,
+        posts: Array.isArray(posts) ? posts : [],
+        unavailable: false,
+      };
+    } catch (error) {
+      console.error(`Category ${params.slug} posts failed to load:`, error);
+      return {
+        category,
         posts: [],
         unavailable: true,
       };
