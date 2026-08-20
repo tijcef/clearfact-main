@@ -8,7 +8,7 @@ export const Route = createFileRoute("/careers")({
       {
         name: "description",
         content:
-          "Join ClearFact News and help build the future of verified journalism in Nigeria. Explore opportunities in investigative reporting, verification, engineering and product design.",
+          "Join ClearFact News and help build the future of verified journalism in Nigeria. Explore career opportunities in investigative reporting, verification, engineering and product design.",
       },
       {
         property: "og:title",
@@ -37,7 +37,15 @@ export const Route = createFileRoute("/careers")({
       </section>
 
       <section>
-        <h2>Open Roles</h2>
+        <h2>Career Opportunities</h2>
+
+        <p>
+          We recruit across editorial, verification, technology and product
+          functions as ClearFact News grows. The roles below represent areas
+          where we may recruit talent. Where a position is actively accepting
+          applications, the application instructions will be provided by the
+          newsroom.
+        </p>
 
         <article>
           <h3>Senior Investigative Reporter</h3>
@@ -60,9 +68,7 @@ export const Route = createFileRoute("/careers")({
             <li>Conduct interviews and field reporting.</li>
             <li>Analyze documents and public records.</li>
             <li>Verify claims and evidence.</li>
-            <li>
-              Work with editors to produce high-impact investigations.
-            </li>
+            <li>Work with editors to produce high-impact investigations.</li>
             <li>
               Maintain rigorous source protection and ethical reporting
               standards.
@@ -118,9 +124,7 @@ export const Route = createFileRoute("/careers")({
             </li>
             <li>Strong digital verification skills.</li>
             <li>Excellent attention to detail.</li>
-            <li>
-              Ability to work quickly under breaking-news pressure.
-            </li>
+            <li>Ability to work quickly under breaking-news pressure.</li>
             <li>
               Strong understanding of Nigeria's information ecosystem.
             </li>
@@ -160,9 +164,7 @@ export const Route = createFileRoute("/careers")({
             <li>Experience with TanStack technologies.</li>
             <li>Proficiency in modern JavaScript/TypeScript.</li>
             <li>API integration experience.</li>
-            <li>
-              Understanding of web performance and technical SEO.
-            </li>
+            <li>Understanding of web performance and technical SEO.</li>
             <li>Strong attention to product quality.</li>
           </ul>
         </article>
@@ -266,7 +268,7 @@ export const Route = createFileRoute("/careers")({
         <h2>How to Apply</h2>
 
         <p>
-          Send your application to{" "}
+          When applications are open, send your application to{" "}
           <a href="mailto:careers@clearfact.ng">
             careers@clearfact.ng
           </a>

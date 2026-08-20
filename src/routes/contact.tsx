@@ -78,7 +78,7 @@ function Contact() {
                   <div className="font-semibold">General Enquiries</div>
 
                   <a
-                    href="mailto:info@clearfact.ng"
+                    href="mailto:info@clearfact.ng?subject=General%20Enquiry"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     info@clearfact.ng
@@ -164,9 +164,7 @@ function Contact() {
             className="rounded-sm border border-border p-6 md:p-8 bg-card space-y-5"
           >
             <div>
-              <h2 className="font-serif text-2xl">
-                Send us a message
-              </h2>
+              <h2 className="font-serif text-2xl">Send us a message</h2>
 
               <p className="text-sm text-muted-foreground mt-1">
                 Select the category that best describes your enquiry.
@@ -281,7 +279,7 @@ function Contact() {
         <p className="text-sm text-muted-foreground mt-3 leading-6">
           Editorial matters should be directed to{" "}
           <a
-            href="mailto:editor@clearfact.ng"
+            href="mailto:editor@clearfact.ng?subject=Editorial%20Matter"
             className="text-primary font-semibold hover:underline"
           >
             editor@clearfact.ng
@@ -299,7 +297,7 @@ function Contact() {
           </a>{" "}
           page or contact{" "}
           <a
-            href="mailto:advertise@clearfact.ng"
+            href="mailto:advertise@clearfact.ng?subject=Advertising%20Enquiry"
             className="text-primary font-semibold hover:underline"
           >
             advertise@clearfact.ng
@@ -317,7 +315,7 @@ function Contact() {
           </a>{" "}
           page or contact{" "}
           <a
-            href="mailto:careers@clearfact.ng"
+            href="mailto:careers@clearfact.ng?subject=Career%20Enquiry"
             className="text-primary font-semibold hover:underline"
           >
             careers@clearfact.ng
@@ -328,9 +326,7 @@ function Contact() {
 
       {/* NEWSROOM CONTACTS */}
       <section className="mt-12 rounded-sm border border-border bg-card p-6 md:p-8">
-        <h2 className="font-serif text-2xl">
-          ClearFact News Desks
-        </h2>
+        <h2 className="font-serif text-2xl">ClearFact News Desks</h2>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
           {/* EDITORIAL */}
@@ -340,7 +336,7 @@ function Contact() {
             </div>
 
             <a
-              href="mailto:editor@clearfact.ng"
+              href="mailto:editor@clearfact.ng?subject=Editorial%20Enquiry"
               className="font-semibold mt-1 block hover:text-primary transition-colors"
             >
               editor@clearfact.ng
@@ -354,7 +350,7 @@ function Contact() {
             </div>
 
             <a
-              href="mailto:advertise@clearfact.ng"
+              href="mailto:advertise@clearfact.ng?subject=Advertising%20Enquiry"
               className="font-semibold mt-1 block hover:text-primary transition-colors"
             >
               advertise@clearfact.ng
@@ -368,7 +364,7 @@ function Contact() {
             </div>
 
             <a
-              href="mailto:careers@clearfact.ng"
+              href="mailto:careers@clearfact.ng?subject=Career%20Enquiry"
               className="font-semibold mt-1 block hover:text-primary transition-colors"
             >
               careers@clearfact.ng
@@ -382,7 +378,7 @@ function Contact() {
             </div>
 
             <a
-              href="mailto:info@clearfact.ng"
+              href="mailto:info@clearfact.ng?subject=General%20Enquiry"
               className="font-semibold mt-1 block hover:text-primary transition-colors"
             >
               info@clearfact.ng
@@ -407,9 +403,7 @@ function Contact() {
 
       {/* FOOTER BRAND MESSAGE */}
       <section className="mt-12 text-center">
-        <p className="font-serif text-2xl">
-          ClearFact News
-        </p>
+        <p className="font-serif text-2xl">ClearFact News</p>
 
         <p className="text-sm text-muted-foreground mt-1">
           Verified Journalism From Nigeria
