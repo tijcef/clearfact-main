@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { getFeaturedImageUrl, normalizeWpSlug, stripHtml } from "@/lib/wordpress";
+import { getFeaturedImageUrl } from "@/lib/wordpress";
 
 type Props = {
   post: any;
@@ -9,10 +8,10 @@ export default function PostCard({ post }: Props) {
   return (
     <article className="border rounded-xl overflow-hidden">
       {/* Image */}
-      {getFeaturedImageUrl(post, "", "medium_large") && (
+      {getFeaturedImageUrl(post) && (
         <img
-          src={getFeaturedImageUrl(post, "", "medium_large")}
-          alt={stripHtml(post.title.rendered)}
+          src={getFeaturedImageUrl(post)}
+          alt={post.title.rendered}
           className="w-full h-60 object-cover"
           loading="lazy"
           decoding="async"
@@ -30,11 +29,14 @@ export default function PostCard({ post }: Props) {
         </div>
 
         {/* Title */}
-        <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
-          <h2 className="text-2xl font-bold hover:text-red-600">
-            {stripHtml(post.title.rendered)}
-          </h2>
-        </Link>
+        <a href={`/news/${post.slug}`}>
+          <h2
+            className="text-2xl font-bold hover:text-red-600"
+            dangerouslySetInnerHTML={{
+              __html: post.title.rendered,
+            }}
+          />
+        </a>
 
         {/* Meta */}
         <p className="text-gray-500 text-sm mt-2">

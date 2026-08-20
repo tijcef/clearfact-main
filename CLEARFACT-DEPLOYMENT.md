@@ -9,20 +9,18 @@ This project is the corrected ClearFact News frontend and Cloudflare Worker.
 2. Install dependencies with `npm install`.
 3. Run the full verification gate:
 
-   ```powershell
+   powershell
    npm run check
-   ```
 
 ## Publish through the existing repository
 
 Extract this archive, copy its contents into a clean clone of the existing
 ClearFact repository, then run:
 
-```powershell
+powershell
 git add .
 git commit -m "Improve ClearFact speed, reliability and live ticker"
 git push origin main
-```
 
 Use the existing Cloudflare project and production domain. Do not create a
 second Worker or change the custom domain while deploying this update.
