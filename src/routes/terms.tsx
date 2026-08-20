@@ -31,7 +31,7 @@ Welcome to <strong>ClearFact News</strong>. By accessing or using
 clearfact.ng, you agree to comply with these Terms & Conditions.
 If you do not agree with these terms, please do not use the website. </p>
 
-```
+
     <p className="text-sm text-muted-foreground">
       Last updated: August 2026
     </p>

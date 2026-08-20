@@ -31,7 +31,6 @@ independent, fair and responsible journalism. Our editorial
 decisions are guided by the public interest and our responsibility to
 provide readers with reliable information. </p>
 
-```
     <p>
       We distinguish clearly between verified facts, allegations, opinions,
       analysis, developing information and sponsored material.

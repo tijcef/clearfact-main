@@ -61,7 +61,6 @@ const [error, setError] = useState(false);
 useEffect(() => {
 let mounted = true;
 
-```
 async function loadTransparencyData() {
   try {
     const { data: arts, error: articlesError } = await supabase
@@ -152,7 +151,6 @@ loadTransparencyData();
 return () => {
   mounted = false;
 };
-```
 
 }, []);
 
@@ -198,7 +196,6 @@ return ( <main>
 {/* HERO */} <section className="bg-primary text-primary-foreground"> <div className="container-news py-14 md:py-20"> <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
 Public Accountability </div>
 
-```
       <h1 className="font-serif text-4xl md:text-6xl mt-2">
         Transparency Dashboard
       </h1>

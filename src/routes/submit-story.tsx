@@ -29,7 +29,6 @@ function SubmitStory() {
 return ( <main className="container-news py-12 md:py-16"> <div className="max-w-3xl"> <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
 ClearFact Tip Line </div>
 
-```
     <h1 className="font-serif text-4xl md:text-5xl mt-2">
       Have information that matters?
     </h1>
