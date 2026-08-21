@@ -13,6 +13,7 @@ export const Route = createFileRoute("/author/$id")({
     meta: [
       { title: `Author profile — ClearFact News` },
       { name: "description", content: `Articles by ClearFact author ${params.id}.` },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: AuthorPage,

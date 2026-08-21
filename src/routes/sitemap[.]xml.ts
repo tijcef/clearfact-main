@@ -5,7 +5,7 @@ import {
   getSitemapPosts,
   type SitemapPost,
 } from "@/lib/wordpress";
-import { categories, moreCategories } from "@/lib/site-navigation";
+import { categories, getCategorySourceSlugs, moreCategories } from "@/lib/site-navigation";
 
 const SITE_ORIGIN = "https://clearfact.ng";
 
@@ -20,7 +20,11 @@ const STATIC_PATHS = [
   "/privacy",
   "/terms",
   "/trust-center",
+  "/transparency",
+  "/fact-check",
   "/newsletter",
+  "/contribute",
+  "/submit-story",
 ];
 
 type SitemapUrl = {
@@ -60,15 +64,9 @@ export const Route = createFileRoute("/sitemap.xml")({
         }> = [];
 
         try {
-          [posts, publishedCategories] = await Promise.all([
-            getSitemapPosts(),
-            getCategories(),
-          ]);
+          [posts, publishedCategories] = await Promise.all([getSitemapPosts(), getCategories()]);
         } catch (error) {
-          console.error(
-            "WordPress data was unavailable while generating the sitemap:",
-            error,
-          );
+          console.error("WordPress data was unavailable while generating the sitemap:", error);
 
           return new Response("Sitemap temporarily unavailable", {
             status: 503,
@@ -90,11 +88,10 @@ export const Route = createFileRoute("/sitemap.xml")({
             .map((category) => category.slug),
         );
 
-        const categoryUrls: SitemapUrl[] = [
-          ...categories,
-          ...moreCategories,
-        ]
-          .filter((category) => liveCategorySlugs.has(category.slug))
+        const categoryUrls: SitemapUrl[] = [...categories, ...moreCategories]
+          .filter((category) =>
+            getCategorySourceSlugs(category.slug).some((slug) => liveCategorySlugs.has(slug)),
+          )
           .map((category) => ({
             loc: `${SITE_ORIGIN}/category/${category.slug}`,
           }));
@@ -108,11 +105,7 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const uniqueUrls = new Map<string, SitemapUrl>();
 
-        for (const item of [
-          ...staticUrls,
-          ...categoryUrls,
-          ...articleUrls,
-        ]) {
+        for (const item of [...staticUrls, ...categoryUrls, ...articleUrls]) {
           if (!uniqueUrls.has(item.loc)) {
             uniqueUrls.set(item.loc, item);
           }
@@ -126,9 +119,7 @@ ${urls
   .map(
     (item) => `  <url>
     <loc>${escapeXml(item.loc)}</loc>${
-      item.lastmod
-        ? `\n    <lastmod>${escapeXml(item.lastmod)}</lastmod>`
-        : ""
+      item.lastmod ? `\n    <lastmod>${escapeXml(item.lastmod)}</lastmod>` : ""
     }
   </url>`,
   )
@@ -139,8 +130,7 @@ ${urls
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control":
-              "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+            "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
           },
         });
       },

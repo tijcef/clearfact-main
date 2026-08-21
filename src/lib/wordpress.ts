@@ -16,7 +16,6 @@ const LIST_FIELDS = [
   "modified",
   "title",
   "excerpt",
-  "content",
   "categories",
   "featured_media",
   "acf",
@@ -383,7 +382,7 @@ export type SitemapPost = {
   };
 };
 
-export async function getSitemapPosts(maxPages = 10) {
+export async function getSitemapPosts(maxPages = 500) {
   const posts: SitemapPost[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {

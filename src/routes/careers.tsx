@@ -19,7 +19,9 @@ export const Route = createFileRoute("/careers")({
         content:
           "Join a modern Nigerian newsroom focused on verified journalism, original reporting, accountability and innovation.",
       },
+      { property: "og:url", content: "https://clearfact.ng/careers" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/careers" }],
   }),
 
   component: () => (
@@ -30,9 +32,8 @@ export const Route = createFileRoute("/careers")({
     >
       <section>
         <p>
-          At <strong>ClearFact News</strong>, we're looking for journalists,
-          editors, designers and technologists who want to help build a
-          trusted Nigerian media institution.
+          At <strong>ClearFact News</strong>, we're looking for journalists, editors, designers and
+          technologists who want to help build a trusted Nigerian media institution.
         </p>
       </section>
 
@@ -40,10 +41,9 @@ export const Route = createFileRoute("/careers")({
         <h2>Career Opportunities</h2>
 
         <p>
-          We recruit across editorial, verification, technology and product
-          functions as ClearFact News grows. The roles below represent areas
-          where we may recruit talent. Where a position is actively accepting
-          applications, the application instructions will be provided by the
+          We recruit across editorial, verification, technology and product functions as ClearFact
+          News grows. The roles below represent areas where we may recruit talent. Where a position
+          is actively accepting applications, the application instructions will be provided by the
           newsroom.
         </p>
 
@@ -57,9 +57,8 @@ export const Route = createFileRoute("/careers")({
           </p>
 
           <p>
-            Lead original investigations into issues of public interest,
-            including governance, accountability, corruption, public spending
-            and social impact.
+            Lead original investigations into issues of public interest, including governance,
+            accountability, corruption, public spending and social impact.
           </p>
 
           <h4>What You'll Do</h4>
@@ -69,10 +68,7 @@ export const Route = createFileRoute("/careers")({
             <li>Analyze documents and public records.</li>
             <li>Verify claims and evidence.</li>
             <li>Work with editors to produce high-impact investigations.</li>
-            <li>
-              Maintain rigorous source protection and ethical reporting
-              standards.
-            </li>
+            <li>Maintain rigorous source protection and ethical reporting standards.</li>
           </ul>
 
           <h4>What We're Looking For</h4>
@@ -80,13 +76,8 @@ export const Route = createFileRoute("/careers")({
             <li>Strong investigative journalism experience.</li>
             <li>Excellent writing and interviewing skills.</li>
             <li>Ability to work with documents and data.</li>
-            <li>
-              Strong understanding of Nigerian politics and public
-              institutions.
-            </li>
-            <li>
-              Commitment to accuracy, fairness and ethical journalism.
-            </li>
+            <li>Strong understanding of Nigerian politics and public institutions.</li>
+            <li>Commitment to accuracy, fairness and ethical journalism.</li>
           </ul>
         </article>
 
@@ -100,10 +91,9 @@ export const Route = createFileRoute("/careers")({
           </p>
 
           <p>
-            Help make <strong>"Verified Journalism From Nigeria"</strong> more
-            than a slogan. You will lead verification of claims, social-media
-            reports, images, videos, documents and breaking-news information
-            before publication.
+            Help make <strong>"Verified Journalism From Nigeria"</strong> more than a slogan. You
+            will lead verification of claims, social-media reports, images, videos, documents and
+            breaking-news information before publication.
           </p>
 
           <h4>What You'll Do</h4>
@@ -118,16 +108,11 @@ export const Route = createFileRoute("/careers")({
 
           <h4>What We're Looking For</h4>
           <ul>
-            <li>
-              Background in journalism, communications, research or a related
-              field.
-            </li>
+            <li>Background in journalism, communications, research or a related field.</li>
             <li>Strong digital verification skills.</li>
             <li>Excellent attention to detail.</li>
             <li>Ability to work quickly under breaking-news pressure.</li>
-            <li>
-              Strong understanding of Nigeria's information ecosystem.
-            </li>
+            <li>Strong understanding of Nigeria's information ecosystem.</li>
           </ul>
         </article>
 
@@ -140,10 +125,7 @@ export const Route = createFileRoute("/careers")({
             <strong>Employment:</strong> Full-time / Contract
           </p>
 
-          <p>
-            Help build the technology powering the next generation of ClearFact
-            journalism.
-          </p>
+          <p>Help build the technology powering the next generation of ClearFact journalism.</p>
 
           <h4>What You'll Do</h4>
           <ul>
@@ -152,10 +134,7 @@ export const Route = createFileRoute("/careers")({
             <li>Work with React and TanStack technologies.</li>
             <li>Integrate APIs and CMS infrastructure.</li>
             <li>Improve performance, accessibility and SEO.</li>
-            <li>
-              Build tools that support newsroom workflows and content
-              distribution.
-            </li>
+            <li>Build tools that support newsroom workflows and content distribution.</li>
           </ul>
 
           <h4>What We're Looking For</h4>
@@ -179,8 +158,8 @@ export const Route = createFileRoute("/careers")({
           </p>
 
           <p>
-            Design the digital experiences that connect ClearFact journalism
-            with millions of readers.
+            Design the digital experiences that connect ClearFact journalism with millions of
+            readers.
           </p>
 
           <h4>What You'll Do</h4>
@@ -190,9 +169,7 @@ export const Route = createFileRoute("/careers")({
             <li>Design homepage, article and discovery experiences.</li>
             <li>Create prototypes for newsroom products.</li>
             <li>Collaborate with journalists, editors and engineers.</li>
-            <li>
-              Develop and maintain a consistent ClearFact design language.
-            </li>
+            <li>Develop and maintain a consistent ClearFact design language.</li>
           </ul>
 
           <h4>What We're Looking For</h4>
@@ -210,27 +187,24 @@ export const Route = createFileRoute("/careers")({
         <h2>Why ClearFact?</h2>
 
         <h3>Do Meaningful Work</h3>
-        <p>
-          Our journalism focuses on stories that matter to people and
-          communities.
-        </p>
+        <p>Our journalism focuses on stories that matter to people and communities.</p>
 
         <h3>Build Something New</h3>
         <p>
-          We're building a digital-first newsroom designed for the way people
-          consume information today.
+          We're building a digital-first newsroom designed for the way people consume information
+          today.
         </p>
 
         <h3>Work Across Disciplines</h3>
         <p>
-          Journalists, researchers, designers and engineers work together to
-          create better journalism.
+          Journalists, researchers, designers and engineers work together to create better
+          journalism.
         </p>
 
         <h3>Grow With the Newsroom</h3>
         <p>
-          As ClearFact grows, team members will have opportunities to take
-          ownership of projects and develop professionally.
+          As ClearFact grows, team members will have opportunities to take ownership of projects and
+          develop professionally.
         </p>
       </section>
 
@@ -242,24 +216,23 @@ export const Route = createFileRoute("/careers")({
             <strong>Accuracy:</strong> We verify before we publish.
           </li>
           <li>
-            <strong>Independence:</strong> Our journalism is guided by public
-            interest, not political or commercial pressure.
+            <strong>Independence:</strong> Our journalism is guided by public interest, not
+            political or commercial pressure.
           </li>
           <li>
-            <strong>Fairness:</strong> We clearly distinguish allegations,
-            claims and verified facts.
+            <strong>Fairness:</strong> We clearly distinguish allegations, claims and verified
+            facts.
           </li>
           <li>
-            <strong>Transparency:</strong> We correct errors and explain our
-            editorial processes.
+            <strong>Transparency:</strong> We correct errors and explain our editorial processes.
           </li>
           <li>
-            <strong>Innovation:</strong> We use technology, data and modern
-            storytelling to improve journalism.
+            <strong>Innovation:</strong> We use technology, data and modern storytelling to improve
+            journalism.
           </li>
           <li>
-            <strong>Impact:</strong> We focus on journalism that informs
-            communities and strengthens accountability.
+            <strong>Impact:</strong> We focus on journalism that informs communities and strengthens
+            accountability.
           </li>
         </ul>
       </section>
@@ -269,9 +242,7 @@ export const Route = createFileRoute("/careers")({
 
         <p>
           When applications are open, send your application to{" "}
-          <a href="mailto:careers@clearfact.ng">
-            careers@clearfact.ng
-          </a>
+          <a href="mailto:careers@clearfact.ng">careers@clearfact.ng</a>
         </p>
 
         <h3>Editorial Roles</h3>
@@ -312,10 +283,8 @@ export const Route = createFileRoute("/careers")({
 
         <p>
           If you're passionate about{" "}
-          <strong>
-            truth, accountability, innovation and public-interest journalism
-          </strong>
-          , we want to hear from you.
+          <strong>truth, accountability, innovation and public-interest journalism</strong>, we want
+          to hear from you.
         </p>
 
         <p>

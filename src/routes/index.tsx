@@ -12,10 +12,9 @@ export const Route = createFileRoute("/")({
       };
     } catch (error) {
       console.error("Homepage posts failed to load:", error);
-
-      return {
-        posts: [],
-      };
+      throw new Error("The ClearFact newsroom is temporarily unavailable.", {
+        cause: error,
+      });
     }
   },
 

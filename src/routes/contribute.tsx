@@ -15,7 +15,9 @@ export const Route = createFileRoute("/contribute")({
         property: "og:description",
         content: "Verified citizen journalism, paid contributors, transparent editorial.",
       },
+      { property: "og:url", content: "https://clearfact.ng/contribute" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/contribute" }],
   }),
   component: Contribute,
 });

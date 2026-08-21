@@ -13,6 +13,7 @@ export const Route = createFileRoute("/auth")({
         content:
           "Join ClearFact News to save articles, comment, react and track your reading history.",
       },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: AuthPage,

@@ -21,7 +21,9 @@ export const Route = createFileRoute("/contact")({
         content:
           "Reach the ClearFact News editorial, partnerships, careers and reader services teams.",
       },
+      { property: "og:url", content: "https://clearfact.ng/contact" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/contact" }],
   }),
 
   component: Contact,
@@ -35,13 +37,11 @@ function Contact() {
           Contact ClearFact
         </div>
 
-        <h1 className="font-serif text-4xl md:text-5xl mt-2">
-          We want to hear from you.
-        </h1>
+        <h1 className="font-serif text-4xl md:text-5xl mt-2">We want to hear from you.</h1>
 
         <p className="text-muted-foreground mt-4 text-lg leading-7">
-          Contact ClearFact News for editorial tips, corrections, advertising,
-          partnerships, media enquiries, careers or general enquiries.
+          Contact ClearFact News for editorial tips, corrections, advertising, partnerships, media
+          enquiries, careers or general enquiries.
         </p>
       </div>
 
@@ -52,8 +52,8 @@ function Contact() {
             <h2 className="font-serif text-2xl">Get in touch</h2>
 
             <p className="text-sm text-muted-foreground mt-2 leading-6">
-              Our team welcomes credible information, corrections, partnership
-              enquiries and feedback from our readers.
+              Our team welcomes credible information, corrections, partnership enquiries and
+              feedback from our readers.
             </p>
 
             <ul className="mt-6 space-y-5 text-sm">
@@ -64,9 +64,7 @@ function Contact() {
                 <div>
                   <div className="font-semibold">Office</div>
 
-                  <div className="text-muted-foreground">
-                    32 Demsawo, Jimeta, Yola, Nigeria
-                  </div>
+                  <div className="text-muted-foreground">32 Demsawo, Jimeta, Yola, Nigeria</div>
                 </div>
               </li>
 
@@ -109,8 +107,8 @@ function Contact() {
             <h2 className="font-serif text-2xl">Editorial Desk</h2>
 
             <p className="text-sm text-muted-foreground mt-2 leading-6">
-              Have a story tip, correction, document or information that may be
-              in the public interest?
+              Have a story tip, correction, document or information that may be in the public
+              interest?
             </p>
 
             <a
@@ -123,13 +121,10 @@ function Contact() {
 
           {/* ADVERTISING */}
           <div className="rounded-sm border border-border bg-card p-6">
-            <h2 className="font-serif text-2xl">
-              Advertising & Partnerships
-            </h2>
+            <h2 className="font-serif text-2xl">Advertising & Partnerships</h2>
 
             <p className="text-sm text-muted-foreground mt-2 leading-6">
-              For advertising, sponsorships, media partnerships and commercial
-              enquiries.
+              For advertising, sponsorships, media partnerships and commercial enquiries.
             </p>
 
             <a
@@ -174,9 +169,7 @@ function Contact() {
             {/* NAME & EMAIL */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">
-                  Full name
-                </label>
+                <label className="text-sm font-medium block mb-2">Full name</label>
 
                 <input
                   name="name"
@@ -187,9 +180,7 @@ function Contact() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">
-                  Email address
-                </label>
+                <label className="text-sm font-medium block mb-2">Email address</label>
 
                 <input
                   name="email"
@@ -203,9 +194,7 @@ function Contact() {
 
             {/* ENQUIRY TYPE */}
             <div>
-              <label className="text-sm font-medium block mb-2">
-                Enquiry type
-              </label>
+              <label className="text-sm font-medium block mb-2">Enquiry type</label>
 
               <select
                 name="enquiryType"
@@ -225,9 +214,7 @@ function Contact() {
 
             {/* MESSAGE */}
             <div>
-              <label className="text-sm font-medium block mb-2">
-                Message
-              </label>
+              <label className="text-sm font-medium block mb-2">Message</label>
 
               <textarea
                 name="message"
@@ -239,9 +226,8 @@ function Contact() {
             </div>
 
             <div className="text-xs text-muted-foreground leading-5">
-              Please do not submit confidential or sensitive information
-              through this general contact form unless specifically requested
-              by a ClearFact journalist.
+              Please do not submit confidential or sensitive information through this general
+              contact form unless specifically requested by a ClearFact journalist.
             </div>
 
             <button
@@ -252,8 +238,8 @@ function Contact() {
             </button>
 
             <p className="text-xs text-muted-foreground">
-              By contacting ClearFact, you acknowledge that information
-              submitted may be reviewed by the appropriate ClearFact team.
+              By contacting ClearFact, you acknowledge that information submitted may be reviewed by
+              the appropriate ClearFact team.
             </p>
           </form>
         </section>
@@ -265,15 +251,12 @@ function Contact() {
           Editorial Transparency
         </div>
 
-        <h2 className="font-serif text-3xl mt-2">
-          Accuracy, corrections and accountability
-        </h2>
+        <h2 className="font-serif text-3xl mt-2">Accuracy, corrections and accountability</h2>
 
         <p className="text-sm text-muted-foreground mt-4 leading-6">
-          ClearFact News welcomes credible information and corrections that
-          help improve the accuracy of our journalism. If you believe an
-          article contains an error, please identify the specific claim and
-          provide supporting information where possible.
+          ClearFact News welcomes credible information and corrections that help improve the
+          accuracy of our journalism. If you believe an article contains an error, please identify
+          the specific claim and provide supporting information where possible.
         </p>
 
         <p className="text-sm text-muted-foreground mt-3 leading-6">
@@ -289,10 +272,7 @@ function Contact() {
 
         <p className="text-sm text-muted-foreground mt-3 leading-6">
           For advertising and commercial partnerships, visit our{" "}
-          <a
-            href="/advertise"
-            className="text-primary font-semibold hover:underline"
-          >
+          <a href="/advertise" className="text-primary font-semibold hover:underline">
             Advertise
           </a>{" "}
           page or contact{" "}
@@ -307,10 +287,7 @@ function Contact() {
 
         <p className="text-sm text-muted-foreground mt-3 leading-6">
           For employment opportunities, visit our{" "}
-          <a
-            href="/careers"
-            className="text-primary font-semibold hover:underline"
-          >
+          <a href="/careers" className="text-primary font-semibold hover:underline">
             Careers
           </a>{" "}
           page or contact{" "}
@@ -359,9 +336,7 @@ function Contact() {
 
           {/* CAREERS */}
           <div>
-            <div className="text-xs uppercase tracking-wider text-gold font-semibold">
-              Careers
-            </div>
+            <div className="text-xs uppercase tracking-wider text-gold font-semibold">Careers</div>
 
             <a
               href="mailto:careers@clearfact.ng?subject=Career%20Enquiry"
@@ -373,9 +348,7 @@ function Contact() {
 
           {/* GENERAL */}
           <div>
-            <div className="text-xs uppercase tracking-wider text-gold font-semibold">
-              General
-            </div>
+            <div className="text-xs uppercase tracking-wider text-gold font-semibold">General</div>
 
             <a
               href="mailto:info@clearfact.ng?subject=General%20Enquiry"
@@ -388,9 +361,7 @@ function Contact() {
 
         {/* PHONE CONTACT */}
         <div className="mt-8 pt-6 border-t border-border">
-          <div className="text-xs uppercase tracking-wider text-gold font-semibold">
-            Telephone
-          </div>
+          <div className="text-xs uppercase tracking-wider text-gold font-semibold">Telephone</div>
 
           <a
             href="tel:+2347079405543"
@@ -405,9 +376,7 @@ function Contact() {
       <section className="mt-12 text-center">
         <p className="font-serif text-2xl">ClearFact News</p>
 
-        <p className="text-sm text-muted-foreground mt-1">
-          Verified Journalism From Nigeria
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Verified Journalism From Nigeria</p>
       </section>
     </main>
   );

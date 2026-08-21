@@ -1,10 +1,5 @@
 import AdSense from "@/components/AdSense";
-import {
-  createFileRoute,
-  notFound,
-  Link,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
@@ -32,11 +27,9 @@ export const Route = createFileRoute("/post/$slug")({
       post = await getPostBySlug(params.slug);
     } catch (error) {
       console.error(`Article ${params.slug} failed to load:`, error);
-
-      return {
-        post: null,
-        unavailable: true,
-      };
+      throw new Error("This report is temporarily unavailable.", {
+        cause: error,
+      });
     }
 
     if (!post) {
@@ -45,7 +38,6 @@ export const Route = createFileRoute("/post/$slug")({
 
     return {
       post,
-      unavailable: false,
     };
   },
 
@@ -68,47 +60,34 @@ export const Route = createFileRoute("/post/$slug")({
 
     const post = loaderData.post;
 
-    const description =
-      stripHtml(post.excerpt?.rendered || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 160) || "";
+    const rawDescription = stripHtml(post.excerpt?.rendered || "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    const image =
-      post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
-      "";
+    const description =
+      rawDescription.length <= 160
+        ? rawDescription
+        : `${rawDescription.slice(0, 157).replace(/\s+\S*$/, "")}…`;
+
+    const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "";
 
     const title = stripHtml(post.title.rendered);
 
-    const articleUrl =
-      `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
+    const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
-    const category =
-      post._embedded?.["wp:term"]?.[0]?.[0];
+    const category = post._embedded?.["wp:term"]?.[0]?.[0];
 
-    const categoryName =
-      category?.name || "News";
+    const categoryName = category?.name || "News";
 
-    const categorySlug =
-      category?.slug || "news";
+    const categorySlug = category?.slug || "news";
 
-    const author =
-      post._embedded?.author?.[0];
+    const author = post._embedded?.author?.[0];
 
-    const authorName =
-      author?.name ||
-      post.authors?.[0]?.display_name ||
-      SITE_NAME;
+    const authorName = author?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
-    const authorUrl =
-      author?.link ||
-      undefined;
+    const publishedDate = new Date(post.date).toISOString();
 
-    const publishedDate =
-      new Date(post.date).toISOString();
-
-    const modifiedDate =
-      new Date(post.modified || post.date).toISOString();
+    const modifiedDate = new Date(post.modified || post.date).toISOString();
 
     const schema = {
       "@context": "https://schema.org",
@@ -151,11 +130,6 @@ export const Route = createFileRoute("/post/$slug")({
           author: {
             "@type": "Person",
             name: authorName,
-            ...(authorUrl
-              ? {
-                  url: authorUrl,
-                }
-              : {}),
           },
 
           publisher: {
@@ -199,8 +173,7 @@ export const Route = createFileRoute("/post/$slug")({
 
               name: categoryName,
 
-              item:
-                `${SITE_ORIGIN}/category/${categorySlug}`,
+              item: `${SITE_ORIGIN}/category/${categorySlug}`,
             },
 
             {
@@ -230,8 +203,7 @@ export const Route = createFileRoute("/post/$slug")({
 
         {
           name: "robots",
-          content:
-            "index,follow,max-image-preview:large",
+          content: "index,follow,max-image-preview:large",
         },
 
         {
@@ -324,61 +296,34 @@ export const Route = createFileRoute("/post/$slug")({
     };
   },
 
-  notFoundComponent: () => (
-    <div className="container-news py-16">
-      Article not found.
-    </div>
-  ),
+  notFoundComponent: () => <div className="container-news py-16">Article not found.</div>,
 });
 
 function ArticlePage() {
-  const { post, unavailable } =
-    Route.useLoaderData();
+  const { post } = Route.useLoaderData();
 
-  const [relatedPosts, setRelatedPosts] =
-    useState<any[]>([]);
+  const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
 
-  const [progress, setProgress] =
-    useState(0);
+  const [progress, setProgress] = useState(0);
 
-  const [previousPost, setPreviousPost] =
-    useState<any>(null);
+  const [previousPost, setPreviousPost] = useState<any>(null);
 
-  const [nextPost, setNextPost] =
-    useState<any>(null);
-
-  const [retryAttempt, setRetryAttempt] =
-    useState(0);
-
-  const router = useRouter();
+  const [nextPost, setNextPost] = useState<any>(null);
 
   useEffect(() => {
     const updateProgress = () => {
       const scrollTop = window.scrollY;
 
-      const height =
-        document.documentElement.scrollHeight -
-        window.innerHeight;
+      const height = document.documentElement.scrollHeight - window.innerHeight;
 
-      setProgress(
-        height > 0
-          ? (scrollTop / height) * 100
-          : 0,
-      );
+      setProgress(height > 0 ? (scrollTop / height) * 100 : 0);
     };
 
-    window.addEventListener(
-      "scroll",
-      updateProgress,
-    );
+    window.addEventListener("scroll", updateProgress);
 
     updateProgress();
 
-    return () =>
-      window.removeEventListener(
-        "scroll",
-        updateProgress,
-      );
+    return () => window.removeEventListener("scroll", updateProgress);
   }, []);
 
   useEffect(() => {
@@ -386,193 +331,67 @@ function ArticlePage() {
       return;
     }
 
-    const loadRelatedAndNavigation =
-      async () => {
-        try {
-          const [
-            related,
-            adjacent,
-          ] = await Promise.all([
-            post?.categories?.length
-              ? getRelatedPosts(
-                  post.categories[0],
-                  post.id,
-                  8,
-                )
-              : Promise.resolve([]),
+    const loadRelatedAndNavigation = async () => {
+      try {
+        const [related, adjacent] = await Promise.all([
+          post?.categories?.length
+            ? getRelatedPosts(post.categories[0], post.id, 8)
+            : Promise.resolve([]),
 
-            getAdjacentPosts(
-              post.date_gmt || post.date,
-              post.id,
-            ),
-          ]);
+          getAdjacentPosts(post.date_gmt || post.date, post.id),
+        ]);
 
-          setRelatedPosts(related);
+        setRelatedPosts(related);
 
-          setPreviousPost(
-            adjacent.previousPost,
-          );
+        setPreviousPost(adjacent.previousPost);
 
-          setNextPost(
-            adjacent.nextPost,
-          );
-        } catch (error) {
-          console.error(
-            "Failed to load related articles:",
-            error,
-          );
-        }
-      };
+        setNextPost(adjacent.nextPost);
+      } catch (error) {
+        console.error("Failed to load related articles:", error);
+      }
+    };
 
     void loadRelatedAndNavigation();
   }, [post]);
 
-  useEffect(() => {
-    if (
-      !unavailable ||
-      post ||
-      retryAttempt >= 2
-    ) {
-      return;
-    }
+  const featuredImage = getFeaturedImageUrl(post, "", "large");
 
-    const timeout =
-      window.setTimeout(
-        () => {
-          void router
-            .invalidate()
-            .finally(() => {
-              setRetryAttempt(
-                (attempt) =>
-                  attempt + 1,
-              );
-            });
-        },
-        retryAttempt === 0
-          ? 500
-          : 1_500,
-      );
+  const cleanContent = proxyWpMediaInHtml(
+    post.content.rendered
+      .replace(/<div[^>]*wp-block-spacer[^>]*>.*?<\/div>/gis, "")
+      .replace(/style="height:[^"]*"/gi, ""),
+  );
 
-    return () =>
-      window.clearTimeout(timeout);
-  }, [
-    post,
-    retryAttempt,
-    router,
-    unavailable,
-  ]);
+  const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
-  if (!post) {
-    return (
-      <main className="container-news py-12">
-        <section className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm md:p-12">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-600">
-            ClearFact Newsroom
-          </p>
+  const articleTitle = stripHtml(post.title.rendered);
 
-          <h1 className="mt-3 font-serif text-3xl font-bold">
-            {retryAttempt < 2
-              ? "Opening this report…"
-              : "This report needs another moment"}
-          </h1>
+  const categoryName = post._embedded?.["wp:term"]?.[0]?.[0]?.name || "News";
 
-          <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
-            {retryAttempt < 2
-              ? "The newsroom is reconnecting automatically. You do not need to refresh the page."
-              : "The news server is responding slowly. Try the report again while ClearFact keeps the rest of the site available."}
-          </p>
-
-          {retryAttempt >= 2 && (
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <button
-                type="button"
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-                onClick={() => {
-                  setRetryAttempt(0);
-                  void router.invalidate();
-                }}
-              >
-                Retry report
-              </button>
-
-              <Link
-                to="/"
-                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold"
-              >
-                Latest news
-              </Link>
-            </div>
-          )}
-        </section>
-      </main>
-    );
-  }
-
-  const featuredImage =
-    getFeaturedImageUrl(
-      post,
-      "",
-      "large",
-    );
-
-  const cleanContent =
-    proxyWpMediaInHtml(
-      post.content.rendered
-        .replace(
-          /<div[^>]*wp-block-spacer[^>]*>.*?<\/div>/gis,
-          "",
-        )
-        .replace(
-          /style="height:[^"]*"/gi,
-          "",
-        ),
-    );
-
-  const articleUrl =
-    `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
-
-  const articleTitle =
-    stripHtml(post.title.rendered);
-
-  const categoryName =
-    post._embedded?.["wp:term"]?.[0]?.[0]
-      ?.name || "News";
-
-  const categorySlug =
-    post._embedded?.["wp:term"]?.[0]?.[0]
-      ?.slug || "news";
+  const categorySlug = post._embedded?.["wp:term"]?.[0]?.[0]?.slug || "news";
 
   const authorName =
-    post._embedded?.author?.[0]?.name ||
-    post.authors?.[0]?.display_name ||
-    SITE_NAME;
+    post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
   const authorDescription =
-    post._embedded?.author?.[0]
-      ?.description ||
+    post._embedded?.author?.[0]?.description ||
     post.authors?.[0]?.description ||
     `${authorName} writes for ClearFact News, an independent Nigerian newsroom committed to verified, transparent, and fact-based journalism.`;
 
-  const headings = Array.from(
-    cleanContent.matchAll(
-      /<h2[^>]*>(.*?)<\/h2>/g,
-    ),
-  ).map((match, index) => ({
-    id: `section-${index + 1}`,
-    title: stripHtml(match[1]),
-  }));
+  const headings = Array.from(cleanContent.matchAll(/<h2[^>]*>(.*?)<\/h2>/g)).map(
+    (match, index) => ({
+      id: `section-${index + 1}`,
+      title: stripHtml(match[1]),
+    }),
+  );
 
   let headingIndex = 0;
 
-  const contentWithIds =
-    cleanContent.replace(
-      /<h2([^>]*)>/g,
-      () => {
-        headingIndex += 1;
+  const contentWithIds = cleanContent.replace(/<h2([^>]*)>/g, () => {
+    headingIndex += 1;
 
-        return `<h2 id="section-${headingIndex}">`;
-      },
-    );
+    return `<h2 id="section-${headingIndex}">`;
+  });
 
   return (
     <>
@@ -584,14 +403,8 @@ function ArticlePage() {
       />
 
       <article className="container-news py-12 px-4 max-w-5xl mx-auto">
-        <nav
-          className="mb-5 text-sm text-muted-foreground"
-          aria-label="Breadcrumb"
-        >
-          <Link
-            to="/"
-            className="hover:text-primary"
-          >
+        <nav className="mb-5 text-sm text-muted-foreground" aria-label="Breadcrumb">
+          <Link to="/" className="hover:text-primary">
             Home
           </Link>
 
@@ -624,25 +437,17 @@ function ArticlePage() {
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
           <span>
-            By{" "}
-            <strong>
-              {authorName}
-            </strong>
+            By <strong>{authorName}</strong>
           </span>
 
           <span>•</span>
 
           <time dateTime={post.date}>
-            {new Date(
-              post.date,
-            ).toLocaleDateString(
-              "en-NG",
-              {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              },
-            )}
+            {new Date(post.date).toLocaleDateString("en-NG", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
           </time>
 
           <span>•</span>
@@ -650,36 +455,21 @@ function ArticlePage() {
           <span>
             {Math.max(
               1,
-              Math.ceil(
-                post.content.rendered
-                  .replace(
-                    /<[^>]+>/g,
-                    "",
-                  )
-                  .split(" ")
-                  .length / 200,
-              ),
+              Math.ceil(post.content.rendered.replace(/<[^>]+>/g, "").split(" ").length / 200),
             )}{" "}
             min read
           </span>
         </div>
 
         <div className="mb-7 rounded-xl border border-border bg-muted/25 p-4 lg:hidden">
-          <ArticleShare
-            url={articleUrl}
-            title={articleTitle}
-          />
+          <ArticleShare url={articleUrl} title={articleTitle} />
         </div>
 
         <aside
           className="fixed left-[max(1rem,calc(50%-37rem))] top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-border bg-background/95 p-2 shadow-lg backdrop-blur xl:block"
           aria-label="Share this article"
         >
-          <ArticleShare
-            url={articleUrl}
-            title={articleTitle}
-            layout="rail"
-          />
+          <ArticleShare url={articleUrl} title={articleTitle} layout="rail" />
         </aside>
 
         {featuredImage && (
@@ -696,17 +486,12 @@ function ArticlePage() {
 
         {headings.length >= 2 && (
           <div className="border rounded-xl p-5 mb-8 bg-muted/30">
-            <h3 className="font-bold mb-3">
-              Table of Contents
-            </h3>
+            <h3 className="font-bold mb-3">Table of Contents</h3>
 
             <ul className="space-y-2 text-sm">
               {headings.map((h) => (
                 <li key={h.id}>
-                  <a
-                    href={`#${h.id}`}
-                    className="hover:text-primary"
-                  >
+                  <a href={`#${h.id}`} className="hover:text-primary">
                     {h.title}
                   </a>
                 </li>
@@ -737,108 +522,71 @@ function ArticlePage() {
           }}
         />
 
-        <div className="mt-10 border-t pt-6">
-          <h3 className="font-bold text-xl mb-2">
-            About the Author
-          </h3>
+        <AdSense />
 
-          <p className="text-muted-foreground leading-7">
-            {authorDescription}
-          </p>
+        <div className="mt-10 border-t pt-6">
+          <h3 className="font-bold text-xl mb-2">About the Author</h3>
+
+          <p className="text-muted-foreground leading-7">{authorDescription}</p>
         </div>
 
         <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5 md:p-6">
-          <h3 className="mb-1 font-serif text-xl font-bold">
-            Help verified news travel further
-          </h3>
+          <h3 className="mb-1 font-serif text-xl font-bold">Help verified news travel further</h3>
 
-          <p className="mb-4 text-sm text-muted-foreground">
-            Share this report with your network.
-          </p>
+          <p className="mb-4 text-sm text-muted-foreground">Share this report with your network.</p>
 
-          <ArticleShare
-            url={articleUrl}
-            title={articleTitle}
-            showLabel={false}
-          />
+          <ArticleShare url={articleUrl} title={articleTitle} showLabel={false} />
         </div>
 
         <Comments postId={post.id} />
 
         {relatedPosts.length > 0 && (
           <section className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6">
-              Related News
-            </h2>
+            <h2 className="text-2xl font-bold mb-6">Related News</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {relatedPosts.map(
-                (item: any) => (
-                  <Link
-                    key={item.id}
-                    to="/post/$slug"
-                    params={{
-                      slug: normalizeWpSlug(
-                        item.slug,
-                      ),
-                    }}
-                    className="block border border-border rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 bg-card"
-                  >
-                    {getFeaturedImageUrl(
-                      item,
-                    ) && (
-                      <img
-                        src={getFeaturedImageUrl(
-                          item,
-                          "",
-                          "medium_large",
-                        )}
-                        alt={stripHtml(
-                          item.title.rendered,
-                        )}
-                        className="w-full h-40 object-cover"
-                        loading="lazy"
-                        decoding="async"
-                        sizes="(min-width: 768px) 50vw, 100vw"
-                      />
-                    )}
+              {relatedPosts.map((item: any) => (
+                <Link
+                  key={item.id}
+                  to="/post/$slug"
+                  params={{
+                    slug: normalizeWpSlug(item.slug),
+                  }}
+                  className="block border border-border rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 bg-card"
+                >
+                  {getFeaturedImageUrl(item) && (
+                    <img
+                      src={getFeaturedImageUrl(item, "", "medium_large")}
+                      alt={stripHtml(item.title.rendered)}
+                      className="w-full h-40 object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                    />
+                  )}
 
-                    <div className="p-5">
-                      <h3 className="font-semibold">
-                        {stripHtml(
-                          item.title.rendered,
-                        )}
-                      </h3>
-                    </div>
-                  </Link>
-                ),
-              )}
+                  <div className="p-5">
+                    <h3 className="font-semibold">{stripHtml(item.title.rendered)}</h3>
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         )}
 
-        {(previousPost ||
-          nextPost) && (
+        {(previousPost || nextPost) && (
           <div className="mt-12 grid gap-4 md:grid-cols-2 border-t pt-8">
             {previousPost && (
               <Link
                 to="/post/$slug"
                 params={{
-                  slug: normalizeWpSlug(
-                    previousPost.slug,
-                  ),
+                  slug: normalizeWpSlug(previousPost.slug),
                 }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md"
               >
-                <span className="text-sm text-muted-foreground">
-                  ← Previous Article
-                </span>
+                <span className="text-sm text-muted-foreground">← Previous Article</span>
 
-                <h3 className="font-semibold mt-2">
-                  {stripHtml(
-                    previousPost.title.rendered,
-                  )}
-                </h3>
+                <h3 className="font-semibold mt-2">{stripHtml(previousPost.title.rendered)}</h3>
               </Link>
             )}
 
@@ -846,33 +594,20 @@ function ArticlePage() {
               <Link
                 to="/post/$slug"
                 params={{
-                  slug: normalizeWpSlug(
-                    nextPost.slug,
-                  ),
+                  slug: normalizeWpSlug(nextPost.slug),
                 }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md md:text-right"
               >
-                <span className="text-sm text-muted-foreground">
-                  Next Article →
-                </span>
+                <span className="text-sm text-muted-foreground">Next Article →</span>
 
-                <h3 className="font-semibold mt-2">
-                  {stripHtml(
-                    nextPost.title.rendered,
-                  )}
-                </h3>
+                <h3 className="font-semibold mt-2">{stripHtml(nextPost.title.rendered)}</h3>
               </Link>
             )}
           </div>
         )}
 
-        <AdSense />
-
         <div className="mt-10">
-          <Link
-            to="/"
-            className="text-sm font-semibold text-primary hover:underline"
-          >
+          <Link to="/" className="text-sm font-semibold text-primary hover:underline">
             ← Back to homepage
           </Link>
         </div>

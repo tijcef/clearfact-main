@@ -14,6 +14,9 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
 
+const GA_MEASUREMENT_ID = "G-GZZJ1W1D3P";
+const ADSENSE_CLIENT = "ca-pub-8967021504063466";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
@@ -150,6 +153,10 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
         name: "robots",
         content: "index,follow,max-image-preview:large",
       },
+      {
+        name: "google-adsense-account",
+        content: ADSENSE_CLIENT,
+      },
     ],
 
     links: [
@@ -170,15 +177,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-  <HeadContent />
+        <HeadContent />
 
-  <script
-    id="clearfact-adsense"
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8967021504063466"
-    crossOrigin="anonymous"
-  ></script>
-</head>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","${GA_MEASUREMENT_ID}",{anonymize_ip:true});`,
+          }}
+        />
+
+        <script
+          id="clearfact-adsense"
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          crossOrigin="anonymous"
+        />
+      </head>
 
       <body>
         {children}

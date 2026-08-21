@@ -21,7 +21,9 @@ export const Route = createFileRoute("/advertise")({
         content:
           "Reach an engaged Nigerian audience through premium digital advertising, sponsored content and media partnerships.",
       },
+      { property: "og:url", content: "https://clearfact.ng/advertise" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/advertise" }],
   }),
 
   component: () => (
@@ -32,16 +34,14 @@ export const Route = createFileRoute("/advertise")({
     >
       <section>
         <p>
-          <strong>ClearFact News</strong> is a digital-first Nigerian news
-          platform focused on verified journalism, public-interest reporting
-          and stories that matter to our readers.
+          <strong>ClearFact News</strong> is a digital-first Nigerian news platform focused on
+          verified journalism, public-interest reporting and stories that matter to our readers.
         </p>
 
         <p>
-          We work with businesses, government institutions, NGOs, development
-          organisations, political and civic organisations, agencies and
-          brands seeking meaningful visibility in Nigeria's digital media
-          environment.
+          We work with businesses, government institutions, NGOs, development organisations,
+          political and civic organisations, agencies and brands seeking meaningful visibility in
+          Nigeria's digital media environment.
         </p>
       </section>
 
@@ -50,33 +50,28 @@ export const Route = createFileRoute("/advertise")({
 
         <ul>
           <li>
-            <strong>Trusted Editorial Environment</strong> — Your brand
-            appears alongside professionally produced journalism and clearly
-            identified sponsored content.
+            <strong>Trusted Editorial Environment</strong> — Your brand appears alongside
+            professionally produced journalism and clearly identified sponsored content.
           </li>
 
           <li>
-            <strong>Engaged Nigerian Audience</strong> — Reach readers
-            interested in politics, business, security, education, technology,
-            entertainment, health and national affairs.
+            <strong>Engaged Nigerian Audience</strong> — Reach readers interested in politics,
+            business, security, education, technology, entertainment, health and national affairs.
           </li>
 
           <li>
-            <strong>National &amp; Diaspora Reach</strong> — Connect with
-            audiences in Nigeria and Nigerians interested in developments at
-            home and abroad.
+            <strong>National &amp; Diaspora Reach</strong> — Connect with audiences in Nigeria and
+            Nigerians interested in developments at home and abroad.
           </li>
 
           <li>
-            <strong>Multiple Digital Formats</strong> — Choose from display
-            advertising, sponsored content, newsletters, video and strategic
-            media partnerships.
+            <strong>Multiple Digital Formats</strong> — Choose from display advertising, sponsored
+            content, newsletters, video and strategic media partnerships.
           </li>
 
           <li>
-            <strong>Editorial Transparency</strong> — Advertising and
-            sponsored content are clearly identified and remain separate from
-            independent editorial decisions.
+            <strong>Editorial Transparency</strong> — Advertising and sponsored content are clearly
+            identified and remain separate from independent editorial decisions.
           </li>
         </ul>
       </section>
@@ -86,38 +81,38 @@ export const Route = createFileRoute("/advertise")({
 
         <h3>Display Advertising</h3>
         <p>
-          Put your brand in front of ClearFact readers through strategically
-          placed digital advertising across our website.
+          Put your brand in front of ClearFact readers through strategically placed digital
+          advertising across our website.
         </p>
 
         <h3>Sponsored Content</h3>
         <p>
-          Tell your organisation's story through professionally produced
-          sponsored articles, features and branded storytelling.
+          Tell your organisation's story through professionally produced sponsored articles,
+          features and branded storytelling.
         </p>
 
         <h3>Newsletter Sponsorship</h3>
         <p>
-          Position your brand within ClearFact's direct audience communication
-          through newsletter sponsorship opportunities.
+          Position your brand within ClearFact's direct audience communication through newsletter
+          sponsorship opportunities.
         </p>
 
         <h3>Video &amp; Social Media Campaigns</h3>
         <p>
-          Extend your campaign beyond the website through ClearFact's social
-          media and video distribution channels.
+          Extend your campaign beyond the website through ClearFact's social media and video
+          distribution channels.
         </p>
 
         <h3>Special Reports &amp; Features</h3>
         <p>
-          Partner with ClearFact on thematic reports, public-interest
-          campaigns, industry features and special editorial projects.
+          Partner with ClearFact on thematic reports, public-interest campaigns, industry features
+          and special editorial projects.
         </p>
 
         <h3>Strategic Media Partnerships</h3>
         <p>
-          We work with organisations seeking longer-term visibility through
-          integrated digital campaigns and media partnerships.
+          We work with organisations seeking longer-term visibility through integrated digital
+          campaigns and media partnerships.
         </p>
       </section>
 
@@ -143,14 +138,13 @@ export const Route = createFileRoute("/advertise")({
         <h2>Our Editorial Independence</h2>
 
         <p>
-          Advertising does not determine our editorial coverage. ClearFact
-          maintains a clear distinction between independent journalism and
-          commercial partnerships.
+          Advertising does not determine our editorial coverage. ClearFact maintains a clear
+          distinction between independent journalism and commercial partnerships.
         </p>
 
         <p>
-          Sponsored content and paid partnerships are clearly identified to
-          protect transparency and maintain reader trust.
+          Sponsored content and paid partnerships are clearly identified to protect transparency and
+          maintain reader trust.
         </p>
       </section>
 
@@ -158,20 +152,14 @@ export const Route = createFileRoute("/advertise")({
         <h2>Request Our Media Kit</h2>
 
         <p>
-          Our media kit contains current information about our audience,
-          advertising formats, campaign opportunities, specifications and
-          partnership options.
+          Our media kit contains current information about our audience, advertising formats,
+          campaign opportunities, specifications and partnership options.
         </p>
 
-        <p>
-          For advertising enquiries and the latest media kit, contact:
-        </p>
+        <p>For advertising enquiries and the latest media kit, contact:</p>
 
         <p>
-          <strong>Email:</strong>{" "}
-          <a href="mailto:advertise@clearfact.ng">
-            advertise@clearfact.ng
-          </a>
+          <strong>Email:</strong> <a href="mailto:advertise@clearfact.ng">advertise@clearfact.ng</a>
         </p>
       </section>
 
@@ -179,9 +167,9 @@ export const Route = createFileRoute("/advertise")({
         <h2>Let's Build a Campaign That Matters</h2>
 
         <p>
-          Whether you are launching a product, promoting an initiative,
-          building public awareness or looking for a trusted Nigerian media
-          partner, ClearFact can help you reach the right audience.
+          Whether you are launching a product, promoting an initiative, building public awareness or
+          looking for a trusted Nigerian media partner, ClearFact can help you reach the right
+          audience.
         </p>
 
         <p>
@@ -191,9 +179,7 @@ export const Route = createFileRoute("/advertise")({
         </p>
 
         <p>
-          <a href="mailto:advertise@clearfact.ng">
-            Contact our advertising team →
-          </a>
+          <a href="mailto:advertise@clearfact.ng">Contact our advertising team →</a>
         </p>
       </section>
     </SimplePage>

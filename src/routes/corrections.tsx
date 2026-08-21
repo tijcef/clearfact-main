@@ -35,7 +35,9 @@ export const Route = createFileRoute("/corrections")({
         content:
           "ClearFact News publicly records significant corrections to published stories as part of our commitment to accuracy and accountability.",
       },
+      { property: "og:url", content: "https://clearfact.ng/corrections" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/corrections" }],
   }),
 
   component: CorrectionsPage,
@@ -53,9 +55,7 @@ function CorrectionsPage() {
               c: string,
               o: { ascending: boolean },
             ) => {
-              limit: (
-                n: number,
-              ) => Promise<{ data: Corr[] | null }>;
+              limit: (n: number) => Promise<{ data: Corr[] | null }>;
             };
           };
         };
@@ -69,20 +69,13 @@ function CorrectionsPage() {
 
       const arr = cors ?? [];
 
-      const ids = Array.from(
-        new Set(arr.map((c) => c.article_id)),
-      );
+      const ids = Array.from(new Set(arr.map((c) => c.article_id)));
 
       const { data: arts } = ids.length
-        ? await supabase
-            .from("articles")
-            .select("id,slug,title")
-            .in("id", ids)
+        ? await supabase.from("articles").select("id,slug,title").in("id", ids)
         : { data: [] as ArticleRef[] };
 
-      const map = new Map(
-        (arts ?? []).map((a) => [a.id, a as ArticleRef]),
-      );
+      const map = new Map((arts ?? []).map((a) => [a.id, a as ArticleRef]));
 
       setItems(
         arr.map((c) => ({
@@ -106,15 +99,12 @@ function CorrectionsPage() {
             </span>
           </div>
 
-          <h1 className="font-serif text-4xl md:text-5xl mt-2">
-            Corrections Log
-          </h1>
+          <h1 className="font-serif text-4xl md:text-5xl mt-2">Corrections Log</h1>
 
           <p className="mt-3 text-primary-foreground/80 max-w-2xl">
-            Significant corrections to published stories are recorded here as
-            part of our commitment to accuracy, transparency and accountability.
-            If you believe a ClearFact News story contains an error, please
-            contact our Editorial Desk at{" "}
+            Significant corrections to published stories are recorded here as part of our commitment
+            to accuracy, transparency and accountability. If you believe a ClearFact News story
+            contains an error, please contact our Editorial Desk at{" "}
             <a
               href="mailto:editor@clearfact.ng?subject=Correction%20Request"
               className="underline decoration-gold underline-offset-2 hover:text-white"
@@ -130,21 +120,17 @@ function CorrectionsPage() {
       <section className="container-news py-10 max-w-3xl">
         {items.length === 0 ? (
           <div className="border border-border rounded-sm p-6">
-            <h2 className="font-serif text-xl">
-              No corrections logged yet.
-            </h2>
+            <h2 className="font-serif text-xl">No corrections logged yet.</h2>
 
             <p className="text-sm text-muted-foreground mt-2 leading-6">
-              This page will display significant corrections issued by
-              ClearFact News when they are recorded.
+              This page will display significant corrections issued by ClearFact News when they are
+              recorded.
             </p>
           </div>
         ) : (
           <div>
             <div className="mb-5">
-              <h2 className="font-serif text-2xl">
-                Recent Corrections
-              </h2>
+              <h2 className="font-serif text-2xl">Recent Corrections</h2>
 
               <p className="text-sm text-muted-foreground mt-1">
                 Corrections are listed in reverse chronological order.
@@ -155,8 +141,7 @@ function CorrectionsPage() {
               {items.map((c) => (
                 <li key={c.id} className="p-5">
                   <div className="text-xs text-muted-foreground">
-                    {new Date(c.created_at).toLocaleString()} ·{" "}
-                    {c.editor_name ?? "Editorial Desk"}
+                    {new Date(c.created_at).toLocaleString()} · {c.editor_name ?? "Editorial Desk"}
                   </div>
 
                   {c.article && (
@@ -180,15 +165,12 @@ function CorrectionsPage() {
       {/* TRANSPARENCY NOTE */}
       <section className="container-news pb-12 max-w-3xl">
         <div className="border-t border-border pt-8">
-          <h2 className="font-serif text-2xl">
-            Our Commitment to Accuracy
-          </h2>
+          <h2 className="font-serif text-2xl">Our Commitment to Accuracy</h2>
 
           <p className="text-sm text-muted-foreground mt-3 leading-6">
-            ClearFact News is committed to correcting significant factual
-            errors promptly and transparently. Corrections are recorded here
-            so that readers can see when material changes have been made to
-            previously published reporting.
+            ClearFact News is committed to correcting significant factual errors promptly and
+            transparently. Corrections are recorded here so that readers can see when material
+            changes have been made to previously published reporting.
           </p>
 
           <p className="text-sm text-muted-foreground mt-3 leading-6">

@@ -21,6 +21,7 @@ export const Route = createFileRoute("/article/$slug/revisions")({
         name: "description",
         content: "Public revision history. ClearFact News never edits silently.",
       },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: RevisionsPage,

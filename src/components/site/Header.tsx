@@ -70,8 +70,12 @@ export function Header() {
   });
   const routeTickerPosts = routePosts.slice(0, 8);
   const [open, setOpen] = useState(false);
-  const [activeMainCategories, setActiveMainCategories] = useState<typeof MAIN_CATEGORIES[number][]>([]);
-  const [activeMoreCategories, setActiveMoreCategories] = useState<typeof MORE_CATEGORIES[number][]>([]);
+  const [activeMainCategories, setActiveMainCategories] = useState<
+    (typeof MAIN_CATEGORIES)[number][]
+  >([]);
+  const [activeMoreCategories, setActiveMoreCategories] = useState<
+    (typeof MORE_CATEGORIES)[number][]
+  >([]);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
   const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
@@ -98,7 +102,9 @@ export function Header() {
     }
 
     void loadActiveCategories();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -190,6 +196,10 @@ export function Header() {
             <Link to="/trust-center" className="inline-flex items-center gap-1 hover:text-gold">
               <ShieldCheck className="h-3.5 w-3.5" />
               Trust Center
+            </Link>
+
+            <Link to="/fact-check" className="hover:text-gold">
+              Fact Check
             </Link>
 
             <Link to="/newsletter" className="hover:text-gold">
@@ -326,7 +336,9 @@ export function Header() {
 
           {open && (
             <div className="mt-2 border-t border-border px-3 pt-3 lg:hidden">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Follow ClearFact</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Follow ClearFact
+              </p>
               <SocialFollow />
             </div>
           )}

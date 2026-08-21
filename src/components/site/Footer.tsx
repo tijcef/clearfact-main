@@ -19,10 +19,7 @@ const policy = [
 
 export function Footer() {
   const [activeCategories, setActiveCategories] = useState(
-    () =>
-      ({ main: [], more: [] }) as ReturnType<
-        typeof filterNavigationCategories
-      >
+    () => ({ main: [], more: [] }) as ReturnType<typeof filterNavigationCategories>,
   );
 
   useEffect(() => {
@@ -34,12 +31,7 @@ export function Footer() {
           setActiveCategories(filterNavigationCategories(available));
         }
       })
-      .catch((error) =>
-        console.error(
-          "Unable to load active footer categories:",
-          error
-        )
-      );
+      .catch((error) => console.error("Unable to load active footer categories:", error));
 
     return () => {
       active = false;
@@ -56,9 +48,8 @@ export function Footer() {
           </div>
 
           <p className="mt-3 text-sm text-primary-foreground/80">
-            An independent Nigerian newsroom delivering verified,
-            transparent and timely journalism to a national and
-            global audience.
+            An independent Nigerian newsroom delivering verified, transparent and timely journalism
+            to a national and global audience.
           </p>
 
           {/* Contact Information */}
@@ -67,19 +58,14 @@ export function Footer() {
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 text-gold mt-0.5 shrink-0" />
 
-              <span>
-                32 Demsawo, Jimeta, Yola, Nigeria
-              </span>
+              <span>32 Demsawo, Jimeta, Yola, Nigeria</span>
             </div>
 
             {/* Email */}
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-gold shrink-0" />
 
-              <a
-                href="mailto:info@clearfact.ng"
-                className="hover:text-gold transition-colors"
-              >
+              <a href="mailto:info@clearfact.ng" className="hover:text-gold transition-colors">
                 info@clearfact.ng
               </a>
             </div>
@@ -88,10 +74,7 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-gold shrink-0" />
 
-              <a
-                href="tel:+2347079405543"
-                className="hover:text-gold transition-colors"
-              >
+              <a href="tel:+2347079405543" className="hover:text-gold transition-colors">
                 +234 707 940 5543
               </a>
             </div>
@@ -103,9 +86,7 @@ export function Footer() {
 
         {/* Sections */}
         <div>
-          <h4 className="font-serif text-lg mb-3">
-            Sections
-          </h4>
+          <h4 className="font-serif text-lg mb-3">Sections</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {activeCategories.main.slice(0, 8).map((c) => (
@@ -124,9 +105,7 @@ export function Footer() {
 
         {/* More */}
         <div>
-          <h4 className="font-serif text-lg mb-3">
-            More
-          </h4>
+          <h4 className="font-serif text-lg mb-3">More</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {activeCategories.more.map((c) => (
@@ -142,19 +121,19 @@ export function Footer() {
             ))}
 
             <li>
-              <Link
-                to="/trust-center"
-                className="hover:text-gold transition-colors"
-              >
+              <Link to="/fact-check" className="hover:text-gold transition-colors">
+                Fact Check Center
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/trust-center" className="hover:text-gold transition-colors">
                 Trust Center
               </Link>
             </li>
 
             <li>
-              <Link
-                to="/submit-story"
-                className="hover:text-gold transition-colors"
-              >
+              <Link to="/submit-story" className="hover:text-gold transition-colors">
                 Submit a Story
               </Link>
             </li>
@@ -163,17 +142,12 @@ export function Footer() {
 
         {/* Policies */}
         <div>
-          <h4 className="font-serif text-lg mb-3">
-            About & Policies
-          </h4>
+          <h4 className="font-serif text-lg mb-3">About & Policies</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {policy.map((p) => (
               <li key={p.to}>
-                <Link
-                  to={p.to}
-                  className="hover:text-gold transition-colors"
-                >
+                <Link to={p.to} className="hover:text-gold transition-colors">
                   {p.label}
                 </Link>
               </li>
@@ -185,14 +159,10 @@ export function Footer() {
       {/* Bottom */}
       <div className="border-t border-primary-foreground/10">
         <div className="container-news py-4 flex flex-col md:flex-row gap-2 items-center justify-between text-xs text-primary-foreground/70">
-          <span>
-            © {new Date().getFullYear()} ClearFact News.
-            All rights reserved.
-          </span>
+          <span>© {new Date().getFullYear()} ClearFact News. All rights reserved.</span>
 
           <span className="text-center">
-            Truth over speed · Verification over virality ·
-            Transparency over secrecy.
+            Truth over speed · Verification over virality · Transparency over secrecy.
           </span>
         </div>
       </div>

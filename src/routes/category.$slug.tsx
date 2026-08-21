@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
+import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import {
   getCategoryBySlug,
   getFeaturedImageUrl,
@@ -8,10 +6,7 @@ import {
   normalizeWpSlug,
   stripHtml,
 } from "@/lib/wordpress";
-
-const CATEGORY_ALIASES: Record<string, string[]> = {
-  "accountability-journalism": ["accountability-journalism", "accountability"],
-};
+import { getCategorySourceSlugs, legacyCategoryRedirects } from "@/lib/site-navigation";
 
 function categoryLabel(slug: string) {
   return slug
@@ -22,7 +17,17 @@ function categoryLabel(slug: string) {
 
 export const Route = createFileRoute("/category/$slug")({
   loader: async ({ params }) => {
-    const acceptedSlugs = CATEGORY_ALIASES[params.slug] ?? [params.slug];
+    const redirectSlug = legacyCategoryRedirects[params.slug];
+
+    if (redirectSlug) {
+      throw redirect({
+        to: "/category/$slug",
+        params: { slug: redirectSlug },
+        statusCode: 301,
+      });
+    }
+
+    const acceptedSlugs = getCategorySourceSlugs(params.slug);
     let category: any = null;
 
     try {
@@ -32,17 +37,9 @@ export const Route = createFileRoute("/category/$slug")({
       category = categoryResults.find(Boolean) ?? null;
     } catch (error) {
       console.error(`Category ${params.slug} failed to load:`, error);
-      return {
-        category: {
-          id: 0,
-          name: categoryLabel(params.slug),
-          slug: params.slug,
-          description: "",
-          count: 0,
-        },
-        posts: [],
-        unavailable: true,
-      };
+      throw new Error(`The ${categoryLabel(params.slug)} desk is temporarily unavailable.`, {
+        cause: error,
+      });
     }
 
     if (!category || Number(category.count ?? 0) === 0) {
@@ -54,50 +51,43 @@ export const Route = createFileRoute("/category/$slug")({
       return {
         category,
         posts: Array.isArray(posts) ? posts : [],
-        unavailable: false,
       };
     } catch (error) {
       console.error(`Category ${params.slug} posts failed to load:`, error);
-      return {
-        category,
-        posts: [],
-        unavailable: true,
-      };
+      throw new Error(`The ${category.name} desk is temporarily unavailable.`, {
+        cause: error,
+      });
     }
   },
 
   head: ({ loaderData, params }) => {
-  const category = loaderData?.category;
-  const categoryName = category?.name?.trim() || "News";
+    const category = loaderData?.category;
+    const categoryName = category?.name?.trim() || "News";
 
-  const categoryTitle =
-    categoryName.toLowerCase() === "news"
-      ? "Latest News | ClearFact News"
-      : `${categoryName} News | ClearFact News`;
+    const categoryTitle =
+      categoryName.toLowerCase() === "news"
+        ? "Latest News | ClearFact News"
+        : `${categoryName} News | ClearFact News`;
 
-  const description =
-    category?.description?.replace(/<[^>]+>/g, "") ||
-    `Latest verified ${categoryName} reports from ClearFact News.`;
+    const description =
+      category?.description?.replace(/<[^>]+>/g, "") ||
+      `Latest verified ${categoryName} reports from ClearFact News.`;
 
-  const canonical = `https://clearfact.ng/category/${params.slug}`;
-  const robots = loaderData?.unavailable
-    ? "noindex,follow"
-    : "index,follow,max-image-preview:large";
-
-  return {
-    meta: [
-      { title: categoryTitle },
-      { name: "description", content: description },
-      { name: "robots", content: robots },
-      { property: "og:title", content: categoryTitle },
-      { property: "og:description", content: description },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: canonical },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: canonical }],
-  };
-},
+    const canonical = `https://clearfact.ng/category/${params.slug}`;
+    return {
+      meta: [
+        { title: categoryTitle },
+        { name: "description", content: description },
+        { name: "robots", content: "index,follow,max-image-preview:large" },
+        { property: "og:title", content: categoryTitle },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
 
   component: CategoryPage,
   notFoundComponent: () => (
@@ -112,27 +102,8 @@ export const Route = createFileRoute("/category/$slug")({
 });
 
 function CategoryPage() {
-  const { category, posts, unavailable } = Route.useLoaderData();
+  const { category, posts } = Route.useLoaderData();
   const categoryName = category?.name ?? "News";
-  const router = useRouter();
-  const [retryAttempt, setRetryAttempt] = useState(0);
-
-  useEffect(() => {
-    if (!unavailable || posts.length > 0 || retryAttempt >= 2) {
-      return;
-    }
-
-    const timeout = window.setTimeout(
-      () => {
-        void router.invalidate().finally(() => {
-          setRetryAttempt((attempt) => attempt + 1);
-        });
-      },
-      retryAttempt === 0 ? 400 : 1_200,
-    );
-
-    return () => window.clearTimeout(timeout);
-  }, [posts.length, retryAttempt, router, unavailable]);
 
   return (
     <div className="container-news py-8 md:py-12">
@@ -184,34 +155,11 @@ function CategoryPage() {
 
       {posts.length === 0 && (
         <div className="text-center py-16">
-          <h3 className="text-2xl font-semibold mb-2">
-            {unavailable && retryAttempt < 2
-              ? `Loading the latest ${categoryName} reports…`
-              : unavailable
-                ? "The newsroom feed needs another moment"
-                : "No articles found"}
-          </h3>
+          <h3 className="text-2xl font-semibold mb-2">No articles found</h3>
 
           <p className="text-muted-foreground">
-            {unavailable && retryAttempt < 2
-              ? "ClearFact is reconnecting automatically. You do not need to refresh the page."
-              : unavailable
-                ? "Please retry this section."
-                : "There are currently no published posts in this category."}
+            There are currently no published posts in this category.
           </p>
-
-          {unavailable && retryAttempt >= 2 && (
-            <button
-              type="button"
-              className="mt-5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-              onClick={() => {
-                setRetryAttempt(0);
-                void router.invalidate();
-              }}
-            >
-              Retry latest reports
-            </button>
-          )}
         </div>
       )}
 
