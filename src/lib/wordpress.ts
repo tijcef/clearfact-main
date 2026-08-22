@@ -1,4 +1,4 @@
-export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
+export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
 
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
@@ -486,7 +486,7 @@ export function proxyWpMediaUrl(sourceUrl?: string) {
   try {
     const url = new URL(sourceUrl, "https://clearfact.ng");
 
-    if (url.hostname === "cms.tijcef.org" && url.pathname.startsWith(WP_MEDIA_PATH)) {
+    if (url.hostname === "cms.clearfact.ng" && url.pathname.startsWith(WP_MEDIA_PATH)) {
       const mediaPath = url.pathname.slice(WP_MEDIA_PATH.length);
       return `/media/${mediaPath}${url.search}`;
     }

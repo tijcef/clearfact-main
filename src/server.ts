@@ -22,8 +22,8 @@ type CloudflareRequestInit = RequestInit & {
   };
 };
 
-const WP_REST_ORIGIN = "https://cms.tijcef.org/wp-json/wp/v2";
-const WP_MEDIA_ORIGIN = "https://cms.tijcef.org/wp-content/uploads/";
+const WP_REST_ORIGIN = "https://cms.clearfact.ng/wp-json/wp/v2";
+const WP_MEDIA_ORIGIN = "https://cms.clearfact.ng/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
 const ONE_WEEK = 604_800;
 const API_ORIGIN_TIMEOUT_MS = 12_000;

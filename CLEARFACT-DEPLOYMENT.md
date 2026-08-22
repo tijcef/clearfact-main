@@ -60,7 +60,7 @@ have to be completed in Google AdSense:
 - Inspect the rendered HTML and confirm each public indexable page has one
   preferred canonical URL and its expected robots directive.
 - Confirm that WordPress remains available at
-  `https://cms.tijcef.org/wp-json/wp/v2/posts`.
+  `https://cms.clearfact.ng/wp-json/wp/v2/posts`.
 
 The frontend now avoids shipping full article bodies in listing-page HTML,
 keeps preferred category URLs consistent, makes the fact-check hub data-driven,
