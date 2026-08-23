@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
+import type { FormEvent } from "react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -30,6 +31,20 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
+  function openEmailDraft(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") || "").trim();
+    const email = String(form.get("email") || "").trim();
+    const enquiryType = String(form.get("enquiryType") || "General enquiry").trim();
+    const message = String(form.get("message") || "").trim();
+    const subject = encodeURIComponent(`${enquiryType} — ${name}`);
+    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
+
+    window.location.href = `mailto:info@clearfact.ng?subject=${subject}&body=${body}`;
+  }
+
   return (
     <main className="container-news py-12 md:py-16">
       <div className="max-w-3xl">
@@ -155,7 +170,7 @@ function Contact() {
         {/* CONTACT FORM */}
         <section className="lg:col-span-2">
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={openEmailDraft}
             className="rounded-sm border border-border p-6 md:p-8 bg-card space-y-5"
           >
             <div>
@@ -169,9 +184,12 @@ function Contact() {
             {/* NAME & EMAIL */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Full name</label>
+                <label htmlFor="contact-name" className="text-sm font-medium block mb-2">
+                  Full name
+                </label>
 
                 <input
+                  id="contact-name"
                   name="name"
                   className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
                   placeholder="Your full name"
@@ -180,9 +198,12 @@ function Contact() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Email address</label>
+                <label htmlFor="contact-email" className="text-sm font-medium block mb-2">
+                  Email address
+                </label>
 
                 <input
+                  id="contact-email"
                   name="email"
                   type="email"
                   className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
@@ -194,9 +215,12 @@ function Contact() {
 
             {/* ENQUIRY TYPE */}
             <div>
-              <label className="text-sm font-medium block mb-2">Enquiry type</label>
+              <label htmlFor="contact-type" className="text-sm font-medium block mb-2">
+                Enquiry type
+              </label>
 
               <select
+                id="contact-type"
                 name="enquiryType"
                 className="h-11 w-full px-3 rounded-sm border border-border bg-background"
                 defaultValue="Editorial tip"
@@ -214,9 +238,12 @@ function Contact() {
 
             {/* MESSAGE */}
             <div>
-              <label className="text-sm font-medium block mb-2">Message</label>
+              <label htmlFor="contact-message" className="text-sm font-medium block mb-2">
+                Message
+              </label>
 
               <textarea
+                id="contact-message"
                 name="message"
                 rows={8}
                 className="w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary resize-y"
@@ -234,12 +261,12 @@ function Contact() {
               type="submit"
               className="h-11 px-6 rounded-sm bg-primary text-primary-foreground font-semibold"
             >
-              Send message
+              Open email to send
             </button>
 
             <p className="text-xs text-muted-foreground">
-              By contacting ClearFact, you acknowledge that information submitted may be reviewed by
-              the appropriate ClearFact team.
+              This opens your email app with the message filled in so you can review it before
+              sending. ClearFact does not receive it until you send the email.
             </p>
           </form>
         </section>

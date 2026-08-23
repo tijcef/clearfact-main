@@ -42,7 +42,7 @@ function PrivacyPolicy() {
 
         <p>
           This Privacy Policy applies to ClearFact News websites, digital services and reader
-          interactions operated by Clearfact Media Ltd. By using clearfact.ng, you acknowledge the
+          interactions operated by ClearFact Media Ltd. By using clearfact.ng, you acknowledge the
           practices described in this policy.
         </p>
       </section>
@@ -246,7 +246,7 @@ function PrivacyPolicy() {
         </p>
 
         <p>
-          Clearfact Media Ltd
+          ClearFact Media Ltd
           <br />
           32 Demsawo, Jimeta, Yola, Adamawa State, Nigeria
         </p>

@@ -31,6 +31,28 @@ export const moreCategories = [
   { name: "Video", slug: "video" },
 ] as const;
 
+export const MIN_INDEXABLE_CATEGORY_POSTS = 5;
+
+const fallbackMainSlugs = new Set([
+  "news",
+  "politics",
+  "crime-security",
+  "law-judiciary",
+  "business",
+  "education",
+]);
+
+const fallbackMoreSlugs = new Set(["entertainment"]);
+
+/**
+ * Server-rendered fallbacks keep navigation useful to readers and crawlers
+ * while the live WordPress category counts are loading or unavailable.
+ */
+export const fallbackNavigationCategories = {
+  main: mainCategories.filter((category) => fallbackMainSlugs.has(category.slug)),
+  more: moreCategories.filter((category) => fallbackMoreSlugs.has(category.slug)),
+};
+
 /**
  * Public category slugs do not always match the historic WordPress taxonomy.
  * Keep that translation in one place so navigation, category loaders and the

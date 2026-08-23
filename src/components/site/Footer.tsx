@@ -4,7 +4,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { SocialFollow } from "./SocialMedia";
 import { useEffect, useState } from "react";
 import { getCategories } from "@/lib/wordpress";
-import { filterNavigationCategories } from "@/lib/site-navigation";
+import { fallbackNavigationCategories, filterNavigationCategories } from "@/lib/site-navigation";
 
 const policy = [
   { to: "/about", label: "About Us" },
@@ -19,7 +19,7 @@ const policy = [
 
 export function Footer() {
   const [activeCategories, setActiveCategories] = useState(
-    () => ({ main: [], more: [] }) as ReturnType<typeof filterNavigationCategories>,
+    () => fallbackNavigationCategories as ReturnType<typeof filterNavigationCategories>,
   );
 
   useEffect(() => {
@@ -28,7 +28,11 @@ export function Footer() {
     getCategories()
       .then((available) => {
         if (active) {
-          setActiveCategories(filterNavigationCategories(available));
+          const filtered = filterNavigationCategories(available);
+
+          if (filtered.main.length || filtered.more.length) {
+            setActiveCategories(filtered);
+          }
         }
       })
       .catch((error) => console.error("Unable to load active footer categories:", error));

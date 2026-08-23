@@ -213,6 +213,38 @@ export async function getCategories() {
   );
 }
 
+export type WordPressAuthor = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  url?: string;
+  link?: string;
+  avatar_urls?: Record<string, string>;
+};
+
+export async function getAuthorById(authorId: number) {
+  return requestJson<WordPressAuthor>(
+    `/users/${authorId}${buildQuery({
+      _fields: "id,name,slug,description,url,link,avatar_urls",
+    })}`,
+    { cacheTtl: 3600 },
+  );
+}
+
+export async function getPostsByAuthor(authorId: number, limit = 24) {
+  const posts = await requestJson<any[]>(
+    `/posts${listQuery({
+      author: authorId,
+      per_page: Math.min(Math.max(limit, 1), 100),
+    })}`,
+    { cacheTtl: 600 },
+  );
+
+  primePostCache(posts);
+  return posts;
+}
+
 export async function getCategoryBySlug(slug: string) {
   const categories = await requestJson<any[]>(
     `/categories${buildQuery({
@@ -524,5 +556,44 @@ export function getFeaturedImageUrl(
 }
 
 export function proxyWpMediaInHtml(html: string) {
-  return html.replace(/https?:\/\/cms\.tijcef\.org\/wp-content\/uploads\//gi, "/media/");
+  return html.replace(
+    /https?:\/\/(?:cms\.clearfact\.ng|cms\.tijcef\.org)\/wp-content\/uploads\//gi,
+    "/media/",
+  );
+}
+
+export function sanitizeWpArticleHtml(html = "") {
+  return proxyWpMediaInHtml(html)
+    .replace(/[\u200e\u200f\ufeff]/g, "")
+    .replace(/<div[^>]*class=["'][^"']*\bwp-block-spacer\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "")
+    .replace(/(?:<br\s*\/?\s*>\s*){3,}/gi, "<br><br>")
+    .replace(/<p[^>]*>\s*Word\s*<\/p>\s*$/i, "")
+    .replace(/(^|>)\s*Word\s*$/i, "$1")
+    .replace(/<p[^>]*>(?:\s|&nbsp;|&#160;|<br\s*\/?\s*>|\u00a0)*<\/p>/gi, "")
+    .trim();
+}
+
+export function getExternalCitationUrls(html = "") {
+  const urls = new Set<string>();
+  const linkPattern = /<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi;
+
+  for (const match of html.matchAll(linkPattern)) {
+    try {
+      const url = new URL(decodeHtmlEntities(match[1]), "https://clearfact.ng");
+
+      if (
+        ["http:", "https:"].includes(url.protocol) &&
+        !["clearfact.ng", "www.clearfact.ng", "cms.clearfact.ng", "cms.tijcef.org"].includes(
+          url.hostname,
+        )
+      ) {
+        url.hash = "";
+        urls.add(url.toString());
+      }
+    } catch {
+      // Invalid or non-web links are not citations.
+    }
+  }
+
+  return Array.from(urls).slice(0, 12);
 }

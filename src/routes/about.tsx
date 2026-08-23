@@ -34,6 +34,25 @@ We believe reliable information is essential to democracy, accountability and in
 
 Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide credible journalism in an environment where misinformation, sensationalism and unverified claims can spread rapidly. We are committed to producing news that readers can trust while maintaining editorial independence and professional responsibility.`}
     >
+      <h2>Ownership and Newsroom Leadership</h2>
+      <p>
+        ClearFact News is published by ClearFact Media Ltd, an independent Nigerian media company.
+        The newsroom is founder-led and is not owned or controlled by a political party, government
+        institution or advertiser.
+      </p>
+
+      <h3>Emmanuel Sunday Tijwun — Founder and Publisher</h3>
+      <p>
+        Emmanuel Sunday Tijwun is a Nigerian journalist, researcher and nonprofit leader based in
+        Yola. His work focuses on governance, development, technology, education, health and public
+        affairs, with particular attention to communities in Northeast Nigeria.
+      </p>
+
+      <p>
+        Questions about newsroom leadership or editorial responsibility can be sent to{" "}
+        <a href="mailto:editor@clearfact.ng">editor@clearfact.ng</a>.
+      </p>
+
       <h2>Our Mission</h2>
       <p>
         To provide accurate, verified, transparent and responsible journalism that informs the

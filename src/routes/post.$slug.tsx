@@ -3,12 +3,13 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
+  getExternalCitationUrls,
   getFeaturedImageUrl,
   getPublicPostPath,
   getPostBySlug,
   getRelatedPosts,
   normalizeWpSlug,
-  proxyWpMediaInHtml,
+  sanitizeWpArticleHtml,
   stripHtml,
 } from "@/lib/wordpress";
 import Comments from "@/components/Comments";
@@ -85,6 +86,13 @@ export const Route = createFileRoute("/post/$slug")({
 
     const authorName = author?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
+    const authorId = Number(author?.id || post.author || 0);
+
+    const authorUrl =
+      Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
+
+    const citations = getExternalCitationUrls(post.content?.rendered || "");
+
     const publishedDate = new Date(post.date).toISOString();
 
     const modifiedDate = new Date(post.modified || post.date).toISOString();
@@ -130,7 +138,10 @@ export const Route = createFileRoute("/post/$slug")({
           author: {
             "@type": "Person",
             name: authorName,
+            ...(authorUrl ? { url: authorUrl } : {}),
           },
+
+          ...(citations.length ? { citation: citations } : {}),
 
           publisher: {
             "@type": "NewsMediaOrganization",
@@ -139,7 +150,7 @@ export const Route = createFileRoute("/post/$slug")({
 
             name: SITE_NAME,
 
-            legalName: "Clearfact Media Ltd",
+            legalName: "ClearFact Media Ltd",
 
             url: SITE_ORIGIN,
 
@@ -356,11 +367,7 @@ function ArticlePage() {
 
   const featuredImage = getFeaturedImageUrl(post, "", "large");
 
-  const cleanContent = proxyWpMediaInHtml(
-    post.content.rendered
-      .replace(/<div[^>]*wp-block-spacer[^>]*>.*?<\/div>/gis, "")
-      .replace(/style="height:[^"]*"/gi, ""),
-  );
+  const cleanContent = sanitizeWpArticleHtml(post.content.rendered);
 
   const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
@@ -373,10 +380,28 @@ function ArticlePage() {
   const authorName =
     post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
+  const authorId = Number(post._embedded?.author?.[0]?.id || post.author || 0);
+
+  const hasAuthorProfile = Number.isInteger(authorId) && authorId > 0;
+
   const authorDescription =
     post._embedded?.author?.[0]?.description ||
     post.authors?.[0]?.description ||
     `${authorName} writes for ClearFact News, an independent Nigerian newsroom committed to verified, transparent, and fact-based journalism.`;
+
+  const featuredMedia = post._embedded?.["wp:featuredmedia"]?.[0];
+
+  const featuredImageAlt = stripHtml(featuredMedia?.alt_text || "") || articleTitle;
+
+  const featuredImageCaption = stripHtml(featuredMedia?.caption?.rendered || "");
+
+  const externalCitations = getExternalCitationUrls(cleanContent);
+
+  const publishedAt = new Date(post.date);
+
+  const modifiedAt = new Date(post.modified || post.date);
+
+  const wasUpdated = modifiedAt.getTime() - publishedAt.getTime() > 60 * 60 * 1_000;
 
   const headings = Array.from(cleanContent.matchAll(/<h2[^>]*>(.*?)<\/h2>/g)).map(
     (match, index) => ({
@@ -437,18 +462,43 @@ function ArticlePage() {
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
           <span>
-            By <strong>{authorName}</strong>
+            By{" "}
+            {hasAuthorProfile ? (
+              <Link
+                to="/author/$id"
+                params={{ id: String(authorId) }}
+                className="font-semibold text-foreground hover:text-primary hover:underline"
+              >
+                {authorName}
+              </Link>
+            ) : (
+              <strong>{authorName}</strong>
+            )}
           </span>
 
           <span>•</span>
 
           <time dateTime={post.date}>
-            {new Date(post.date).toLocaleDateString("en-NG", {
+            {publishedAt.toLocaleDateString("en-NG", {
               day: "numeric",
               month: "long",
               year: "numeric",
             })}
           </time>
+
+          {wasUpdated && (
+            <>
+              <span>•</span>
+              <time dateTime={post.modified}>
+                Updated{" "}
+                {modifiedAt.toLocaleDateString("en-NG", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </time>
+            </>
+          )}
 
           <span>•</span>
 
@@ -473,15 +523,23 @@ function ArticlePage() {
         </aside>
 
         {featuredImage && (
-          <img
-            src={featuredImage}
-            alt={articleTitle}
-            className="w-full rounded-xl mb-8"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            sizes="(min-width: 1024px) 960px, 100vw"
-          />
+          <figure className="mb-8">
+            <img
+              src={featuredImage}
+              alt={featuredImageAlt}
+              className="w-full rounded-xl"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              sizes="(min-width: 1024px) 960px, 100vw"
+            />
+
+            {featuredImageCaption && (
+              <figcaption className="mt-2 text-sm leading-6 text-muted-foreground">
+                {featuredImageCaption}
+              </figcaption>
+            )}
+          </figure>
         )}
 
         {headings.length >= 2 && (
@@ -522,12 +580,47 @@ function ArticlePage() {
           }}
         />
 
+        {externalCitations.length > 0 && (
+          <aside className="mt-10 rounded-xl border border-border bg-muted/30 p-5">
+            <h2 className="font-serif text-xl font-bold">Sources referenced in this report</h2>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              These external records and reports are linked in the article for reader verification.
+            </p>
+
+            <ul className="mt-4 space-y-2 text-sm">
+              {externalCitations.map((url) => (
+                <li key={url}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all font-medium text-primary hover:underline"
+                  >
+                    {new URL(url).hostname.replace(/^www\./, "")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+
         <AdSense />
 
         <div className="mt-10 border-t pt-6">
-          <h3 className="font-bold text-xl mb-2">About the Author</h3>
+          <h2 className="font-bold text-xl mb-2">About the Author</h2>
 
           <p className="text-muted-foreground leading-7">{authorDescription}</p>
+
+          {hasAuthorProfile && (
+            <Link
+              to="/author/$id"
+              params={{ id: String(authorId) }}
+              className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
+            >
+              View {authorName}&apos;s profile and reports →
+            </Link>
+          )}
         </div>
 
         <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5 md:p-6">

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
+import type { FormEvent } from "react";
 
 export const Route = createFileRoute("/submit-story")({
   head: () => ({
@@ -28,6 +29,21 @@ export const Route = createFileRoute("/submit-story")({
 });
 
 function SubmitStory() {
+  function openTipEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    const subject = String(form.get("subject") || "News tip").trim();
+    const story = String(form.get("story") || "").trim();
+    const evidence = String(form.get("evidence") || "").trim();
+    const contact = String(form.get("contact") || "Not provided").trim();
+    const body = encodeURIComponent(
+      `Story details:\n${story}\n\nSupporting evidence or links:\n${evidence || "None listed"}\n\nPreferred contact:\n${contact}`,
+    );
+
+    window.location.href = `mailto:editor@clearfact.ng?subject=${encodeURIComponent(`News tip — ${subject}`)}&body=${body}`;
+  }
+
   return (
     <main className="container-news py-12 md:py-16">
       {" "}
@@ -99,7 +115,7 @@ function SubmitStory() {
         {/* SUBMISSION FORM */}
         <section className="lg:col-span-2">
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={openTipEmail}
             className="rounded-sm border border-border p-6 md:p-8 bg-card space-y-5"
           >
             <div>
@@ -111,9 +127,12 @@ function SubmitStory() {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-2">Story subject</label>
+              <label htmlFor="tip-subject" className="text-sm font-medium block mb-2">
+                Story subject
+              </label>
 
               <input
+                id="tip-subject"
                 name="subject"
                 className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
                 placeholder="What is the story about?"
@@ -122,9 +141,12 @@ function SubmitStory() {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-2">Your information</label>
+              <label htmlFor="tip-story" className="text-sm font-medium block mb-2">
+                Your information
+              </label>
 
               <textarea
+                id="tip-story"
                 name="story"
                 rows={10}
                 className="w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary resize-y"
@@ -134,9 +156,12 @@ function SubmitStory() {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-2">Supporting evidence or links</label>
+              <label htmlFor="tip-evidence" className="text-sm font-medium block mb-2">
+                Supporting evidence or links
+              </label>
 
               <textarea
+                id="tip-evidence"
                 name="evidence"
                 rows={5}
                 className="w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary resize-y"
@@ -145,9 +170,12 @@ function SubmitStory() {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-2">Preferred contact</label>
+              <label htmlFor="tip-contact" className="text-sm font-medium block mb-2">
+                Preferred contact
+              </label>
 
               <input
+                id="tip-contact"
                 name="contact"
                 className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
                 placeholder="Optional email or other contact method"
@@ -179,12 +207,13 @@ function SubmitStory() {
               type="submit"
               className="h-11 px-6 rounded-sm bg-gold text-gold-foreground font-semibold"
             >
-              Submit Story
+              Open email to submit
             </button>
 
             <p className="text-xs text-muted-foreground leading-5">
-              Submissions are reviewed for editorial relevance and verification. Submission does not
-              guarantee publication.
+              This opens your email app with the tip filled in. You can review it and attach files
+              before sending. Submissions are reviewed for editorial relevance and verification;
+              submission does not guarantee publication.
             </p>
           </form>
         </section>

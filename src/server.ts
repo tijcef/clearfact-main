@@ -204,6 +204,7 @@ function cacheFreshAndStale(
 function apiCacheTtl(pathname: string) {
   if (pathname.startsWith("/api/wp/categories")) return 900;
   if (pathname.startsWith("/api/wp/tags")) return 900;
+  if (pathname.startsWith("/api/wp/users")) return 3600;
   if (pathname.startsWith("/api/wp/comments")) return 60;
   return 900;
 }
@@ -222,7 +223,7 @@ async function proxyWordPressRequest(
     restPath = restPath.slice("/wp/v2".length);
   }
 
-  if (!/^\/(?:posts|categories|tags|comments)(?:\/|$)/.test(restPath)) {
+  if (!/^\/(?:posts|categories|tags|comments|users)(?:\/|$)/.test(restPath)) {
     return new Response("Not found", { status: 404 });
   }
 

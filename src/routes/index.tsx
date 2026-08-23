@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
           "@id": "https://clearfact.ng/#organization",
 
           name: "ClearFact News",
-          legalName: "Clearfact Media Ltd",
+          legalName: "ClearFact Media Ltd",
           url: "https://clearfact.ng/",
 
           logo: {
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/")({
           description:
             "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
 
-          email: "clearfactmedia@gmail.com",
+          email: "info@clearfact.ng",
 
           address: {
             "@type": "PostalAddress",

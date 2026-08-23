@@ -6,6 +6,7 @@ import { SocialFollow } from "./SocialMedia";
 import logo from "@/assets/logo.jpg";
 import { getCategories, normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
+  fallbackNavigationCategories,
   filterNavigationCategories,
   mainCategories as MAIN_CATEGORIES,
   moreCategories as MORE_CATEGORIES,
@@ -72,10 +73,10 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [activeMainCategories, setActiveMainCategories] = useState<
     (typeof MAIN_CATEGORIES)[number][]
-  >([]);
+  >([...fallbackNavigationCategories.main]);
   const [activeMoreCategories, setActiveMoreCategories] = useState<
     (typeof MORE_CATEGORIES)[number][]
-  >([]);
+  >([...fallbackNavigationCategories.more]);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
   const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
@@ -92,7 +93,7 @@ export function Header() {
       try {
         const available = await getCategories();
         const filtered = filterNavigationCategories(available);
-        if (active) {
+        if (active && (filtered.main.length || filtered.more.length)) {
           setActiveMainCategories(filtered.main);
           setActiveMoreCategories(filtered.more);
         }
@@ -378,11 +379,12 @@ export function Header() {
                 ))}
               </div>
             ) : (
-              <p className="whitespace-nowrap text-sm font-medium text-slate-300">
-                {tickerLoading
-                  ? "Connecting to the live newsroom…"
-                  : "Live updates will resume automatically · Browse the latest verified reports below."}
-              </p>
+              <Link
+                to="/"
+                className="whitespace-nowrap text-sm font-medium text-slate-300 hover:text-amber-400"
+              >
+                {tickerLoading ? "Browse the latest verified reports" : "View the latest news"}
+              </Link>
             )}
           </div>
         </div>

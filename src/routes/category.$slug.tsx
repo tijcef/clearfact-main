@@ -6,7 +6,11 @@ import {
   normalizeWpSlug,
   stripHtml,
 } from "@/lib/wordpress";
-import { getCategorySourceSlugs, legacyCategoryRedirects } from "@/lib/site-navigation";
+import {
+  getCategorySourceSlugs,
+  legacyCategoryRedirects,
+  MIN_INDEXABLE_CATEGORY_POSTS,
+} from "@/lib/site-navigation";
 
 function categoryLabel(slug: string) {
   return slug
@@ -78,7 +82,13 @@ export const Route = createFileRoute("/category/$slug")({
       meta: [
         { title: categoryTitle },
         { name: "description", content: description },
-        { name: "robots", content: "index,follow,max-image-preview:large" },
+        {
+          name: "robots",
+          content:
+            Number(category?.count ?? 0) >= MIN_INDEXABLE_CATEGORY_POSTS
+              ? "index,follow,max-image-preview:large"
+              : "noindex,follow",
+        },
         { property: "og:title", content: categoryTitle },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
@@ -113,7 +123,9 @@ function CategoryPage() {
         <h1 className="font-serif text-4xl md:text-5xl mt-1">{categoryName}</h1>
 
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          Latest stories from the {categoryName} desk.
+          {category?.description
+            ? stripHtml(category.description)
+            : `Verified reports, context and public-interest updates from the ${categoryName} desk.`}
         </p>
       </div>
 

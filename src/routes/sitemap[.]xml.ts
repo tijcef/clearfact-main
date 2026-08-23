@@ -5,7 +5,12 @@ import {
   getSitemapPosts,
   type SitemapPost,
 } from "@/lib/wordpress";
-import { categories, getCategorySourceSlugs, moreCategories } from "@/lib/site-navigation";
+import {
+  categories,
+  getCategorySourceSlugs,
+  MIN_INDEXABLE_CATEGORY_POSTS,
+  moreCategories,
+} from "@/lib/site-navigation";
 
 const SITE_ORIGIN = "https://clearfact.ng";
 
@@ -84,7 +89,7 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const liveCategorySlugs = new Set(
           publishedCategories
-            .filter((category) => category.count > 0)
+            .filter((category) => category.count >= MIN_INDEXABLE_CATEGORY_POSTS)
             .map((category) => category.slug),
         );
 
