@@ -40,7 +40,13 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
   console.error(error);
 
   const router = useRouter();
@@ -50,7 +56,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     const path = window.location.pathname;
     const storageKey = `clearfact-route-recovery:${path}`;
     const now = Date.now();
-    let recovery = { attempts: 0, startedAt: now };
+
+    let recovery = {
+      attempts: 0,
+      startedAt: now,
+    };
 
     try {
       const stored = window.sessionStorage.getItem(storageKey);
@@ -97,7 +107,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
         <h1 className="font-serif text-2xl">
-          {isRecovering ? "Reconnecting to ClearFact…" : "This page needs another moment"}
+          {isRecovering
+            ? "Reconnecting to ClearFact…"
+            : "This page needs another moment"}
         </h1>
 
         <p className="mt-2 text-sm text-muted-foreground">
@@ -113,17 +125,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
                 window.sessionStorage.removeItem(
                   `clearfact-route-recovery:${window.location.pathname}`,
                 );
+
                 setIsRecovering(true);
                 void router.invalidate().finally(reset);
               }}
-              className="h-10 px-4 rounded-sm bg-primary text-primary-foreground text-sm font-semibold"
+              className="h-10 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground"
             >
               Try again
             </button>
 
             <a
               href="/"
-              className="h-10 px-4 rounded-sm border border-border text-sm font-semibold inline-flex items-center"
+              className="inline-flex h-10 items-center rounded-sm border border-border px-4 text-sm font-semibold"
             >
               Latest news
             </a>
@@ -137,7 +150,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<Record<string, never>>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
+      {
+        charSet: "utf-8",
+      },
       {
         title: "ClearFact News | Verified Journalism From Nigeria",
       },
@@ -164,6 +179,27 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
         rel: "stylesheet",
         href: appCss,
       },
+
+      // ClearFact favicon for Google Search and browser tabs
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "48x48",
+        href: "/favicon.png",
+      },
+
+      // Compatibility for browsers that use shortcut icon
+      {
+        rel: "shortcut icon",
+        type: "image/png",
+        href: "/favicon.png",
+      },
+
+      // Mobile / Apple devices
+      {
+        rel: "apple-touch-icon",
+        href: "/favicon.png",
+      },
     ],
   }),
 
@@ -179,13 +215,26 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
 
-        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+        {/* Google Analytics */}
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        />
+
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","${GA_MEASUREMENT_ID}",{anonymize_ip:true});`,
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag("js", new Date());
+              gtag("config", "${GA_MEASUREMENT_ID}", {
+                anonymize_ip: true
+              });
+            `,
           }}
         />
 
+        {/* Google AdSense */}
         <script
           id="clearfact-adsense"
           async
@@ -205,7 +254,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white transition-colors">
+      <div className="min-h-screen flex flex-col bg-white text-black transition-colors dark:bg-black dark:text-white">
         <Header />
 
         <main className="flex-1">
