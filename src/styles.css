@@ -1,0 +1,350 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-serif: "Source Serif 4", "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", "Helvetica Neue", system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-breaking: var(--breaking);
+  --color-breaking-foreground: var(--breaking-foreground);
+  --color-verified: var(--verified);
+  --color-verified-foreground: var(--verified-foreground);
+}
+
+:root {
+  --radius: 0.375rem;
+
+  --background: oklch(0.99 0.003 250);
+  --foreground: oklch(0.16 0.03 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.03 260);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.03 260);
+
+  --primary: oklch(0.27 0.09 258);
+  --primary-foreground: oklch(0.99 0.003 250);
+
+  --secondary: oklch(0.96 0.008 250);
+  --secondary-foreground: oklch(0.22 0.05 260);
+
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.46 0.02 260);
+
+  --accent: oklch(0.94 0.015 255);
+  --accent-foreground: oklch(0.22 0.05 260);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0.003 250);
+
+  --border: oklch(0.9 0.008 255);
+  --input: oklch(0.9 0.008 255);
+  --ring: oklch(0.27 0.09 258);
+
+  --gold: oklch(0.78 0.14 80);
+  --gold-foreground: oklch(0.18 0.04 260);
+
+  --breaking: oklch(0.55 0.22 27);
+  --breaking-foreground: oklch(0.99 0 0);
+
+  --verified: oklch(0.62 0.16 155);
+  --verified-foreground: oklch(0.99 0 0);
+
+  --sidebar: oklch(0.99 0.003 250);
+  --sidebar-foreground: oklch(0.16 0.03 260);
+  --sidebar-primary: oklch(0.27 0.09 258);
+  --sidebar-primary-foreground: oklch(0.99 0.003 250);
+  --sidebar-accent: oklch(0.94 0.015 255);
+  --sidebar-accent-foreground: oklch(0.22 0.05 260);
+  --sidebar-border: oklch(0.9 0.008 255);
+  --sidebar-ring: oklch(0.27 0.09 258);
+}
+
+.dark {
+  --background: oklch(0.13 0.02 260);
+  --foreground: oklch(0.97 0.005 250);
+
+  --card: oklch(0.17 0.025 260);
+  --card-foreground: oklch(0.97 0.005 250);
+
+  --popover: oklch(0.17 0.025 260);
+  --popover-foreground: oklch(0.97 0.005 250);
+
+  --primary: oklch(0.78 0.14 80);
+  --primary-foreground: oklch(0.15 0.03 260);
+
+  --secondary: oklch(0.22 0.03 260);
+  --secondary-foreground: oklch(0.97 0.005 250);
+
+  --muted: oklch(0.22 0.03 260);
+  --muted-foreground: oklch(0.7 0.02 260);
+
+  --accent: oklch(0.24 0.04 260);
+  --accent-foreground: oklch(0.97 0.005 250);
+
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.78 0.14 80);
+
+  --gold: oklch(0.82 0.14 80);
+  --gold-foreground: oklch(0.15 0.03 260);
+
+  --breaking: oklch(0.65 0.22 27);
+  --breaking-foreground: oklch(0.99 0 0);
+
+  --verified: oklch(0.7 0.16 155);
+  --verified-foreground: oklch(0.13 0.02 260);
+
+  --sidebar: oklch(0.13 0.02 260);
+  --sidebar-foreground: oklch(0.97 0.005 250);
+  --sidebar-primary: oklch(0.78 0.14 80);
+  --sidebar-primary-foreground: oklch(0.15 0.03 260);
+  --sidebar-accent: oklch(0.24 0.04 260);
+  --sidebar-accent-foreground: oklch(0.97 0.005 250);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.14 80);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  img {
+    height: auto;
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .article-body {
+    width: 100%;
+    max-width: 46rem;
+    color: var(--color-foreground);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+
+  .article-body :where(p) {
+    margin-top: 0 !important;
+    margin-bottom: 1.45em !important;
+    font-family: inherit !important;
+    font-size: 1em !important;
+    line-height: inherit !important;
+    text-align: left !important;
+  }
+
+  .article-body :where(p:last-child) {
+    margin-bottom: 0 !important;
+  }
+
+  .article-body :where(p:empty, div:empty) {
+    display: none;
+  }
+
+  .article-body :where(p, li, blockquote) :where(span, strong, em, b, i, small) {
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .article-body :where(h2) {
+    margin-top: 2.1em;
+    margin-bottom: 0.75em;
+    font-size: 1.65em;
+    line-height: 1.2;
+  }
+
+  .article-body :where(h3, h4) {
+    margin-top: 1.8em;
+    margin-bottom: 0.65em;
+    line-height: 1.3;
+  }
+
+  .article-body :where(ul, ol) {
+    margin-block: 0 1.5em;
+    padding-inline-start: 1.35em;
+  }
+
+  .article-body :where(li) {
+    margin-block: 0.45em;
+    line-height: 1.7;
+  }
+
+  .article-body :where(blockquote) {
+    margin-block: 1.75em;
+    border-inline-start: 4px solid var(--color-primary);
+    padding-inline-start: 1.1em;
+    font-style: italic;
+    line-height: 1.75;
+  }
+
+  .article-body :where(a) {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+  }
+
+  .article-body :where(img, video, iframe) {
+    max-width: 100%;
+    border-radius: 0.75rem;
+  }
+
+  .article-body :where(iframe) {
+    width: 100%;
+    min-height: 18rem;
+  }
+
+  .article-body :where(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    font-family: var(--font-sans);
+    font-size: 0.875em;
+  }
+
+  @media (min-width: 768px) {
+    .article-body {
+      max-width: 48rem;
+      font-size: 1.1875rem;
+      line-height: 1.85;
+    }
+  }
+}
+
+@layer utilities {
+  .container-news {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
+  }
+
+  .ticker-viewport {
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      black 1.5rem,
+      black calc(100% - 1.5rem),
+      transparent
+    );
+  }
+
+  .ticker-track {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: max-content;
+    min-width: max-content;
+    animation: clearfact-ticker 52s linear infinite;
+    contain: layout paint;
+    will-change: transform;
+  }
+
+  .ticker-track:hover,
+  .ticker-track:focus-within {
+    animation-play-state: paused;
+  }
+
+  @keyframes clearfact-ticker {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container-news {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .ticker-viewport {
+      overflow-x: auto;
+      mask-image: none;
+    }
+
+    .ticker-track {
+      animation: none;
+      transform: none;
+      will-change: auto;
+    }
+  }
+}
