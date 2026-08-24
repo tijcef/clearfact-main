@@ -20,6 +20,26 @@ export default function AdSense() {
     }
 
     let active = true;
+    const ad = container.querySelector<HTMLElement>(".adsbygoogle");
+
+    if (!ad) {
+      return;
+    }
+
+    const syncAdVisibility = () => {
+      const isUnfilled = ad.getAttribute("data-ad-status") === "unfilled";
+
+      container.hidden = isUnfilled;
+      container.classList.toggle("mt-0", isUnfilled);
+      container.classList.toggle("mt-10", !isUnfilled);
+    };
+
+    const adStatusObserver = new MutationObserver(syncAdVisibility);
+
+    adStatusObserver.observe(ad, {
+      attributes: true,
+      attributeFilter: ["data-ad-status", "data-adsbygoogle-status"],
+    });
 
     const displayAd = () => {
       try {
@@ -35,9 +55,7 @@ export default function AdSense() {
           return;
         }
 
-        const ad = container.querySelector(".adsbygoogle");
-
-        if (!ad || ad.getAttribute("data-adsbygoogle-status")) {
+        if (ad.getAttribute("data-adsbygoogle-status")) {
           return;
         }
 
@@ -54,6 +72,7 @@ export default function AdSense() {
 
       return () => {
         active = false;
+        adStatusObserver.disconnect();
       };
     }
 
@@ -74,15 +93,12 @@ export default function AdSense() {
     return () => {
       active = false;
       observer.disconnect();
+      adStatusObserver.disconnect();
     };
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="mt-10 min-h-24 w-full overflow-hidden"
-      aria-label="Advertisement"
-    >
+    <div ref={containerRef} className="mt-10 w-full" aria-label="Advertisement">
       <ins
         className="adsbygoogle"
         style={{
@@ -91,7 +107,7 @@ export default function AdSense() {
         }}
         data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={ADSENSE_SLOT}
-        data-ad-format="auto"
+        data-ad-format="rectangle"
         data-full-width-responsive="true"
       />
     </div>
