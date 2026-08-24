@@ -45,7 +45,6 @@ import { Route as ContributorReferralsRouteImport } from './routes/contributor.r
 import { Route as ContributorPayoutsRouteImport } from './routes/contributor.payouts'
 import { Route as ContributorOnboardingRouteImport } from './routes/contributor.onboarding'
 import { Route as ContributorNotificationsRouteImport } from './routes/contributor.notifications'
-import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AuthorIdRouteImport } from './routes/author.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
@@ -237,11 +236,6 @@ const ContributorNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => ContributorRoute,
   } as any)
-const CategorySlugRoute = CategorySlugRouteImport.update({
-  id: '/category/$slug',
-  path: '/category/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthorIdRoute = AuthorIdRouteImport.update({
   id: '/author/$id',
   path: '/author/$id',
@@ -322,7 +316,6 @@ export interface FileRoutesByFullPath {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
-  '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
   '/contributor/payouts': typeof ContributorPayoutsRoute
@@ -368,7 +361,6 @@ export interface FileRoutesByTo {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
-  '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
   '/contributor/payouts': typeof ContributorPayoutsRoute
@@ -417,7 +409,6 @@ export interface FileRoutesById {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
-  '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
   '/contributor/payouts': typeof ContributorPayoutsRoute
@@ -467,7 +458,6 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
-    | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
     | '/contributor/payouts'
@@ -513,7 +503,6 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
-    | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
     | '/contributor/payouts'
@@ -561,7 +550,6 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
-    | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
     | '/contributor/payouts'
@@ -604,7 +592,6 @@ export interface RootRouteChildren {
   TrustCenterRoute: typeof TrustCenterRoute
   WhistleblowerRoute: typeof WhistleblowerRoute
   AuthorIdRoute: typeof AuthorIdRoute
-  CategorySlugRoute: typeof CategorySlugRoute
   PostSlugRoute: typeof PostSlugRoute
   ArticleSlugRevisionsRoute: typeof ArticleSlugRevisionsRoute
 }
@@ -863,13 +850,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContributorNotificationsRouteImport
       parentRoute: typeof ContributorRoute
     }
-    '/category/$slug': {
-      id: '/category/$slug'
-      path: '/category/$slug'
-      fullPath: '/category/$slug'
-      preLoaderRoute: typeof CategorySlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/author/$id': {
       id: '/author/$id'
       path: '/author/$id'
@@ -1014,7 +994,6 @@ const rootRouteChildren: RootRouteChildren = {
   TrustCenterRoute: TrustCenterRoute,
   WhistleblowerRoute: WhistleblowerRoute,
   AuthorIdRoute: AuthorIdRoute,
-  CategorySlugRoute: CategorySlugRoute,
   PostSlugRoute: PostSlugRoute,
   ArticleSlugRevisionsRoute: ArticleSlugRevisionsRoute,
 }

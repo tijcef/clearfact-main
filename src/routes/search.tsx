@@ -15,9 +15,18 @@ import { Loader2, Search as SearchIcon, Tag, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>) => ({
-    q: (search.q as string) ?? "",
-    category: (search.category as string) ?? "",
-    tag: (search.tag as string) ?? "",
+    q:
+      typeof search.q === "string" && search.q.trim()
+        ? search.q.trim()
+        : undefined,
+    category:
+      typeof search.category === "string" && search.category.trim()
+        ? search.category.trim()
+        : undefined,
+    tag:
+      typeof search.tag === "string" && search.tag.trim()
+        ? search.tag.trim()
+        : undefined,
   }),
 
   head: () => ({
@@ -53,12 +62,12 @@ function SearchPage() {
   const { q, category, tag } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const [input, setInput] = useState(q);
+  const [input, setInput] = useState(q ?? "");
   const [results, setResults] = useState<any[] | null>(null);
   const [wordpressCategories, setWordpressCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    setInput(q);
+    setInput(q ?? "");
   }, [q]);
 
   useEffect(() => {
@@ -103,7 +112,7 @@ function SearchPage() {
               const cleanExcerpt =
                 post.excerpt?.rendered?.replace(/<[^>]+>/g, "").toLowerCase() || "";
 
-              const searchTerm = q.trim().toLowerCase();
+              const searchTerm = (q ?? "").trim().toLowerCase();
 
               const matchesSearch =
                 !searchTerm || cleanTitle.includes(searchTerm) || cleanExcerpt.includes(searchTerm);
@@ -178,7 +187,7 @@ function SearchPage() {
                   to="/search"
                   search={{
                     q,
-                    category: "",
+                    category: undefined,
                     tag,
                   }}
                   className={`block px-2 py-1 rounded-sm ${
@@ -222,8 +231,8 @@ function SearchPage() {
                   to="/search"
                   search={{
                     q: item,
-                    category: "",
-                    tag: "",
+                    category: undefined,
+                    tag: undefined,
                   }}
                   className="text-xs px-2 py-1 rounded-sm border border-border hover:bg-accent"
                 >
@@ -242,7 +251,7 @@ function SearchPage() {
                   to="/search"
                   search={{
                     q,
-                    category: "",
+                    category: undefined,
                     tag,
                   }}
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-primary text-primary-foreground"
@@ -260,7 +269,7 @@ function SearchPage() {
                   search={{
                     q,
                     category,
-                    tag: "",
+                    tag: undefined,
                   }}
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-gold text-gold-foreground"
                 >
