@@ -68,7 +68,7 @@ export default function Comments({ postId }: { postId: number }) {
 
     try {
       // Email is intentionally left blank.
-      await submitComment(postId, cleanName, "", cleanContent);
+      await submitComment(postId, cleanName, cleanContent);
 
       alert(
         "Thank you. Your comment has been submitted and may be held for moderation.",

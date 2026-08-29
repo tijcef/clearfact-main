@@ -402,7 +402,11 @@ export async function getComments(postId: number) {
   );
 }
 
-export async function submitComment(postId: number, name: string, email: string, content: string) {
+export async function submitComment(
+  postId: number,
+  name: string,
+  content: string,
+) {
   return requestJson("/comments", {
     method: "POST",
     headers: {
@@ -411,7 +415,6 @@ export async function submitComment(postId: number, name: string, email: string,
     body: JSON.stringify({
       post: postId,
       author_name: name,
-      author_email: email,
       content,
     }),
     cacheTtl: 0,
