@@ -50,13 +50,17 @@ separate opt-in before anonymous REST comments are accepted; the normal
 Discussion screen alone does not provide that opt-in.
 
 1. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
-2. Upload `clearfact-rest-comments.zip` and activate **ClearFact REST Comments**.
-3. Open **Settings → Discussion** and confirm **Users must be registered and logged in to comment** is unticked.
+2. Upload `clearfact-rest-comments.zip` and activate **ClearFact REST Comments**. Replace version 1.0.0 if WordPress reports that the plugin already exists.
+3. Open **Settings → Discussion** and confirm both **Comment author must fill out name and email** and **Users must be registered and logged in to comment** are unticked. The public form requires only a name and comment.
 4. Keep **Comment must be manually approved** enabled if every new comment should wait for moderation.
 5. Purge WordPress and Cloudflare caches, then submit a test comment from a live article.
 
 The frontend now displays the real WordPress error when a submission fails and
 correctly tells the reader when a successful comment is awaiting moderation.
+Comment writes use a longer timeout than ordinary CMS reads because the live
+WordPress origin may take several seconds to complete its spam and moderation checks.
+Plugin version 1.1.0 also removes Email and Website from the native WordPress
+comment form, keeping it consistent with the name-and-comment-only frontend.
 
 ## AdSense account checks
 

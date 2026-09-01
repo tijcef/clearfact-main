@@ -8,13 +8,16 @@ Install `clearfact-rest-comments.php` as a WordPress plugin:
 
 1. In the ClearFact WordPress dashboard, open **Plugins → Add New Plugin → Upload Plugin**.
 2. Upload the separate `clearfact-rest-comments.zip` package supplied with this project.
-3. Activate **ClearFact REST Comments**.
-4. Under **Settings → Discussion**, leave **Users must be registered and logged in to comment** unticked.
+3. Activate **ClearFact REST Comments**. If version 1.0.0 is already installed, approve WordPress's **Replace current with uploaded** option to install version 1.1.0.
+4. Under **Settings → Discussion**, leave both **Comment author must fill out name and email** and **Users must be registered and logged in to comment** unticked. The ClearFact frontend requires the visitor's name but does not request an email address.
 5. Purge the WordPress and Cloudflare caches, then submit a test comment from an article on `clearfact.ng`.
 
 Keep comment moderation enabled if you want new comments held for review. The
 plugin changes only anonymous `POST /wp/v2/comments` requests; it does not grant
 permission to edit or delete comments, posts, users or any other WordPress data.
+It also removes the optional Email and Website fields from the native
+`cms.clearfact.ng` comment form so both the CMS view and public frontend request
+only a name and comment.
 
 ## Subcategory cleanup
 

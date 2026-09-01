@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ClearFact REST Comments
  * Description: Allows public article comments through the ClearFact headless WordPress REST API.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: ClearFact Media Ltd
  */
 
@@ -29,13 +29,38 @@ function clearfact_allow_anonymous_rest_comments( $allowed, $request ) {
 add_filter( 'rest_allow_anonymous_comments', 'clearfact_allow_anonymous_rest_comments', 10, 2 );
 
 /**
+ * Keep the native WordPress article form consistent with clearfact.ng:
+ * visitors provide only a name and their comment.
+ */
+function clearfact_name_only_comment_fields( $fields ) {
+	unset( $fields['email'], $fields['url'] );
+
+	return $fields;
+}
+add_filter( 'comment_form_default_fields', 'clearfact_name_only_comment_fields' );
+
+/**
+ * Remove WordPress's email notice after the email field has been removed.
+ */
+function clearfact_name_only_comment_form_defaults( $defaults ) {
+	$defaults['comment_notes_before'] = '';
+
+	return $defaults;
+}
+add_filter( 'comment_form_defaults', 'clearfact_name_only_comment_form_defaults' );
+
+/**
  * Make an incorrect registration option visible instead of silently failing.
  */
 function clearfact_rest_comments_admin_notice() {
-	if ( ! current_user_can( 'manage_options' ) || ! get_option( 'comment_registration' ) ) {
+	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 
-	echo '<div class="notice notice-error"><p><strong>ClearFact REST Comments:</strong> Open <a href="' . esc_url( admin_url( 'options-discussion.php' ) ) . '">Settings &rarr; Discussion</a> and untick &ldquo;Users must be registered and logged in to comment.&rdquo;</p></div>';
+	if ( ! get_option( 'comment_registration' ) && ! get_option( 'require_name_email' ) ) {
+		return;
+	}
+
+	echo '<div class="notice notice-error"><p><strong>ClearFact REST Comments:</strong> Open <a href="' . esc_url( admin_url( 'options-discussion.php' ) ) . '">Settings &rarr; Discussion</a> and untick both &ldquo;Comment author must fill out name and email&rdquo; and &ldquo;Users must be registered and logged in to comment.&rdquo;</p></div>';
 }
 add_action( 'admin_notices', 'clearfact_rest_comments_admin_notice' );

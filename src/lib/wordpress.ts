@@ -5,7 +5,7 @@ const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
 const SERVER_GET_TIMEOUT_MS = 20_000;
 const BROWSER_GET_TIMEOUT_MS = 15_000;
-const WRITE_TIMEOUT_MS = 10_000;
+const WRITE_TIMEOUT_MS = 30_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
 const POST_DETAIL_CACHE_TTL_MS = 5 * 60 * 1_000;
 
@@ -431,7 +431,7 @@ export async function getComments(postId: number) {
   );
 }
 
-export async function submitComment(postId: number, name: string, email: string, content: string) {
+export async function submitComment(postId: number, name: string, content: string) {
   return requestJson<{
     id: number;
     status?: string;
@@ -446,7 +446,6 @@ export async function submitComment(postId: number, name: string, email: string,
     body: JSON.stringify({
       post: postId,
       author_name: name.trim(),
-      author_email: email.trim(),
       content: content.trim(),
     }),
     cacheTtl: 0,

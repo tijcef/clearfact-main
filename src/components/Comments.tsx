@@ -63,7 +63,7 @@ export default function Comments({ postId }: { postId: number }) {
     setFeedback(null);
 
     if (!name.trim() || !content.trim()) {
-      setFeedback({ kind: "error", message: "Please complete every field." });
+      setFeedback({ kind: "error", message: "Please enter your name and comment." });
       return;
     }
 
@@ -92,7 +92,9 @@ export default function Comments({ postId }: { postId: number }) {
           ? "Commenting is temporarily unavailable. Please try again shortly."
           : error instanceof WordPressRequestError
             ? error.message
-            : "We could not submit your comment. Please try again.";
+            : error instanceof Error && error.message.includes("timed out")
+              ? "The comment server is responding slowly. Please wait a moment and try again."
+              : "We could not submit your comment. Please try again.";
 
       setFeedback({ kind: "error", message });
     } finally {

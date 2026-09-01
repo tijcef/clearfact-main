@@ -27,6 +27,7 @@ const WP_MEDIA_ORIGIN = "https://cms.clearfact.ng/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
 const ONE_WEEK = 604_800;
 const API_ORIGIN_TIMEOUT_MS = 12_000;
+const COMMENT_WRITE_TIMEOUT_MS = 30_000;
 const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -284,7 +285,11 @@ async function proxyWordPressRequest(
   let originResponse: Response;
 
   try {
-    originResponse = await fetchWithTimeout(originUrl, init, API_ORIGIN_TIMEOUT_MS);
+    originResponse = await fetchWithTimeout(
+      originUrl,
+      init,
+      isCommentWrite ? COMMENT_WRITE_TIMEOUT_MS : API_ORIGIN_TIMEOUT_MS,
+    );
   } catch (error) {
     console.error("WordPress origin request failed:", error);
 
