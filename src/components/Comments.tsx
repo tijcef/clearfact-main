@@ -70,6 +70,7 @@ export default function Comments({ postId }: { postId: number }) {
     setSubmitting(true);
 
     try {
+      const submittedName = name.trim();
       const submitted = await submitComment(postId, name, content);
 
       setName("");
@@ -82,7 +83,21 @@ export default function Comments({ postId }: { postId: number }) {
         });
       } else {
         setFeedback({ kind: "success", message: "Your comment has been published." });
-        await loadComments();
+
+        if (submitted.id && typeof submitted.content?.rendered === "string") {
+          const publishedComment = {
+            ...submitted,
+            author_name: submitted.author_name || submittedName,
+          };
+
+          setComments((current) =>
+            current.some((comment) => comment.id === submitted.id)
+              ? current
+              : [...current, publishedComment],
+          );
+        } else {
+          await loadComments();
+        }
       }
     } catch (error) {
       console.error(error);

@@ -57,6 +57,8 @@ Discussion screen alone does not provide that opt-in.
 
 The frontend now displays the real WordPress error when a submission fails and
 correctly tells the reader when a successful comment is awaiting moderation.
+An approved comment is added to the visible article discussion immediately from
+the successful WordPress response instead of waiting for the 60-second comment cache.
 Comment writes use a longer timeout than ordinary CMS reads because the live
 WordPress origin may take several seconds to complete its spam and moderation checks.
 Plugin version 1.1.0 also removes Email and Website from the native WordPress
