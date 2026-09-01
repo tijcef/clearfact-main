@@ -1,4 +1,22 @@
-# ClearFact WordPress subcategory cleanup
+# ClearFact WordPress tools
+
+## Enable comments from the public frontend
+
+WordPress blocks anonymous comment creation through the REST API by default,
+even when ordinary website comments are enabled in **Settings → Discussion**.
+Install `clearfact-rest-comments.php` as a WordPress plugin:
+
+1. In the ClearFact WordPress dashboard, open **Plugins → Add New Plugin → Upload Plugin**.
+2. Upload the separate `clearfact-rest-comments.zip` package supplied with this project.
+3. Activate **ClearFact REST Comments**.
+4. Under **Settings → Discussion**, leave **Users must be registered and logged in to comment** unticked.
+5. Purge the WordPress and Cloudflare caches, then submit a test comment from an article on `clearfact.ng`.
+
+Keep comment moderation enabled if you want new comments held for review. The
+plugin changes only anonymous `POST /wp/v2/comments` requests; it does not grant
+permission to edit or delete comments, posts, users or any other WordPress data.
+
+## Subcategory cleanup
 
 The frontend shows every live top-level WordPress category and keeps **Elections** as its only public subcategory. Removed subcategory URLs redirect to their closest surviving main category.
 

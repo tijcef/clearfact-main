@@ -48,6 +48,18 @@ const postDetailCache = new Map<
   }
 >();
 
+export class WordPressRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "WordPressRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export function primePostCache(posts: unknown) {
   if (!Array.isArray(posts)) {
     return;
@@ -149,7 +161,24 @@ async function requestJson<T>(
       });
 
       if (!response.ok) {
-        throw new Error(`WordPress request failed (${response.status} ${response.statusText})`);
+        let message = `WordPress request failed (${response.status} ${response.statusText})`;
+        let code: string | undefined;
+
+        try {
+          const payload = (await response.json()) as { code?: unknown; message?: unknown };
+
+          if (typeof payload.message === "string" && payload.message.trim()) {
+            message = payload.message.trim();
+          }
+
+          if (typeof payload.code === "string" && payload.code.trim()) {
+            code = payload.code.trim();
+          }
+        } catch {
+          // Some hosts return an HTML error page instead of a WordPress JSON error.
+        }
+
+        throw new WordPressRequestError(message, response.status, code);
       }
 
       const value = (await response.json()) as T;
@@ -402,20 +431,23 @@ export async function getComments(postId: number) {
   );
 }
 
-export async function submitComment(
-  postId: number,
-  name: string,
-  content: string,
-) {
-  return requestJson("/comments", {
+export async function submitComment(postId: number, name: string, email: string, content: string) {
+  return requestJson<{
+    id: number;
+    status?: string;
+    author_name?: string;
+    date?: string;
+    content?: { rendered?: string };
+  }>("/comments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       post: postId,
-      author_name: name,
-      content,
+      author_name: name.trim(),
+      author_email: email.trim(),
+      content: content.trim(),
     }),
     cacheTtl: 0,
   });

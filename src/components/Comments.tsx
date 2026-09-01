@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getComments, submitComment } from "@/lib/wordpress";
+import { getComments, submitComment, WordPressRequestError } from "@/lib/wordpress";
+
+type Feedback = {
+  kind: "error" | "success";
+  message: string;
+};
 
 export default function Comments({ postId }: { postId: number }) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -18,7 +24,7 @@ export default function Comments({ postId }: { postId: number }) {
       const data = await getComments(postId);
       setComments(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Failed to load comments:", error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +49,6 @@ export default function Comments({ postId }: { postId: number }) {
     );
 
     observer.observe(section);
-
     return () => observer.disconnect();
   }, [postId]);
 
@@ -55,32 +60,41 @@ export default function Comments({ postId }: { postId: number }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
 
-    const cleanName = name.trim();
-    const cleanContent = content.trim();
-
-    if (!cleanName || !cleanContent) {
-      alert("Please enter your name and comment.");
+    if (!name.trim() || !content.trim()) {
+      setFeedback({ kind: "error", message: "Please complete every field." });
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // Email is intentionally left blank.
-      await submitComment(postId, cleanName, cleanContent);
-
-      alert(
-        "Thank you. Your comment has been submitted and may be held for moderation.",
-      );
+      const submitted = await submitComment(postId, name, content);
 
       setName("");
       setContent("");
 
-      void loadComments();
+      if (submitted.status === "hold") {
+        setFeedback({
+          kind: "success",
+          message: "Your comment has been received and is awaiting moderation.",
+        });
+      } else {
+        setFeedback({ kind: "success", message: "Your comment has been published." });
+        await loadComments();
+      }
     } catch (error) {
-      console.error("Failed to submit comment:", error);
-      alert("Failed to submit comment. Please try again.");
+      console.error(error);
+
+      const message =
+        error instanceof WordPressRequestError && error.code === "rest_comment_login_required"
+          ? "Commenting is temporarily unavailable. Please try again shortly."
+          : error instanceof WordPressRequestError
+            ? error.message
+            : "We could not submit your comment. Please try again.";
+
+      setFeedback({ kind: "error", message });
     } finally {
       setSubmitting(false);
     }
@@ -88,14 +102,7 @@ export default function Comments({ postId }: { postId: number }) {
 
   return (
     <section ref={sectionRef} className="mt-12">
-      <h2 className="text-2xl font-bold mb-2">
-        Join the Conversation
-      </h2>
-
-      <p className="text-sm text-muted-foreground mb-6">
-        Share your thoughts on this story. Comments may be moderated before
-        appearing publicly.
-      </p>
+      <h2 className="text-2xl font-bold mb-6">Comments ({comments.length})</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-10">
         <input
@@ -103,8 +110,9 @@ export default function Comments({ postId }: { postId: number }) {
           placeholder="Your Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          required
+          autoComplete="name"
           maxLength={100}
+          required
           className="w-full border rounded-lg p-3"
         />
 
@@ -118,12 +126,23 @@ export default function Comments({ postId }: { postId: number }) {
           className="w-full border rounded-lg p-3"
         />
 
+        {feedback ? (
+          <p
+            role={feedback.kind === "error" ? "alert" : "status"}
+            className={
+              feedback.kind === "error" ? "text-sm text-destructive" : "text-sm text-green-700"
+            }
+          >
+            {feedback.message}
+          </p>
+        ) : null}
+
         <button
           type="submit"
           disabled={submitting}
-          className="bg-primary text-white px-5 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-primary text-white px-5 py-3 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "Posting..." : "Post Comment"}
+          {submitting ? "Submitting…" : "Post Comment"}
         </button>
       </form>
 
@@ -132,14 +151,12 @@ export default function Comments({ postId }: { postId: number }) {
       ) : loading ? (
         <p>Loading comments...</p>
       ) : comments.length === 0 ? (
-        <p>No comments yet. Be the first to join the conversation.</p>
+        <p>No comments yet.</p>
       ) : (
         <div className="space-y-6">
           {comments.map((comment) => (
             <div key={comment.id} className="border rounded-lg p-4">
-              <h4 className="font-semibold">
-                {comment.author_name || "Reader"}
-              </h4>
+              <h4 className="font-semibold">{comment.author_name}</h4>
 
               <div
                 className="mt-2 text-sm"

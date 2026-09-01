@@ -43,6 +43,21 @@ preserves its articles, deletes only empty non-default categories and leaves
 valid WordPress subcategories intact. Purge the WordPress/CDN cache after the
 command completes.
 
+## Enable frontend comments
+
+The public comment form uses the WordPress REST API. WordPress requires a
+separate opt-in before anonymous REST comments are accepted; the normal
+Discussion screen alone does not provide that opt-in.
+
+1. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
+2. Upload `clearfact-rest-comments.zip` and activate **ClearFact REST Comments**.
+3. Open **Settings → Discussion** and confirm **Users must be registered and logged in to comment** is unticked.
+4. Keep **Comment must be manually approved** enabled if every new comment should wait for moderation.
+5. Purge WordPress and Cloudflare caches, then submit a test comment from a live article.
+
+The frontend now displays the real WordPress error when a submission fails and
+correctly tells the reader when a successful comment is awaiting moderation.
+
 ## AdSense account checks
 
 The code now declares the publisher account, loads the approved AdSense client
@@ -78,6 +93,8 @@ have to be completed in Google AdSense:
   preferred canonical URL and its expected robots directive.
 - Confirm that WordPress remains available at
   `https://cms.clearfact.ng/wp-json/wp/v2/posts`.
+- Submit a comment from an article while logged out. It should be accepted or
+  held for moderation, not return `rest_comment_login_required`.
 
 The frontend now avoids shipping full article bodies in listing-page HTML,
 keeps preferred category URLs consistent, makes the fact-check hub data-driven,
