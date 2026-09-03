@@ -582,8 +582,7 @@ async function servePage(
     !cache ||
     !ttl ||
     !response.ok ||
-    (machineTtl === null &&
-      !response.headers.get("content-type")?.includes("text/html")) ||
+    (machineTtl === null && !response.headers.get("content-type")?.includes("text/html")) ||
     response.headers.has("set-cookie")
   ) {
     return response;
@@ -592,7 +591,19 @@ async function servePage(
   const headers = new Headers(response.headers);
   headers.set("cache-control", `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=86400`);
 
-  const cacheableResponse = new Response(response.body, {
+  let responseBody: ArrayBuffer;
+
+  try {
+    responseBody = await response.arrayBuffer();
+  } catch (error) {
+    console.error("Page response was interrupted before caching:", error);
+    return response;
+  }
+
+  // Buffer the rendered response before cloning it into fresh and stale cache
+  // entries. Cloning a live SSR stream can create backpressure and leave an
+  // otherwise successful category page or sitemap waiting indefinitely.
+  const cacheableResponse = new Response(responseBody, {
     status: response.status,
     statusText: response.statusText,
     headers,

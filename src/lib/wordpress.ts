@@ -514,32 +514,49 @@ export type SitemapPost = {
 
 export async function getSitemapPosts(maxPages = 500) {
   const posts: SitemapPost[] = [];
+  const concurrency = 4;
 
-  for (let page = 1; page <= maxPages; page += 1) {
-    let batch: SitemapPost[];
+  for (let firstPage = 1; firstPage <= maxPages; firstPage += concurrency) {
+    const pageNumbers = Array.from(
+      { length: Math.min(concurrency, maxPages - firstPage + 1) },
+      (_, index) => firstPage + index,
+    );
+    const batches = await Promise.all(
+      pageNumbers.map(async (page) => {
+        try {
+          return await requestJson<SitemapPost[]>(
+            `/posts${buildQuery({
+              per_page: 100,
+              page,
+              status: "publish",
+              orderby: "date",
+              order: "desc",
+              _fields: "id,slug,date,modified,title",
+            })}`,
+            { cacheTtl: 900 },
+          );
+        } catch (error) {
+          if (
+            error instanceof WordPressRequestError &&
+            error.status === 400 &&
+            error.code === "rest_post_invalid_page_number"
+          ) {
+            return [];
+          }
 
-    try {
-      batch = await requestJson<SitemapPost[]>(
-        `/posts${buildQuery({
-          per_page: 100,
-          page,
-          status: "publish",
-          orderby: "date",
-          order: "desc",
-          _fields: "id,slug,date,modified,title",
-        })}`,
-        { cacheTtl: 900 },
-      );
-    } catch (error) {
-      throw new Error(`WordPress sitemap page ${page} failed to load.`, {
-        cause: error,
-      });
-    }
+          throw new Error(`WordPress sitemap page ${page} failed to load.`, {
+            cause: error,
+          });
+        }
+      }),
+    );
 
-    posts.push(...batch);
+    for (const batch of batches) {
+      posts.push(...batch);
 
-    if (batch.length < 100) {
-      break;
+      if (batch.length < 100) {
+        return posts;
+      }
     }
   }
 
