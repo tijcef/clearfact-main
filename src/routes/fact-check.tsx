@@ -1,9 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, FileCheck, Search, ShieldCheck } from "lucide-react";
 
+import AdSense from "@/components/AdSense";
 import { VerificationBadge } from "@/components/site/VerificationBadge";
 import {
-  getCategoryBySlug,
+  getCategories,
   getFeaturedImageUrl,
   getPostsByCategory,
   normalizeWpSlug,
@@ -15,9 +16,11 @@ const FACT_CHECK_SOURCE_SLUGS = ["accountability"];
 export const Route = createFileRoute("/fact-check")({
   loader: async () => {
     try {
-      const categories = (
-        await Promise.all(FACT_CHECK_SOURCE_SLUGS.map((slug) => getCategoryBySlug(slug)))
-      ).filter((category) => category && Number(category.count ?? 0) > 0);
+      const allCategories = await getCategories();
+      const categoriesBySlug = new Map(allCategories.map((category) => [category.slug, category]));
+      const categories = FACT_CHECK_SOURCE_SLUGS.map((slug) => categoriesBySlug.get(slug)).filter(
+        (category) => category && Number(category.count ?? 0) > 0,
+      );
 
       const groups = await Promise.all(
         categories.map((category) => getPostsByCategory(category.id, 24)),
@@ -230,6 +233,8 @@ function FactCheck() {
             </p>
           </div>
         )}
+
+        {checks.length > 0 && <AdSense />}
       </section>
     </div>
   );

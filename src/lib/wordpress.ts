@@ -3,7 +3,7 @@ export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
-const SERVER_GET_TIMEOUT_MS = 20_000;
+const SERVER_GET_TIMEOUT_MS = 30_000;
 const BROWSER_GET_TIMEOUT_MS = 15_000;
 const WRITE_TIMEOUT_MS = 30_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
@@ -25,6 +25,21 @@ const LIST_FIELDS = [
   "_embedded",
 ].join(",");
 
+const CATEGORY_LIST_FIELDS = [
+  "id",
+  "slug",
+  "date",
+  "date_gmt",
+  "modified",
+  "title",
+  "excerpt",
+  "categories",
+  "featured_media",
+  "acf",
+  "_links",
+  "_embedded",
+].join(",");
+
 type CacheEntry = {
   expiresAt: number;
   staleUntil: number;
@@ -40,6 +55,8 @@ type CloudflareRequestInit = RequestInit & {
 
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<unknown>>();
+const serverGetWaiters: Array<() => void> = [];
+let activeServerGets = 0;
 const postDetailCache = new Map<
   string,
   {
@@ -47,6 +64,26 @@ const postDetailCache = new Map<
     post: any;
   }
 >();
+
+async function withServerGetSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeServerGets < 1) {
+    activeServerGets += 1;
+  } else {
+    await new Promise<void>((resolve) => serverGetWaiters.push(resolve));
+  }
+
+  try {
+    return await task();
+  } finally {
+    const next = serverGetWaiters.shift();
+
+    if (next) {
+      next();
+    } else {
+      activeServerGets -= 1;
+    }
+  }
+}
 
 function sanitizePublicAuthor(author: unknown) {
   if (!author || typeof author !== "object") return author;
@@ -195,67 +232,77 @@ async function requestJson<T>(
       };
     }
 
-    const controller = new AbortController();
     const timeoutMs =
       method === "GET"
         ? typeof window === "undefined"
           ? SERVER_GET_TIMEOUT_MS
           : BROWSER_GET_TIMEOUT_MS
         : WRITE_TIMEOUT_MS;
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const execute = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const response = await fetch(endpoint, {
-        ...init,
-        signal: controller.signal,
-      });
+      try {
+        const response = await fetch(endpoint, {
+          ...init,
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        let message = `WordPress request failed (${response.status} ${response.statusText})`;
-        let code: string | undefined;
+        if (!response.ok) {
+          let message = `WordPress request failed (${response.status} ${response.statusText})`;
+          let code: string | undefined;
 
-        try {
-          const payload = (await response.json()) as { code?: unknown; message?: unknown };
+          try {
+            const payload = (await response.json()) as { code?: unknown; message?: unknown };
 
-          if (typeof payload.message === "string" && payload.message.trim()) {
-            message = payload.message.trim();
+            if (typeof payload.message === "string" && payload.message.trim()) {
+              message = payload.message.trim();
+            }
+
+            if (typeof payload.code === "string" && payload.code.trim()) {
+              code = payload.code.trim();
+            }
+          } catch {
+            // Some hosts return an HTML error page instead of a WordPress JSON error.
           }
 
-          if (typeof payload.code === "string" && payload.code.trim()) {
-            code = payload.code.trim();
-          }
-        } catch {
-          // Some hosts return an HTML error page instead of a WordPress JSON error.
+          throw new WordPressRequestError(message, response.status, code);
         }
 
-        throw new WordPressRequestError(message, response.status, code);
+        const value = sanitizePublicWordPressData(path, (await response.json()) as T);
+
+        if (method === "GET") {
+          memoryCache.set(cacheKey, {
+            expiresAt: Date.now() + cacheTtl * 1_000,
+            staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
+            value,
+          });
+        }
+
+        return value;
+      } catch (error) {
+        if (method === "GET" && staleEntry) {
+          console.warn(`Using cached WordPress data after ${endpoint} failed.`);
+          return staleEntry.value as T;
+        }
+
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
+        }
+
+        throw error;
+      } finally {
+        clearTimeout(timeout);
       }
+    };
 
-      const value = sanitizePublicWordPressData(path, (await response.json()) as T);
+    const shouldThrottleServerGet =
+      method === "GET" &&
+      typeof window === "undefined" &&
+      path.startsWith("/posts") &&
+      !path.includes("per_page=100");
 
-      if (method === "GET") {
-        memoryCache.set(cacheKey, {
-          expiresAt: Date.now() + cacheTtl * 1_000,
-          staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
-          value,
-        });
-      }
-
-      return value;
-    } catch (error) {
-      if (method === "GET" && staleEntry) {
-        console.warn(`Using cached WordPress data after ${endpoint} failed.`);
-        return staleEntry.value as T;
-      }
-
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
-      }
-
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
+    return shouldThrottleServerGet ? withServerGetSlot(execute) : execute();
   };
 
   const pending = request();
@@ -412,9 +459,12 @@ export async function getPostBySlug(slug: string) {
 
 export async function getPostsByCategory(categoryId: number, limit = 24) {
   const posts = await requestJson<any[]>(
-    `/posts${listQuery({
+    `/posts${buildQuery({
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
+      _embed: "wp:featuredmedia",
+      acf_format: "standard",
+      _fields: CATEGORY_LIST_FIELDS,
     })}`,
     { cacheTtl: 600 },
   );

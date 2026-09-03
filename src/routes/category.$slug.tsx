@@ -1,6 +1,6 @@
 import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import {
-  getCategoryBySlug,
+  getCategories,
   getFeaturedImageUrl,
   getPostsByCategory,
   normalizeWpSlug,
@@ -39,13 +39,18 @@ export const Route = createFileRoute("/category/$slug")({
     let matchedCategories: any[] = [];
 
     try {
-      const categoryResults = await Promise.all(
-        acceptedSlugs.map((slug) => getCategoryBySlug(slug)),
-      );
-      matchedCategories = categoryResults.filter(
-        (category) =>
-          category && isAllowedPublicCategory(category) && Number(category.count ?? 0) > 0,
-      );
+      // The root route already needs the complete category list for navigation.
+      // Reusing that same request lets the WordPress client deduplicate it instead
+      // of making an additional, slow category lookup for every section page.
+      const categories = await getCategories();
+      const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]));
+
+      matchedCategories = acceptedSlugs
+        .map((slug) => categoriesBySlug.get(slug))
+        .filter(
+          (category) =>
+            category && isAllowedPublicCategory(category) && Number(category.count ?? 0) > 0,
+        );
     } catch (error) {
       console.error(`Category ${params.slug} failed to load:`, error);
       throw new Error(`The ${categoryLabel(params.slug)} desk is temporarily unavailable.`, {

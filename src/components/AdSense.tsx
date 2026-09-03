@@ -23,6 +23,7 @@ export default function AdSense({ className = "" }: AdSenseProps) {
     }
 
     let active = true;
+    let unresolvedAdTimeout: number | undefined;
     const ad = container.querySelector<HTMLElement>(".adsbygoogle");
 
     if (!ad) {
@@ -30,7 +31,14 @@ export default function AdSense({ className = "" }: AdSenseProps) {
     }
 
     const syncAdVisibility = () => {
-      const isUnfilled = ad.getAttribute("data-ad-status") === "unfilled";
+      const adStatus = ad.getAttribute("data-ad-status");
+      const requestStatus = ad.getAttribute("data-adsbygoogle-status");
+      const isUnfilled = adStatus === "unfilled";
+
+      if ((adStatus || requestStatus) && unresolvedAdTimeout !== undefined) {
+        window.clearTimeout(unresolvedAdTimeout);
+        unresolvedAdTimeout = undefined;
+      }
 
       container.hidden = isUnfilled;
       container.classList.toggle("mt-0", isUnfilled);
@@ -65,6 +73,15 @@ export default function AdSense({ className = "" }: AdSenseProps) {
         requestedRef.current = true;
         window.adsbygoogle = window.adsbygoogle || [];
         window.adsbygoogle.push({});
+
+        // Only start the fallback timer after the ad has actually been requested.
+        // A reader who reaches a below-the-fold placement later must still be able
+        // to trigger it, even if the page has already been open for 20 seconds.
+        unresolvedAdTimeout = window.setTimeout(() => {
+          if (!ad.getAttribute("data-ad-status") && !ad.getAttribute("data-adsbygoogle-status")) {
+            container.hidden = true;
+          }
+        }, 20_000);
       } catch {
         requestedRef.current = false;
         // Ad blockers, offline readers, or unavailable AdSense
@@ -72,21 +89,14 @@ export default function AdSense({ className = "" }: AdSenseProps) {
       }
     };
 
-    const unresolvedAdTimeout = window.setTimeout(() => {
-      if (
-        !ad.getAttribute("data-ad-status") &&
-        !ad.getAttribute("data-adsbygoogle-status")
-      ) {
-        container.hidden = true;
-      }
-    }, 20_000);
-
     if (typeof IntersectionObserver === "undefined") {
       displayAd();
 
       return () => {
         active = false;
-        window.clearTimeout(unresolvedAdTimeout);
+        if (unresolvedAdTimeout !== undefined) {
+          window.clearTimeout(unresolvedAdTimeout);
+        }
         adStatusObserver.disconnect();
       };
     }
@@ -107,7 +117,9 @@ export default function AdSense({ className = "" }: AdSenseProps) {
 
     return () => {
       active = false;
-      window.clearTimeout(unresolvedAdTimeout);
+      if (unresolvedAdTimeout !== undefined) {
+        window.clearTimeout(unresolvedAdTimeout);
+      }
       observer.disconnect();
       adStatusObserver.disconnect();
     };

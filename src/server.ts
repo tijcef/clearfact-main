@@ -26,6 +26,7 @@ const WP_REST_ORIGIN = "https://cms.clearfact.ng/wp-json/wp/v2";
 const WP_MEDIA_ORIGIN = "https://cms.clearfact.ng/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
 const ONE_WEEK = 604_800;
+const ONE_DAY = 86_400;
 const API_ORIGIN_TIMEOUT_MS = 12_000;
 const COMMENT_WRITE_TIMEOUT_MS = 30_000;
 const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
@@ -181,10 +182,12 @@ function cacheFreshAndStale(
   namespace: "page" | "wp",
   ctx: ExecutionContextLike,
 ) {
+  const pathname = new URL(request.url).pathname;
+  const staleTtl = namespace === "page" && pathname.startsWith("/category/") ? ONE_DAY : ONE_WEEK;
   const staleHeaders = new Headers(response.headers);
   staleHeaders.set(
     "cache-control",
-    `public, max-age=0, s-maxage=${ONE_WEEK}, stale-while-revalidate=${ONE_WEEK}`,
+    `public, max-age=0, s-maxage=${staleTtl}, stale-while-revalidate=${staleTtl}`,
   );
 
   const staleResponse = new Response(response.clone().body, {
@@ -508,9 +511,10 @@ function machineRouteCacheTtl(request: Request) {
 function canServeStaleBeforeOrigin(request: Request) {
   const pathname = new URL(request.url).pathname;
 
-  // A deleted story or taxonomy term must be allowed to reach its real 404
-  // promptly instead of being hidden behind a week-old stale 200 response.
-  return !pathname.startsWith("/post/") && !pathname.startsWith("/category/");
+  // Deleted stories should reach their real 404 promptly. Category pages use
+  // a shorter one-day stale copy so readers and crawlers are never sent to an
+  // intermittent WordPress timeout while the section refreshes in background.
+  return !pathname.startsWith("/post/");
 }
 
 async function servePage(
