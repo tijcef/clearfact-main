@@ -38,10 +38,10 @@ cleanup after deploying the frontend:
 wp eval-file backend-tools/remove-empty-categories.php
 ```
 
-This changes the misspelled `higher-ducation` slug to `higher-education`,
-preserves its articles, deletes only empty non-default categories and leaves
-valid WordPress subcategories intact. Purge the WordPress/CDN cache after the
-command completes.
+This keeps every top-level category and the Elections subcategory. Before it
+deletes any other subcategory, it adds that subcategory's articles to the
+closest surviving top-level category. No article is deleted. Purge the
+WordPress/CDN cache after the command completes.
 
 ## Enable frontend comments
 
@@ -64,11 +64,21 @@ WordPress origin may take several seconds to complete its spam and moderation ch
 Plugin version 1.1.0 also removes Email and Website from the native WordPress
 comment form, keeping it consistent with the name-and-comment-only frontend.
 
+## Brand isolation
+
+The public frontend uses only the ClearFact production domain and
+`cms.clearfact.ng`. WordPress author-profile descriptions and external profile
+URLs are not exposed in rendered page data; author boxes use a ClearFact-specific
+newsroom biography instead. This prevents unrelated affiliations or legacy CMS
+details from appearing as ClearFact branding.
+
 ## AdSense account checks
 
-The code now declares the publisher account, loads the approved AdSense client
-and provides the required advertising disclosures. Account-level controls still
-have to be completed in Google AdSense:
+The code now declares the publisher account, uses responsive manual placements
+on the homepage, category pages and articles, and leaves Auto Ads available on
+substantive public content. Ads are not loaded on newsroom, contributor, login,
+error or policy pages. Unfilled or blocked units collapse without breaking the
+page. Account-level controls still have to be completed in Google AdSense:
 
 1. In **Privacy & messaging**, publish a GDPR message using a Google-certified
    consent management platform for visitors in the EEA, United Kingdom and
@@ -93,7 +103,7 @@ have to be completed in Google AdSense:
   URL and that a temporary WordPress outage returns an error instead of a
   cacheable empty success page.
 - Confirm `/category/higher-ducation` permanently redirects to
-  `/category/higher-education` and `/category/accountability-journalism`
+  `/category/education` and `/category/accountability-journalism`
   redirects to `/category/accountability`.
 - Inspect the rendered HTML and confirm each public indexable page has one
   preferred canonical URL and its expected robots directive.
@@ -101,6 +111,10 @@ have to be completed in Google AdSense:
   `https://cms.clearfact.ng/wp-json/wp/v2/posts`.
 - Submit a comment from an article while logged out. It should be accepted or
   held for moderation, not return `rest_comment_login_required`.
+- In Google Search Console, resubmit `/sitemap.xml` and `/news-sitemap.xml`,
+  verify both show **Success**, then use URL Inspection on the homepage and two
+  newly published articles. Request indexing only after the live test confirms
+  the preferred canonical URL and an `index,follow` robots directive.
 
 The frontend now avoids shipping full article bodies in listing-page HTML,
 keeps preferred category URLs consistent, makes the fact-check hub data-driven,

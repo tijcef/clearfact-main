@@ -3,7 +3,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { SocialFollow } from "./SocialMedia";
-import logo from "@/assets/logo.jpg";
 import { getCategories, normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
   fallbackNavigationCategories,
@@ -40,8 +39,8 @@ function Logo() {
   return (
     <Link to="/" className="flex items-center gap-3 md:gap-4" aria-label="ClearFact News home">
       <img
-        src={logo}
-        alt="ClearFact News Logo"
+        src="/logo.jpg"
+        alt="ClearFact News logo"
         className="h-11 w-auto object-contain md:h-12"
         width="120"
         height="120"

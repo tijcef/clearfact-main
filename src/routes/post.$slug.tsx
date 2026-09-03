@@ -15,9 +15,8 @@ import {
 import Comments from "@/components/Comments";
 import { ArticleShare } from "@/components/site/SocialMedia";
 import { getPublicCategoryName, getPublicCategorySlug } from "@/lib/site-navigation";
+import { getClearFactAuthorBio, SITE_NAME, SITE_ORIGIN } from "@/lib/site-config";
 
-const SITE_ORIGIN = "https://clearfact.ng";
-const SITE_NAME = "ClearFact News";
 const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 const LOGO_URL = `${SITE_ORIGIN}/logo.jpg`;
 
@@ -62,7 +61,7 @@ export const Route = createFileRoute("/post/$slug")({
 
     const post = loaderData.post;
 
-    const rawDescription = stripHtml(post.excerpt?.rendered || "")
+    const rawDescription = stripHtml(post.excerpt?.rendered || post.content?.rendered || "")
       .replace(/\s+/g, " ")
       .trim();
 
@@ -71,9 +70,10 @@ export const Route = createFileRoute("/post/$slug")({
         ? rawDescription
         : `${rawDescription.slice(0, 157).replace(/\s+\S*$/, "")}…`;
 
-    const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "";
-
     const title = stripHtml(post.title.rendered);
+
+    const relativeImage = getFeaturedImageUrl(post, "", "full");
+    const image = relativeImage ? new URL(relativeImage, SITE_ORIGIN).toString() : "";
 
     const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
@@ -244,6 +244,10 @@ export const Route = createFileRoute("/post/$slug")({
                 property: "og:image",
                 content: image,
               },
+              {
+                property: "og:image:alt",
+                content: title,
+              },
             ]
           : []),
 
@@ -287,6 +291,10 @@ export const Route = createFileRoute("/post/$slug")({
               {
                 name: "twitter:image",
                 content: image,
+              },
+              {
+                name: "twitter:image:alt",
+                content: title,
               },
             ]
           : []),
@@ -401,10 +409,7 @@ function ArticlePage() {
 
   const hasAuthorProfile = Number.isInteger(authorId) && authorId > 0;
 
-  const authorDescription =
-    post._embedded?.author?.[0]?.description ||
-    post.authors?.[0]?.description ||
-    `${authorName} writes for ClearFact News, an independent Nigerian newsroom committed to verified, transparent, and fact-based journalism.`;
+  const authorDescription = getClearFactAuthorBio(authorName);
 
   const featuredMedia = post._embedded?.["wp:featuredmedia"]?.[0];
 
@@ -611,7 +616,7 @@ function ArticlePage() {
           </aside>
         )}
 
-        <AdSense />
+        <AdSense key={post.id} />
 
         <div className="mt-10 border-t pt-6">
           <h2 className="font-bold text-xl mb-2">About the Author</h2>

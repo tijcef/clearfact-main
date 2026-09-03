@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getPublicPostPath,
-  getSitemapPosts,
+  getRecentSitemapPosts,
   stripHtml,
   type SitemapPost,
 } from "@/lib/wordpress";
@@ -50,9 +50,10 @@ export const Route = createFileRoute("/news-sitemap.xml")({
     handlers: {
       GET: async () => {
         let posts: SitemapPost[] = [];
+        const cutoff = Date.now() - NEWS_WINDOW_MS;
 
         try {
-          posts = await getSitemapPosts();
+          posts = await getRecentSitemapPosts(new Date(cutoff).toISOString());
         } catch (error) {
           console.error(
             "WordPress posts were unavailable for the news sitemap:",
@@ -68,8 +69,6 @@ export const Route = createFileRoute("/news-sitemap.xml")({
             },
           });
         }
-
-        const cutoff = Date.now() - NEWS_WINDOW_MS;
 
         const recentPosts = posts
           .filter((post) => {

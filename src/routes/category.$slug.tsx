@@ -14,6 +14,7 @@ import {
   legacyCategoryRedirects,
   MIN_INDEXABLE_CATEGORY_POSTS,
 } from "@/lib/site-navigation";
+import AdSense from "@/components/AdSense";
 
 function categoryLabel(slug: string) {
   return slug
@@ -215,6 +216,8 @@ function CategoryPage() {
             </article>
           ))}
       </div>
+
+      {posts.length > 0 && <AdSense key={category.id} />}
 
       {posts.length === 0 && (
         <div className="text-center py-16">

@@ -491,6 +491,20 @@ function pageCacheTtl(request: Request) {
   return 900;
 }
 
+function machineRouteCacheTtl(request: Request) {
+  if (request.method !== "GET") return null;
+
+  const url = new URL(request.url);
+
+  if (url.search) return null;
+
+  if (url.pathname === "/robots.txt") return 86_400;
+  if (url.pathname === "/sitemap.xml") return 900;
+  if (url.pathname === "/news-sitemap.xml") return 300;
+
+  return null;
+}
+
 function canServeStaleBeforeOrigin(request: Request) {
   const pathname = new URL(request.url).pathname;
 
@@ -505,7 +519,8 @@ async function servePage(
   ctx: ExecutionContextLike,
   serveStaleImmediately = true,
 ) {
-  const ttl = pageCacheTtl(request);
+  const machineTtl = machineRouteCacheTtl(request);
+  const ttl = machineTtl ?? pageCacheTtl(request);
   const cache = ttl ? getDefaultCache() : undefined;
 
   if (cache) {
@@ -567,7 +582,8 @@ async function servePage(
     !cache ||
     !ttl ||
     !response.ok ||
-    !response.headers.get("content-type")?.includes("text/html") ||
+    (machineTtl === null &&
+      !response.headers.get("content-type")?.includes("text/html")) ||
     response.headers.has("set-cookie")
   ) {
     return response;
@@ -619,6 +635,16 @@ export default {
         response = await proxyWordPressMedia(request, executionContext);
       } else {
         response = await servePage(request, env, executionContext);
+      }
+
+      if (url.pathname.startsWith("/api/")) {
+        const headers = new Headers(response.headers);
+        headers.set("x-robots-tag", "noindex, nofollow");
+        response = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        });
       }
 
       return withSecurityHeaders(response, url.protocol === "https:");

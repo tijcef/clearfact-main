@@ -60,10 +60,16 @@ export const Route = createFileRoute("/sitemap.xml")({
         let posts: SitemapPost[] = [];
         let publishedCategories: WordPressCategory[] = [];
 
-        try {
-          [posts, publishedCategories] = await Promise.all([getSitemapPosts(), getCategories()]);
-        } catch (error) {
-          console.error("WordPress data was unavailable while generating the sitemap:", error);
+        const [postResult, categoryResult] = await Promise.allSettled([
+          getSitemapPosts(),
+          getCategories(),
+        ]);
+
+        if (postResult.status === "rejected") {
+          console.error(
+            "WordPress posts were unavailable while generating the sitemap:",
+            postResult.reason,
+          );
 
           return new Response("Sitemap temporarily unavailable", {
             status: 503,
@@ -73,6 +79,17 @@ export const Route = createFileRoute("/sitemap.xml")({
               "retry-after": "300",
             },
           });
+        }
+
+        posts = postResult.value;
+
+        if (categoryResult.status === "fulfilled") {
+          publishedCategories = categoryResult.value;
+        } else {
+          console.error(
+            "WordPress categories were unavailable while generating the sitemap:",
+            categoryResult.reason,
+          );
         }
 
         const staticUrls: SitemapUrl[] = STATIC_PATHS.map((path) => ({

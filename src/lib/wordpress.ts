@@ -48,6 +48,56 @@ const postDetailCache = new Map<
   }
 >();
 
+function sanitizePublicAuthor(author: unknown) {
+  if (!author || typeof author !== "object") return author;
+
+  const value = author as Record<string, unknown>;
+
+  return {
+    ...(typeof value.id === "number" ? { id: value.id } : {}),
+    ...(typeof value.name === "string" ? { name: value.name } : {}),
+    ...(typeof value.display_name === "string" ? { display_name: value.display_name } : {}),
+    ...(typeof value.slug === "string" ? { slug: value.slug } : {}),
+    ...(value.avatar_urls && typeof value.avatar_urls === "object"
+      ? { avatar_urls: value.avatar_urls }
+      : {}),
+  };
+}
+
+function sanitizePublicPost(post: unknown) {
+  if (!post || typeof post !== "object") return post;
+
+  const value = post as Record<string, any>;
+  const embedded = value._embedded;
+
+  return {
+    ...value,
+    ...(Array.isArray(value.authors) ? { authors: value.authors.map(sanitizePublicAuthor) } : {}),
+    ...(embedded && typeof embedded === "object"
+      ? {
+          _embedded: {
+            ...embedded,
+            ...(Array.isArray(embedded.author)
+              ? { author: embedded.author.map(sanitizePublicAuthor) }
+              : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+function sanitizePublicWordPressData<T>(path: string, value: T): T {
+  if (path.startsWith("/posts") && Array.isArray(value)) {
+    return value.map(sanitizePublicPost) as T;
+  }
+
+  if (path.startsWith("/users/")) {
+    return sanitizePublicAuthor(value) as T;
+  }
+
+  return value;
+}
+
 export class WordPressRequestError extends Error {
   readonly status: number;
   readonly code?: string;
@@ -181,7 +231,7 @@ async function requestJson<T>(
         throw new WordPressRequestError(message, response.status, code);
       }
 
-      const value = (await response.json()) as T;
+      const value = sanitizePublicWordPressData(path, (await response.json()) as T);
 
       if (method === "GET") {
         memoryCache.set(cacheKey, {
@@ -496,6 +546,34 @@ export async function getSitemapPosts(maxPages = 500) {
   return posts;
 }
 
+/** Fetch only posts eligible for the time-sensitive Google News sitemap. */
+export async function getRecentSitemapPosts(after: string, maxPages = 10) {
+  const posts: SitemapPost[] = [];
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const batch = await requestJson<SitemapPost[]>(
+      `/posts${buildQuery({
+        after,
+        per_page: 100,
+        page,
+        status: "publish",
+        orderby: "date",
+        order: "desc",
+        _fields: "id,slug,date,modified,title",
+      })}`,
+      { cacheTtl: 300 },
+    );
+
+    posts.push(...batch);
+
+    if (batch.length < 100) {
+      break;
+    }
+  }
+
+  return posts;
+}
+
 export function normalizeWpSlug(slug: string) {
   let value = slug.trim();
 
@@ -565,10 +643,7 @@ export function proxyWpMediaUrl(sourceUrl?: string) {
   try {
     const url = new URL(sourceUrl, "https://clearfact.ng");
 
-    if (
-      ["cms.clearfact.ng", "cms.tijcef.org"].includes(url.hostname) &&
-      url.pathname.startsWith(WP_MEDIA_PATH)
-    ) {
+    if (url.hostname === "cms.clearfact.ng" && url.pathname.startsWith(WP_MEDIA_PATH)) {
       const mediaPath = url.pathname.slice(WP_MEDIA_PATH.length);
       return `/media/${mediaPath}${url.search}`;
     }
@@ -606,10 +681,7 @@ export function getFeaturedImageUrl(
 }
 
 export function proxyWpMediaInHtml(html: string) {
-  return html.replace(
-    /https?:\/\/(?:cms\.clearfact\.ng|cms\.tijcef\.org)\/wp-content\/uploads\//gi,
-    "/media/",
-  );
+  return html.replace(/https?:\/\/cms\.clearfact\.ng\/wp-content\/uploads\//gi, "/media/");
 }
 
 export function sanitizeWpArticleHtml(html = "") {
@@ -640,9 +712,7 @@ export function getExternalCitationUrls(html = "") {
 
       if (
         ["http:", "https:"].includes(url.protocol) &&
-        !["clearfact.ng", "www.clearfact.ng", "cms.clearfact.ng", "cms.tijcef.org"].includes(
-          url.hostname,
-        )
+        !["clearfact.ng", "www.clearfact.ng", "cms.clearfact.ng"].includes(url.hostname)
       ) {
         url.hash = "";
         urls.add(url.toString());

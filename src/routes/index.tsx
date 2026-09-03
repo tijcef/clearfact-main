@@ -8,6 +8,7 @@ import {
 } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 import { filterNavigationCategories } from "@/lib/site-navigation";
+import AdSense from "@/components/AdSense";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -359,6 +360,8 @@ function Home() {
           ))}
         </div>
       </section>
+
+      <AdSense className="mb-16" />
 
       {trendingPosts.length > 0 && (
         <section className="mb-16">
