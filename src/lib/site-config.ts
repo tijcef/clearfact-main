@@ -9,7 +9,7 @@ export function getClearFactAuthorBio(authorName: string) {
 
   const authorBios: Record<string, string> = {
     "emmanuel sunday tijwun":
-      "Emmanuel Sunday Tijwun is the Founder and Publisher of ClearFact News, a researcher, geospatial professional and social impact leader committed to verified, evidence-driven and public-interest journalism.",
+      "Emmanuel Sunday Tijwun is the Founder and Publisher of ClearFact News, a researcher, geospatial professional and social impact leader with interests in evidence-driven and public-interest journalism.",
   };
 
   return (
