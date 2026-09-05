@@ -644,6 +644,20 @@ export default {
             },
           },
         );
+      } else if (url.pathname === "/api/document-verify") {
+        const code = url.searchParams.get("code") ?? "";
+        if (!code.trim()) {
+          response = new Response(JSON.stringify({ valid: false }), { status: 400, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+        } else {
+          const origin = new URL("https://cms.clearfact.ng/wp-json/clearfact/v1/verify");
+          origin.searchParams.set("code", code);
+          try {
+            const upstream = await fetchWithTimeout(origin, { headers: { accept: "application/json" } }, API_ORIGIN_TIMEOUT_MS);
+            response = new Response(upstream.body, { status: upstream.status, headers: { "content-type": upstream.headers.get("content-type") ?? "application/json; charset=utf-8", "cache-control": "no-store" } });
+          } catch {
+            response = new Response(JSON.stringify({ valid: false, error: "verification_unavailable" }), { status: 503, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+          }
+        }
       } else if (url.pathname.startsWith("/api/wp/")) {
         response = await proxyWordPressRequest(request, executionContext);
       } else if (url.pathname.startsWith("/media/")) {
