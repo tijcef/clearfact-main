@@ -45,7 +45,12 @@ async function getServerEntry(): Promise<ServerEntry> {
 function brandedErrorResponse(): Response {
   return new Response(renderErrorPage(), {
     status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "retry-after": "60",
+      "x-robots-tag": "noindex, follow",
+    },
   });
 }
 
@@ -183,7 +188,9 @@ function cacheFreshAndStale(
   ctx: ExecutionContextLike,
 ) {
   const pathname = new URL(request.url).pathname;
-  const staleTtl = namespace === "page" && pathname.startsWith("/category/") ? ONE_DAY : ONE_WEEK;
+  const isNewsContent =
+    pathname.startsWith("/post/") || pathname.startsWith("/category/");
+  const staleTtl = namespace === "page" && isNewsContent ? ONE_DAY : ONE_WEEK;
   const staleHeaders = new Headers(response.headers);
   staleHeaders.set(
     "cache-control",
@@ -476,8 +483,13 @@ function pageCacheTtl(request: Request) {
 
   const url = new URL(request.url);
   const accept = request.headers.get("accept") ?? "";
+  const acceptsHtml =
+    !accept ||
+    accept.includes("text/html") ||
+    accept.includes("application/xhtml+xml") ||
+    accept.includes("*/*");
 
-  if (!accept.includes("text/html") || url.search) return null;
+  if (!acceptsHtml || url.search) return null;
   if (request.headers.has("authorization") || request.headers.has("cookie")) {
     return null;
   }
@@ -489,8 +501,8 @@ function pageCacheTtl(request: Request) {
   }
 
   if (url.pathname === "/") return 600;
-  if (url.pathname.startsWith("/post/")) return 120;
-  if (url.pathname.startsWith("/category/")) return 120;
+  if (url.pathname.startsWith("/post/")) return 600;
+  if (url.pathname.startsWith("/category/")) return 300;
   return 900;
 }
 
@@ -511,10 +523,14 @@ function machineRouteCacheTtl(request: Request) {
 function canServeStaleBeforeOrigin(request: Request) {
   const pathname = new URL(request.url).pathname;
 
-  // Deleted stories should reach their real 404 promptly. Category pages use
-  // a shorter one-day stale copy so readers and crawlers are never sent to an
-  // intermittent WordPress timeout while the section refreshes in background.
-  return !pathname.startsWith("/post/");
+  // Public stories and sections may use a one-day stale copy while WordPress
+  // refreshes in the background. A confirmed 404/410 clears both cache entries
+  // below, so removed stories stop being served on the following request.
+  return !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/auth") &&
+    !pathname.startsWith("/contributor") &&
+    !pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/login");
 }
 
 async function servePage(

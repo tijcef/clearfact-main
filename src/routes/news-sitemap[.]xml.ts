@@ -48,6 +48,16 @@ function newsUrl(post: SitemapPost) {
 export const Route = createFileRoute("/news-sitemap.xml")({
   server: {
     handlers: {
+      HEAD: async () => {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "content-type": "application/xml; charset=utf-8",
+            "cache-control":
+              "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
+          },
+        });
+      },
       GET: async () => {
         let posts: SitemapPost[] = [];
         const cutoff = Date.now() - NEWS_WINDOW_MS;

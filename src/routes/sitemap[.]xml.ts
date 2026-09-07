@@ -56,6 +56,15 @@ function normalizeDate(value?: string | null) {
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
+      HEAD: async () => {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "content-type": "application/xml; charset=utf-8",
+            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+          },
+        });
+      },
       GET: async () => {
         let posts: SitemapPost[] = [];
         let publishedCategories: WordPressCategory[] = [];
