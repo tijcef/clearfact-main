@@ -13,16 +13,14 @@ export const Route = createFileRoute("/partnership")({
   component: Partnership,
 });
 function Partnership() {
-  const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("Loading application form…");
   useEffect(() => {
     getServiceData<ServiceConfig>("config")
       .then((c) => {
-        setReady(!!c.ready);
         setMessage(
           c.ready
             ? ""
-            : "Online applications are not available yet. Send your proposal to info@clearfact.ng.",
+            : "Complete the form below. If online saving is unavailable, use its email option.",
         );
       })
       .catch(() =>
@@ -37,7 +35,7 @@ function Partnership() {
       title="Partnerships with purpose"
       intro="Individuals and organisations can propose media partnerships, event collaborations, publishing projects and public-interest initiatives."
     >
-      <ServiceForm partnership enabled={ready} />
+      <ServiceForm partnership />
       {message && <p role="status">{message}</p>}
       <h2>What happens next?</h2>
       <p>

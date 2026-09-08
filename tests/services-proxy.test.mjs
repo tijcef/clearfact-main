@@ -9,7 +9,6 @@ const origin = 'https://clearfact.ng';
 const write = (body = '{}', headers = {}) => new Request(origin + '/api/services/requests', { method: 'POST', headers: { origin, 'content-type': 'application/json', ...headers }, body });
 let calls = 0;
 globalThis.fetch = async () => { calls++; throw new Error('Unexpected upstream call'); };
-assert.equal((await proxyServices(write(), {})).status, 503);
 assert.equal((await proxyServices(write('{}', { origin: 'https://other.example' }), env)).status, 403);
 assert.equal((await proxyServices(write('{bad'), env)).status, 400);
 assert.equal((await proxyServices(write(' '.repeat(24001)), env)).status, 413);
@@ -37,4 +36,6 @@ globalThis.fetch = async (url, init) => {
 assert.equal((await (await proxyServices(new Request(origin+'/api/services/config'),env)).json()).ready,true);
 globalThis.fetch = async () => Response.json({accepting_requests:false});
 assert.equal((await (await proxyServices(new Request(origin+'/api/services/config'),env)).json()).ready,false);
+globalThis.fetch = async (url, init) => { assert.equal(init.headers['x-clearfact-secret'], undefined); return Response.json({reference:'CF-NO-SECRET',email_queued:true},{status:201}); };
+assert.equal((await proxyServices(write(),{})).status,201);
 console.log('PASS: proxy origin, size, methods, validation, private headers, upstream errors and readiness.');

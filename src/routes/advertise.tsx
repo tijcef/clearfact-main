@@ -55,13 +55,13 @@ function Advertise() {
           </section>
         ))}
       </div>
-      <ServiceForm enabled={!!config?.ready} />
+      <ServiceForm />
       {error && <p role="alert">{error}</p>}
       {!config && !error && <p role="status">Loading service options…</p>}
       {config && !config.ready && (
         <p>
           For service requests, please email <a href="mailto:ads@clearfact.ng">ads@clearfact.ng</a>.
-          Online submission is not available yet.
+          You can complete the form below; if online saving is unavailable, use its email option.
         </p>
       )}
       <section className="my-8 rounded border border-border p-6">

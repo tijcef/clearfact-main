@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ClearFact Services & Publications
  * Description: Private service requests, partnership applications, verified receipts, books and e-print catalogues for clearfact.ng.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) exit;
@@ -18,17 +18,17 @@ add_action('init', function() {
     register_post_type('cf_request', ['label'=>'ClearFact Requests','public'=>false,'publicly_queryable'=>false,'exclude_from_search'=>true,'show_ui'=>true,'show_in_rest'=>false,'rewrite'=>false,'supports'=>['title'],'capabilities'=>['edit_posts'=>'manage_options','edit_others_posts'=>'manage_options','publish_posts'=>'manage_options','read_private_posts'=>'manage_options','delete_posts'=>'manage_options','delete_others_posts'=>'manage_options','edit_post'=>'manage_options','read_post'=>'manage_options','delete_post'=>'manage_options','create_posts'=>'do_not_allow'],'map_meta_cap'=>false]);
 });
 add_action('rest_api_init', function() {
-    register_rest_route('clearfact-services/v1','/config',['methods'=>'GET','permission_callback'=>'__return_true','callback'=>function($r){ $o=cfs_options(); $secret=$o['secret']; unset($o['secret']); $o['accepting_requests']=$secret && hash_equals($secret,(string)$r->get_header('x-clearfact-secret')); return $o; }]);
+    register_rest_route('clearfact-services/v1','/config',['methods'=>'GET','permission_callback'=>'__return_true','callback'=>function($r){ $o=cfs_options(); $secret=$o['secret']; unset($o['secret']); $o['accepting_requests']=true; return $o; }]);
     register_rest_route('clearfact-services/v1','/catalogue',['methods'=>'GET','permission_callback'=>'__return_true','callback'=>function($r){
         $kind=$r->get_param('kind'); if (!in_array($kind,['books','eprint'],true)) return cfs_error('kind','Invalid catalogue.');
         $posts=get_posts(['post_type'=>$kind==='books'?'cf_book':'cf_eprint','post_status'=>'publish','posts_per_page'=>-1,'orderby'=>'date','order'=>'DESC']); $items=[];
-        foreach($posts as $p) { $m=(array)get_post_meta($p->ID,'_cfs_publication',true); $items[]=['id'=>$p->ID,'title'=>wp_strip_all_tags(get_the_title($p)),'description'=>wp_strip_all_tags(strip_shortcodes($p->post_content)),'author'=>$m['author']??'','edition'=>$m['edition']??'','price'=>$m['price']??'','cover'=>cfs_url(get_the_post_thumbnail_url($p,'large')?:''),'url'=>cfs_url($m['url']??'')]; } return $items;
+        foreach($posts as $p) { $m=(array)get_post_meta($p->ID,'_cfs_publication',true); $items[]=['id'=>$p->ID,'title'=>wp_strip_all_tags(get_the_title($p)),'description'=>wp_strip_all_tags(strip_shortcodes($p->post_content)),'author'=>$m['author']??'','edition'=>$m['edition']??'','price'=>$m['price']??'','cover'=>cfs_url(get_the_post_thumbnail_url($p,'large')?:''),'url'=>cfs_url($m['url']??'')]; } return apply_filters('cfs_catalogue', $items, $kind);
     }]);
-    register_rest_route('clearfact-services/v1','/requests',['methods'=>'POST','permission_callback'=>function($r){ $secret=cfs_options()['secret']; return $secret && hash_equals($secret,(string)$r->get_header('x-clearfact-secret')) ? true : cfs_error('forbidden','Request unavailable.',403); },'callback'=>'cfs_submit']);
+    register_rest_route('clearfact-services/v1','/requests',['methods'=>'POST','permission_callback'=>'__return_true','callback'=>'cfs_submit']);
 });
 add_filter('rest_post_dispatch', function($response,$server,$request){ if (strpos($request->get_route(),'/clearfact-services/v1/')===0) { $response->header('Cache-Control','no-store'); $response->header('X-Robots-Tag','noindex, nofollow'); } return $response; },10,3);
 function cfs_submit($r) {
-    $d=$r->get_json_params(); if (!is_array($d)) return cfs_error('invalid','Invalid form.');
+    $d=$r->get_json_params(); if (!is_array($d) || !$d) $d=$r->get_params(); if (!is_array($d)) return cfs_error('invalid','Invalid form.');
     foreach($d as $key=>$value) { if (!is_scalar($value) && $value!==null) return cfs_error('invalid','Invalid form value.'); }
     if (!empty($d['website_check'])) return cfs_error('invalid','Unable to accept this request.');
     $kind=$d['kind']??''; $name=sanitize_text_field($d['name']??''); $email=sanitize_email($d['email']??''); $brief=sanitize_textarea_field($d['brief']??''); $service=sanitize_text_field($d['service']??''); $uuid=$d['request_id']??'';
@@ -39,17 +39,29 @@ function cfs_submit($r) {
     $fingerprint=hash('sha256',$email.'|'.$kind.'|'.$name.'|'.$brief);
     if (is_array($existing) && ($existing['fingerprint']??'')===$fingerprint && !empty($existing['id'])) return ['reference'=>get_post_meta($existing['id'],'_cfs_reference',true),'email_queued'=>(bool)get_post_meta($existing['id'],'_cfs_customer_mail',true)];
     if ($existing) return cfs_error('pending','This request is processing. Please retry shortly.',409);
-    $rate='cfs_rate_'.hash_hmac('sha256',(string)$r->get_header('x-clearfact-client'),wp_salt()); $count=(int)get_transient($rate);
-    if ($count>=8) return cfs_error('rate','Too many requests. Please try again in an hour or contact us by email.',429);
+    $secret=cfs_options()['secret']; $trusted=$secret && hash_equals($secret,(string)$r->get_header('x-clearfact-secret'));
+    $ip=$trusted ? (string)$r->get_header('x-clearfact-client') : (string)($_SERVER['REMOTE_ADDR']??'unknown');
+    $rate='cfs_rate_'.hash_hmac('sha256',$ip,wp_salt()); $count=(int)get_transient($rate);
+    $email_rate='cfs_email_'.hash_hmac('sha256',strtolower($email),wp_salt());
+    if ((int)get_transient($email_rate)>=3) return cfs_error('rate','Please wait before sending another request, or contact us by email.',429);
+    if ($count>=($trusted?8:120)) return cfs_error('rate','Too many requests. Please try again in an hour or contact us by email.',429);
     if (!add_option($lock,['fingerprint'=>$fingerprint], '',false)) return cfs_error('pending','Request is processing. Please retry shortly.',409);
-    set_transient($rate,$count+1,HOUR_IN_SECONDS);
+    set_transient($rate,$count+1,HOUR_IN_SECONDS); set_transient($email_rate,(int)get_transient($email_rate)+1,HOUR_IN_SECONDS);
     $id=wp_insert_post(['post_type'=>'cf_request','post_status'=>'private','post_title'=>ucfirst($kind).' — '.$name],true);
     if (is_wp_error($id) || !$id) { delete_option($lock); return cfs_error('storage','Unable to save your request. Please retry.',503); }
     $ref='CF-'.gmdate('Y').'-'.str_pad((string)$id,6,'0',STR_PAD_LEFT);
     $record=['kind'=>$kind,'name'=>$name,'email'=>$email,'organisation'=>substr(sanitize_text_field($d['organisation']??''),0,180),'phone'=>substr(sanitize_text_field($d['phone']??''),0,40),'service'=>$service,'brief'=>$brief,'materials'=>cfs_url(substr($d['materials']??'',0,1000)),'payment_reference'=>substr(sanitize_text_field($d['payment_reference']??''),0,120),'claimed_amount'=>$amount,'consent_at'=>gmdate('c')];
-    update_post_meta($id,'_cfs_record',$record); update_post_meta($id,'_cfs_reference',$ref); update_post_meta($id,'_cfs_status','received'); update_option($lock,['fingerprint'=>$fingerprint,'id'=>$id],false);
+    update_post_meta($id,'_cfs_record',$record); update_post_meta($id,'_cfs_reference',$ref); update_post_meta($id,'_cfs_status','received');
+    $files=method_exists($r,'get_file_params')?$r->get_file_params():[]; $proof=$files['payment_proof']??null;
+    if (is_array($proof) && (($proof['error']??UPLOAD_ERR_NO_FILE)===UPLOAD_ERR_OK)) {
+        $allowed=['application/pdf','image/jpeg','image/png','image/webp']; $type=sanitize_mime_type($proof['type']??''); $size=(int)($proof['size']??0);
+        if ($size>5242880 || !in_array($type,$allowed,true) || empty($proof['tmp_name']) || !is_uploaded_file($proof['tmp_name'])) { delete_option($lock); wp_delete_post($id,true); return cfs_error('proof','Payment proof must be a PDF, JPG, PNG or WebP file up to 5 MB.'); }
+        $bytes=file_get_contents($proof['tmp_name']); if ($bytes===false) { delete_option($lock); wp_delete_post($id,true); return cfs_error('proof','Payment proof could not be read.',503); }
+        update_post_meta($id,'_cfs_payment_proof',['name'=>sanitize_file_name($proof['name']??'proof'),'type'=>$type,'size'=>$size,'data'=>base64_encode($bytes)]);
+    }
+    update_option($lock,['fingerprint'=>$fingerprint,'id'=>$id],false);
     $to=$kind==='advertising'?'ads@clearfact.ng':'info@clearfact.ng';
-    $staff=wp_mail($to,"New ClearFact $kind request: $ref","Reference: $ref\nName: $name\nEmail: $email\nService: $service\n\n$brief\n\nReview securely: ".admin_url("post.php?post=$id&action=edit"));
+    $staff=wp_mail($to,"New ClearFact $kind request: $ref","Reference: $ref\nName: $name\nEmail: $email\nService: $service\nPayment proof: ".($proof?'uploaded in the private request record':'not uploaded')."\n\n$brief\n\nReview securely: ".admin_url("post.php?post=$id&action=edit"));
     update_post_meta($id,'_cfs_staff_mail',$staff?1:0);
     $message="Hello $name,\n\nYour ClearFact $kind request has been received.\nReference: $ref\n\n".($kind==='advertising'?"Email payment proof and creative files to ads@clearfact.ng, quoting this reference. Please pay only the amount and destination confirmed by our team. This acknowledgement is NOT a payment receipt. A receipt is issued after staff verify the payment.":"Our team will review your proposal and contact you. This acknowledgement is not a partnership agreement.")."\n\nClearFact Media Ltd\nhttps://clearfact.ng";
     $sent=wp_mail($email,"ClearFact request received — $ref",$message,['Reply-To: '.$to]); update_post_meta($id,'_cfs_customer_mail',$sent?1:0);
@@ -61,7 +73,7 @@ function cfs_settings() {
     if (isset($_POST['cfs_save'])) { check_admin_referer('cfs_settings'); $o=cfs_options(); foreach(['bank','account_name','account_number','instructions'] as $k) $o[$k]=sanitize_textarea_field(wp_unslash($_POST[$k]??'')); $o['payment_url']=cfs_url(wp_unslash($_POST['payment_url']??'')); if (!$o['secret']) $o['secret']=wp_generate_password(48,false,false); update_option('cfs_options',$o,false); echo '<div class="notice notice-success"><p>Settings saved.</p></div>'; }
     $o=cfs_options(); echo '<div class="wrap"><h1>ClearFact Services</h1><p>Add only verified company payment details and an approved HTTPS checkout link. Prices and service scope must be agreed with the customer before payment.</p><form method="post">'; wp_nonce_field('cfs_settings');
     foreach(['bank'=>'Bank','account_name'=>'Account name','account_number'=>'Account number','payment_url'=>'Secure payment link (HTTPS)','instructions'=>'Payment instructions'] as $k=>$label) echo '<p><label for="'.esc_attr($k).'">'.esc_html($label).'</label><br><textarea class="large-text" id="'.esc_attr($k).'" name="'.esc_attr($k).'" rows="2">'.esc_textarea($o[$k]).'</textarea></p>';
-    submit_button('Save settings','primary','cfs_save'); echo '</form><h2>Website connection</h2><p>Set the Cloudflare Worker secret <code>CLEARFACT_SERVICES_SECRET</code> to this value. Never place it in a VITE variable or client code.</p><code style="overflow-wrap:anywhere">'.esc_html($o['secret']).'</code><h2>Staff workflow</h2><p>Open ClearFact Requests to review applications and briefs. Verify payments independently against your bank or provider before issuing a receipt. Only administrators can access these private records. Confirm your WordPress email service delivers mail to ads@clearfact.ng, info@clearfact.ng and customers.</p></div>';
+    submit_button('Save settings','primary','cfs_save'); echo '</form><h2>Website connection</h2><p>Optional: for stricter per-visitor rate limiting, set the Cloudflare Worker secret <code>CLEARFACT_SERVICES_SECRET</code> to this value. Never place it in a VITE variable or client code.</p><code style="overflow-wrap:anywhere">'.esc_html($o['secret']).'</code><h2>Staff workflow</h2><p>Open ClearFact Requests to review applications and briefs. Verify payments independently against your bank or provider before issuing a receipt. Only administrators can access these private records. Confirm your WordPress email service delivers mail to ads@clearfact.ng, info@clearfact.ng and customers.</p></div>';
 }
 add_action('add_meta_boxes',function(){
     foreach(['cf_book','cf_eprint'] as $type) add_meta_box('cfs_publication','Publication details','cfs_publication_box',$type,'normal','high');
@@ -81,7 +93,8 @@ function cfs_request_box($post) {
     $d=(array)get_post_meta($post->ID,'_cfs_record',true); $ref=get_post_meta($post->ID,'_cfs_reference',true); $receipt=(array)get_post_meta($post->ID,'_cfs_receipt',true);
     echo '<h3>'.esc_html($ref).'</h3><p>Status: <strong>'.esc_html(get_post_meta($post->ID,'_cfs_status',true)).'</strong></p><table class="widefat striped">';
     foreach($d as $k=>$v) echo '<tr><th>'.esc_html(ucwords(str_replace('_',' ',$k))).'</th><td style="white-space:pre-wrap;overflow-wrap:anywhere">'.esc_html($v).'</td></tr>';
-    echo '</table><p>Notification to staff: '.(get_post_meta($post->ID,'_cfs_staff_mail',true)?'accepted by mail system':'not queued — handle this record directly').'. Customer acknowledgement: '.(get_post_meta($post->ID,'_cfs_customer_mail',true)?'accepted by mail system':'not queued').'. Mail acceptance does not confirm inbox delivery.</p>';
+    $proof=(array)get_post_meta($post->ID,'_cfs_payment_proof',true);
+    echo '</table><p>Payment proof: '.(!empty($proof['data'])?'uploaded privately ('.esc_html($proof['name']??'file').', '.esc_html(size_format((int)($proof['size']??0))).')':'not uploaded').'.</p><p>Notification to staff: '.(get_post_meta($post->ID,'_cfs_staff_mail',true)?'accepted by mail system':'not queued — handle this record directly').'. Customer acknowledgement: '.(get_post_meta($post->ID,'_cfs_customer_mail',true)?'accepted by mail system':'not queued').'. Mail acceptance does not confirm inbox delivery.</p>';
     wp_nonce_field('cfs_review_'.$post->ID,'cfs_review_nonce');
     echo '<p><label>Request status <select name="cfs_status">'; foreach(['received','in_review','awaiting_payment','in_progress','completed','declined'] as $status) echo '<option value="'.esc_attr($status).'" '.selected(get_post_meta($post->ID,'_cfs_status',true),$status,false).'>'.esc_html($status).'</option>'; echo '</select></label> Update the record to save.</p>';
     if (($d['kind']??'')!=='advertising') return;

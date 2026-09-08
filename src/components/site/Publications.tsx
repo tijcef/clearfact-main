@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SimplePage } from "./SimplePage";
 import { Button } from "@/components/ui/button";
 import { getServiceData, safeExternalUrl, type Publication } from "@/lib/services";
+import { supabase } from "@/integrations/supabase/client";
 export function Publications({ kind }: { kind: "books" | "eprint" }) {
   const [items, setItems] = useState<Publication[]>([]);
   const [status, setStatus] = useState("Loading publications…");
@@ -9,12 +10,17 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
   useEffect(() => {
     let active = true;
     setStatus("Loading publications…");
-    getServiceData<Publication[]>(`catalogue?kind=${kind}`)
-      .then((data) => {
+    Promise.all([
+      getServiceData<Publication[]>(`catalogue?kind=${kind}`).catch(() => [] as Publication[]),
+      kind === "books" ? (supabase as any).from("book_submissions").select("id,title,pen_name,description,price_kobo,cover_path,woo_product_id").eq("status", "approved").order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    ])
+      .then(([data, { data: approved }]) => {
         if (active) {
-          setItems(data);
+          const submitted = (approved ?? []).map((book: any) => ({ id: `supabase-${book.id}`, title: book.title, description: book.description, author: book.pen_name, edition: "Digital book", price: `₦${(Number(book.price_kobo) / 100).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`, cover: book.cover_path ? supabase.storage.from("author-book-covers").getPublicUrl(book.cover_path).data.publicUrl : "", url: book.woo_product_id ? `https://cms.clearfact.ng/?post_type=product&p=${book.woo_product_id}` : "", store: !!book.woo_product_id }));
+          const merged = [...submitted, ...(data ?? [])].filter((book, index, all) => all.findIndex(other => other.title.toLowerCase() === book.title.toLowerCase()) === index);
+          setItems(merged);
           setStatus(
-            data.length
+            merged.length
               ? ""
               : "No publications are available yet. Please check back for new releases.",
           );
@@ -33,10 +39,20 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
       title={kind === "books" ? "ClearFact Books" : "ClearFact E-Print"}
       intro={
         kind === "books"
-          ? "Explore books published by ClearFact Media Ltd."
+          ? "Discover digital books, read a sample and buy online. Authors can submit their books for ClearFact review."
           : "Read the digital newspaper. Browse available editions and follow each edition’s reading or purchase link."
       }
     >
+      {kind === "books" && (
+        <div className="flex flex-wrap gap-4 mb-6 border-b border-border pb-6">
+          <a href="/author" className="font-semibold">
+            Submit your book / Author dashboard
+          </a>
+          <a href="/author" className="font-semibold">
+            My purchases & downloads
+          </a>
+        </div>
+      )}
       {kind === "eprint" && (
         <p className="border-l-4 border-gold pl-4">
           CLEARFACT NEWS · Verified · Transparent · Nigerian.
@@ -71,6 +87,13 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
               <h2 className="!mt-0">{item.title}</h2>
               <p>{item.description}</p>
               {item.price && <p className="font-semibold">{item.price}</p>}
+              {item.sample && safeExternalUrl(item.sample) && (
+                <p>
+                  <a href={safeExternalUrl(item.sample)} target="_blank" rel="noopener noreferrer">
+                    Read a sample PDF ↗
+                  </a>
+                </p>
+              )}
               {safeExternalUrl(item.url) ? (
                 <a
                   href={safeExternalUrl(item.url)}
@@ -78,9 +101,11 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
                   rel="noopener noreferrer"
                   className="inline-block font-semibold"
                 >
-                  {item.price && item.price.toLowerCase() !== "free"
-                    ? "View / purchase"
-                    : "Read publication"}{" "}
+                  {item.store
+                    ? "View book & buy online"
+                    : item.price && item.price.toLowerCase() !== "free"
+                      ? "View / purchase"
+                      : "Read publication"}{" "}
                   ↗
                 </a>
               ) : (

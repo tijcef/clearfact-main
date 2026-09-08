@@ -7,6 +7,8 @@ export type Publication = {
   price: string;
   cover: string;
   url: string;
+  sample?: string;
+  store?: boolean;
 };
 export type ServiceConfig = {
   bank: string;

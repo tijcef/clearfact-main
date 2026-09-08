@@ -13,17 +13,14 @@ export async function proxyServices(request: Request, environment: unknown): Pro
   if (!["config", "catalogue", "requests"].includes(endpoint)) return fail(404, "Not found.");
   const isWrite = endpoint === "requests";
   if (request.method !== (isWrite ? "POST" : "GET")) return fail(405, "Method not allowed.");
-  let body: string | undefined;
+  let body: ArrayBuffer | undefined;
+  let incomingContentType = "";
   if (isWrite) {
-    if (!env.CLEARFACT_SERVICES_SECRET)
-      return fail(
-        503,
-        "Online requests are unavailable. Please email ads@clearfact.ng for advertising or info@clearfact.ng for partnerships.",
-      );
     if (request.headers.get("origin") !== url.origin)
       return fail(403, "Please submit through the ClearFact website.");
-    if (!request.headers.get("content-type")?.startsWith("application/json"))
-      return fail(415, "JSON required.");
+    incomingContentType = request.headers.get("content-type") || "";
+    if (!incomingContentType.startsWith("application/json") && !incomingContentType.startsWith("multipart/form-data;"))
+      return fail(415, "Use the website form to submit this request.");
     const reader = request.body?.getReader();
     if (!reader) return fail(400, "Request body required.");
     const chunks: Uint8Array[] = [];
@@ -32,7 +29,8 @@ export async function proxyServices(request: Request, environment: unknown): Pro
       const part = await reader.read();
       if (part.done) break;
       size += part.value.byteLength;
-      if (size > 24000) {
+      const maxSize = incomingContentType.startsWith("multipart/form-data;") ? 6 * 1024 * 1024 : 24000;
+      if (size > maxSize) {
         await reader.cancel();
         return fail(413, "Your request is too large. Please shorten the brief.");
       }
@@ -44,11 +42,9 @@ export async function proxyServices(request: Request, environment: unknown): Pro
       bytes.set(chunk, offset);
       offset += chunk.length;
     }
-    body = new TextDecoder().decode(bytes);
-    try {
-      JSON.parse(body);
-    } catch {
-      return fail(400, "Invalid request.");
+    body = bytes.buffer;
+    if (incomingContentType.startsWith("application/json")) {
+      try { JSON.parse(new TextDecoder().decode(bytes)); } catch { return fail(400, "Invalid request."); }
     }
   }
   const upstream = new URL(`https://cms.clearfact.ng/wp-json/clearfact-services/v1/${endpoint}`);
@@ -68,8 +64,10 @@ export async function proxyServices(request: Request, environment: unknown): Pro
           : {}),
         ...(isWrite
           ? {
-              "content-type": "application/json",
-              "x-clearfact-secret": env.CLEARFACT_SERVICES_SECRET!,
+              "content-type": incomingContentType,
+              ...(env.CLEARFACT_SERVICES_SECRET
+                ? { "x-clearfact-secret": env.CLEARFACT_SERVICES_SECRET }
+                : {}),
               "x-clearfact-client": request.headers.get("cf-connecting-ip") || "unknown",
             }
           : {}),
@@ -82,8 +80,7 @@ export async function proxyServices(request: Request, environment: unknown): Pro
         "This service is temporarily unavailable. Please contact ClearFact by email.",
       );
     const data = (await response.json()) as Record<string, unknown>;
-    if (endpoint === "config" && response.ok)
-      data.ready = !!env.CLEARFACT_SERVICES_SECRET && data.accepting_requests === true;
+    if (endpoint === "config" && response.ok) data.ready = data.accepting_requests === true;
     return new Response(JSON.stringify(data), { status: response.status, headers });
   } catch {
     return fail(

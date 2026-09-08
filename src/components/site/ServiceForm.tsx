@@ -19,19 +19,30 @@ const services = [
   "E-print advertisement",
   "Other media service",
 ];
-export function ServiceForm({
-  partnership = false,
-  enabled = true,
-}: {
-  partnership?: boolean;
-  enabled?: boolean;
-}) {
+export function ServiceForm({ partnership = false }: { partnership?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ reference: string; email_queued: boolean } | null>(null);
   const [consent, setConsent] = useState(false);
   const [choice, setChoice] = useState("");
   const key = useRef("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  function prepareEmail() {
+    const form = formRef.current;
+    if (!form || !form.reportValidity() || !consent || !choice) {
+      setError("Complete the required fields, selection and consent first.");
+      return;
+    }
+    const values = Object.fromEntries(new FormData(form));
+    const body = Object.entries({ ...values, service: choice })
+      .filter(([k]) => k !== "website_check")
+      .map(([k, v]) => `${k.replaceAll("_", " ")}: ${v}`)
+      .join("\n\n");
+    setEmailDraft(
+      `mailto:${partnership ? "info" : "ads"}@clearfact.ng?subject=${encodeURIComponent(partnership ? "Partnership application" : "Service request")}&body=${encodeURIComponent(body)}`,
+    );
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -41,23 +52,28 @@ export function ServiceForm({
     }
     setBusy(true);
     setError("");
-    const values = Object.fromEntries(new FormData(event.currentTarget));
     if (!key.current) key.current = crypto.randomUUID();
+    const formData = new FormData(event.currentTarget);
+    formData.set("service", choice);
+    formData.set("consent", "true");
+    formData.set("kind", partnership ? "partnership" : "advertising");
+    formData.set("request_id", key.current);
+    const proof = formData.get("payment_proof");
+    if (proof instanceof File && proof.size > 5 * 1024 * 1024) {
+      setError("Payment proof must be 5 MB or smaller.");
+      setBusy(false);
+      return;
+    }
     try {
       const response = await fetch("/api/services/requests", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          service: choice,
-          consent: true,
-          kind: partnership ? "partnership" : "advertising",
-          request_id: key.current,
-        }),
+        body: formData,
       });
       const data = await response.json();
-      if (!response.ok)
+      if (!response.ok) {
+        if (response.status === 400) key.current = "";
         throw new Error(data.message || "Your request could not be submitted. Please try again.");
+      }
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connection failed. Please try again.");
@@ -100,11 +116,15 @@ export function ServiceForm({
       </section>
     );
   return (
-    <form onSubmit={submit} className="space-y-5 rounded border border-border p-5 sm:p-8">
+    <form
+      ref={formRef}
+      onSubmit={submit}
+      className="space-y-5 rounded border border-border p-5 sm:p-8"
+    >
       <h2 className="!mt-0">
         {partnership ? "Partnership application" : "Submit your service request"}
       </h2>
-      <fieldset disabled={busy || !enabled} className="space-y-5 disabled:opacity-60">
+      <fieldset disabled={busy} className="space-y-5 disabled:opacity-60">
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="name">Full name *</Label>
@@ -188,6 +208,11 @@ export function ServiceForm({
               <Label htmlFor="payment_reference">Invoice / transaction reference (if paid)</Label>
               <Input id="payment_reference" name="payment_reference" maxLength={120} />
             </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="payment_proof">Payment proof (optional, if already paid)</Label>
+              <Input id="payment_proof" name="payment_proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" />
+              <p className="text-sm text-muted-foreground">PDF/JPG/PNG/WebP, maximum 5 MB. Staff verify payments independently before issuing a receipt.</p>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="amount">Amount paid in NGN (if paid)</Label>
               <Input
@@ -218,7 +243,7 @@ export function ServiceForm({
             process this request under its <a href="/privacy">Privacy Policy</a>. *
           </Label>
         </div>
-        <Button type="submit" disabled={busy || !enabled}>
+        <Button type="submit" disabled={busy}>
           {busy ? "Submitting…" : partnership ? "Submit application" : "Submit service request"}
         </Button>
       </fieldset>
@@ -227,6 +252,23 @@ export function ServiceForm({
           {error}
         </p>
       )}
+      <div className="border-t border-border pt-4 space-y-3">
+        <Button type="button" variant="outline" onClick={prepareEmail}>
+          Prepare email submission
+        </Button>
+        {emailDraft && (
+          <div role="status">
+            <a href={emailDraft} className="font-semibold">
+              Open email app with your completed {partnership ? "application" : "request"}
+            </a>
+            <p className="text-sm mt-2">
+              Send it from your email app to complete the email submission. This does not create an
+              online reference. If your email app cannot open or truncates the message, copy your
+              details and send them to {partnership ? "info@clearfact.ng" : "ads@clearfact.ng"}.
+            </p>
+          </div>
+        )}
+      </div>
       <p className="text-sm text-muted-foreground">
         {partnership
           ? "Applications are reviewed before any partnership is agreed."

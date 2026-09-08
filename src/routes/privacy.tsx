@@ -264,6 +264,15 @@ function PrivacyPolicy() {
         correction of or deletion of your enquiry details, contact info@clearfact.ng. Records needed
         for an ongoing service or required accounting obligations may need to be retained.
       </p>
+      <h2>Bookstore accounts, submissions and purchases</h2>
+      <p>
+        ClearFact uses author account details, book submissions and rights declarations to review
+        and publish books. Full book PDFs are stored privately; approved covers, descriptions,
+        author names, samples and prices are public. We use purchase and payment records to issue
+        order confirmations, control downloads and calculate author earnings and payouts. Authors
+        see their own book sales and earnings, without buyer contact details. Payment credentials
+        are handled by the connected payment provider.
+      </p>
     </SimplePage>
   );
 }

@@ -36,6 +36,7 @@ import { Route as ContributeRouteImport } from './routes/contribute'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as BooksRouteImport } from './routes/books'
+import { Route as AuthorRouteImport } from './routes/author'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdvertiseRouteImport } from './routes/advertise'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -197,6 +198,11 @@ const BooksRoute = BooksRouteImport.update({
   path: '/books',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthorRoute = AuthorRouteImport.update({
+  id: '/author',
+  path: '/author',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -279,9 +285,9 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthorIdRoute = AuthorIdRouteImport.update({
-  id: '/author/$id',
-  path: '/author/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthorRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
@@ -330,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/author': typeof AuthorRouteWithChildren
   '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
@@ -383,6 +390,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/author': typeof AuthorRouteWithChildren
   '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/author': typeof AuthorRouteWithChildren
   '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/advertise'
     | '/auth'
+    | '/author'
     | '/books'
     | '/careers'
     | '/contact'
@@ -546,6 +556,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/advertise'
     | '/auth'
+    | '/author'
     | '/books'
     | '/careers'
     | '/contact'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/advertise'
     | '/auth'
+    | '/author'
     | '/books'
     | '/careers'
     | '/contact'
@@ -654,6 +666,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdvertiseRoute: typeof AdvertiseRoute
   AuthRoute: typeof AuthRoute
+  AuthorRoute: typeof AuthorRouteWithChildren
   BooksRoute: typeof BooksRoute
   CareersRoute: typeof CareersRoute
   ContactRoute: typeof ContactRoute
@@ -681,7 +694,6 @@ export interface RootRouteChildren {
   TrustCenterRoute: typeof TrustCenterRoute
   VerifyRoute: typeof VerifyRoute
   WhistleblowerRoute: typeof WhistleblowerRoute
-  AuthorIdRoute: typeof AuthorIdRoute
   CategorySlugRoute: typeof CategorySlugRoute
   PostSlugRoute: typeof PostSlugRoute
   ArticleSlugRevisionsRoute: typeof ArticleSlugRevisionsRoute
@@ -878,6 +890,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BooksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/author': {
+      id: '/author'
+      path: '/author'
+      fullPath: '/author'
+      preLoaderRoute: typeof AuthorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -992,10 +1011,10 @@ declare module '@tanstack/react-router' {
     }
     '/author/$id': {
       id: '/author/$id'
-      path: '/author/$id'
+      path: '/$id'
       fullPath: '/author/$id'
       preLoaderRoute: typeof AuthorIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthorRoute
     }
     '/admin/users': {
       id: '/admin/users'
@@ -1080,6 +1099,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AuthorRouteChildren {
+  AuthorIdRoute: typeof AuthorIdRoute
+}
+
+const AuthorRouteChildren: AuthorRouteChildren = {
+  AuthorIdRoute: AuthorIdRoute,
+}
+
+const AuthorRouteWithChildren =
+  AuthorRoute._addFileChildren(AuthorRouteChildren)
+
 interface ContributorRouteChildren {
   ContributorNotificationsRoute: typeof ContributorNotificationsRoute
   ContributorOnboardingRoute: typeof ContributorOnboardingRoute
@@ -1112,6 +1142,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdvertiseRoute: AdvertiseRoute,
   AuthRoute: AuthRoute,
+  AuthorRoute: AuthorRouteWithChildren,
   BooksRoute: BooksRoute,
   CareersRoute: CareersRoute,
   ContactRoute: ContactRoute,
@@ -1139,7 +1170,6 @@ const rootRouteChildren: RootRouteChildren = {
   TrustCenterRoute: TrustCenterRoute,
   VerifyRoute: VerifyRoute,
   WhistleblowerRoute: WhistleblowerRoute,
-  AuthorIdRoute: AuthorIdRoute,
   CategorySlugRoute: CategorySlugRoute,
   PostSlugRoute: PostSlugRoute,
   ArticleSlugRevisionsRoute: ArticleSlugRevisionsRoute,

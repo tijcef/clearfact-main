@@ -288,6 +288,9 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
           <Link to="/books" className="hover:underline">
             Books
           </Link>
+          <Link to="/author" className="hover:underline">
+            Author Centre
+          </Link>
           <Link to="/e-print" className="hover:underline">
             E-Print
           </Link>
