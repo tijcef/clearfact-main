@@ -33,6 +33,10 @@ export function useAuth(): AuthState {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
+    }).catch((error) => {
+      console.error("[Auth] Unable to load session", error);
+      setSession(null);
+      setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
