@@ -13,7 +13,6 @@ const STATIC_PATHS = [
   "/",
   "/about",
   "/contact",
-  "/advertise",
   "/careers",
   "/editorial-policy",
   "/corrections",
@@ -61,7 +60,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+            "cache-control": "public, max-age=60, s-maxage=60",
           },
         });
       },
@@ -145,7 +144,7 @@ ${urls
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+            "cache-control": "public, max-age=60, s-maxage=60",
           },
         });
       },

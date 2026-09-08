@@ -41,7 +41,7 @@ Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide cre
         institution or advertiser.
       </p>
 
-      <h3>Emmanuel Sunday Tijwun — Founder and Publisher</h3>
+      <h3>Emmanuel Sunday Tijwun — Lead / Founder</h3>
       <p>
         Emmanuel Sunday Tijwun is a Nigerian journalist, researcher and nonprofit leader based in
         Yola. His work focuses on governance, development, technology, education, health and public
@@ -53,6 +53,11 @@ Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide cre
         <a href="mailto:editor@clearfact.ng">editor@clearfact.ng</a>.
       </p>
 
+      <h3>Nuhu Danladi Mamtso — Chief Editor</h3>
+      <p>
+        <a href="/team">Meet our team</a> or{" "}
+        <a href="/partnership">apply for a partnership with ClearFact Media Ltd</a>.
+      </p>
       <h2>Our Mission</h2>
       <p>
         To provide accurate, verified, transparent and responsible journalism that informs the

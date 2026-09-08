@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate, Outlet } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 import {
   LogOut,
@@ -30,34 +29,10 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const { session, loading, isEditor, signOut } = useAuth();
   const navigate = useNavigate();
-  const [grantBusy, setGrantBusy] = useState(false);
-  const [hasAnyRole, setHasAnyRole] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
-
-  // Bootstrap: if no roles exist in the system, let the first signed-in user claim editor+admin.
-  useEffect(() => {
-    if (!session) return;
-    (async () => {
-      const { count } = await supabase
-        .from("user_roles")
-        .select("*", { count: "exact", head: true });
-      setHasAnyRole((count ?? 0) > 0);
-    })();
-  }, [session]);
-
-  const claimAdmin = async () => {
-    if (!session) return;
-    setGrantBusy(true);
-    await supabase.from("user_roles").insert([
-      { user_id: session.user.id, role: "admin" },
-      { user_id: session.user.id, role: "editor" },
-    ]);
-    setGrantBusy(false);
-    window.location.reload();
-  };
 
   if (loading || !session) {
     return (
@@ -75,21 +50,9 @@ function AdminLayout() {
         <p className="text-muted-foreground mt-2">
           Your account is signed in but doesn't yet have editor permissions.
         </p>
-        {hasAnyRole === false && (
-          <div className="mt-6 rounded-sm border border-border p-5 bg-accent">
-            <h2 className="font-serif text-xl">Bootstrap workspace</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              No admin exists yet. As the first user, you can claim the admin and editor roles.
-            </p>
-            <button
-              onClick={claimAdmin}
-              disabled={grantBusy}
-              className="mt-3 h-10 px-4 rounded-sm bg-primary text-primary-foreground font-semibold disabled:opacity-60"
-            >
-              {grantBusy ? "Granting…" : "Claim admin role"}
-            </button>
-          </div>
-        )}
+        <p className="mt-4">
+          Contact the Lead / Founder or Chief Editor to request an assigned staff role.
+        </p>
         <button
           onClick={signOut}
           className="mt-6 text-sm font-semibold text-primary hover:underline"

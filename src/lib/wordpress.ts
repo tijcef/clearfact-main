@@ -583,7 +583,7 @@ export async function getSitemapPosts(maxPages = 500) {
               order: "desc",
               _fields: "id,slug,date,modified,title",
             })}`,
-            { cacheTtl: 900 },
+            { cacheTtl: 60 },
           );
         } catch (error) {
           if (
@@ -618,18 +618,29 @@ export async function getRecentSitemapPosts(after: string, maxPages = 10) {
   const posts: SitemapPost[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {
-    const batch = await requestJson<SitemapPost[]>(
-      `/posts${buildQuery({
-        after,
-        per_page: 100,
-        page,
-        status: "publish",
-        orderby: "date",
-        order: "desc",
-        _fields: "id,slug,date,modified,title",
-      })}`,
-      { cacheTtl: 300 },
-    );
+    let batch: SitemapPost[];
+    try {
+      batch = await requestJson<SitemapPost[]>(
+        `/posts${buildQuery({
+          after,
+          per_page: 100,
+          page,
+          status: "publish",
+          orderby: "date",
+          order: "desc",
+          _fields: "id,slug,date,modified,title",
+        })}`,
+        { cacheTtl: 60 },
+      );
+    } catch (error) {
+      if (
+        error instanceof WordPressRequestError &&
+        error.status === 400 &&
+        error.code === "rest_post_invalid_page_number"
+      )
+        break;
+      throw error;
+    }
 
     posts.push(...batch);
 

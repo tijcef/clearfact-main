@@ -14,23 +14,28 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as TrustCenterRouteImport } from './routes/trust-center'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as SubmitStoryRouteImport } from './routes/submit-story'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PartnershipRouteImport } from './routes/partnership'
 import { Route as NewsletterRouteImport } from './routes/newsletter'
 import { Route as NewsSitemapDotxmlRouteImport } from './routes/news-sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FactCheckRouteImport } from './routes/fact-check'
 import { Route as EditorialPolicyRouteImport } from './routes/editorial-policy'
+import { Route as EPrintRouteImport } from './routes/e-print'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CorrectionsRouteImport } from './routes/corrections'
 import { Route as ContributorRouteImport } from './routes/contributor'
 import { Route as ContributeRouteImport } from './routes/contribute'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as BooksRouteImport } from './routes/books'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdvertiseRouteImport } from './routes/advertise'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -82,9 +87,19 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubmitStoryRoute = SubmitStoryRouteImport.update({
   id: '/submit-story',
   path: '/submit-story',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -105,6 +120,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnershipRoute = PartnershipRouteImport.update({
+  id: '/partnership',
+  path: '/partnership',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsletterRoute = NewsletterRouteImport.update({
@@ -137,6 +157,11 @@ const EditorialPolicyRoute = EditorialPolicyRouteImport.update({
   path: '/editorial-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EPrintRoute = EPrintRouteImport.update({
+  id: '/e-print',
+  path: '/e-print',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -165,6 +190,11 @@ const ContactRoute = ContactRouteImport.update({
 const CareersRoute = CareersRouteImport.update({
   id: '/careers',
   path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BooksRoute = BooksRouteImport.update({
+  id: '/books',
+  path: '/books',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -300,23 +330,28 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
   '/contributor': typeof ContributorRouteWithChildren
   '/corrections': typeof CorrectionsRoute
   '/dashboard': typeof DashboardRoute
+  '/e-print': typeof EPrintRoute
   '/editorial-policy': typeof EditorialPolicyRoute
   '/fact-check': typeof FactCheckRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/news-sitemap.xml': typeof NewsSitemapDotxmlRoute
   '/newsletter': typeof NewsletterRoute
+  '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/staff': typeof StaffRoute
   '/submit-story': typeof SubmitStoryRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
@@ -348,22 +383,27 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
   '/corrections': typeof CorrectionsRoute
   '/dashboard': typeof DashboardRoute
+  '/e-print': typeof EPrintRoute
   '/editorial-policy': typeof EditorialPolicyRoute
   '/fact-check': typeof FactCheckRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/news-sitemap.xml': typeof NewsSitemapDotxmlRoute
   '/newsletter': typeof NewsletterRoute
+  '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/staff': typeof StaffRoute
   '/submit-story': typeof SubmitStoryRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
@@ -397,23 +437,28 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
+  '/books': typeof BooksRoute
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
   '/contributor': typeof ContributorRouteWithChildren
   '/corrections': typeof CorrectionsRoute
   '/dashboard': typeof DashboardRoute
+  '/e-print': typeof EPrintRoute
   '/editorial-policy': typeof EditorialPolicyRoute
   '/fact-check': typeof FactCheckRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/news-sitemap.xml': typeof NewsSitemapDotxmlRoute
   '/newsletter': typeof NewsletterRoute
+  '/partnership': typeof PartnershipRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/staff': typeof StaffRoute
   '/submit-story': typeof SubmitStoryRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
@@ -448,23 +493,28 @@ export interface FileRouteTypes {
     | '/admin'
     | '/advertise'
     | '/auth'
+    | '/books'
     | '/careers'
     | '/contact'
     | '/contribute'
     | '/contributor'
     | '/corrections'
     | '/dashboard'
+    | '/e-print'
     | '/editorial-policy'
     | '/fact-check'
     | '/leaderboard'
     | '/login'
     | '/news-sitemap.xml'
     | '/newsletter'
+    | '/partnership'
     | '/privacy'
     | '/robots.txt'
     | '/search'
     | '/sitemap.xml'
+    | '/staff'
     | '/submit-story'
+    | '/team'
     | '/terms'
     | '/transparency'
     | '/trust-center'
@@ -496,22 +546,27 @@ export interface FileRouteTypes {
     | '/about'
     | '/advertise'
     | '/auth'
+    | '/books'
     | '/careers'
     | '/contact'
     | '/contribute'
     | '/corrections'
     | '/dashboard'
+    | '/e-print'
     | '/editorial-policy'
     | '/fact-check'
     | '/leaderboard'
     | '/login'
     | '/news-sitemap.xml'
     | '/newsletter'
+    | '/partnership'
     | '/privacy'
     | '/robots.txt'
     | '/search'
     | '/sitemap.xml'
+    | '/staff'
     | '/submit-story'
+    | '/team'
     | '/terms'
     | '/transparency'
     | '/trust-center'
@@ -544,23 +599,28 @@ export interface FileRouteTypes {
     | '/admin'
     | '/advertise'
     | '/auth'
+    | '/books'
     | '/careers'
     | '/contact'
     | '/contribute'
     | '/contributor'
     | '/corrections'
     | '/dashboard'
+    | '/e-print'
     | '/editorial-policy'
     | '/fact-check'
     | '/leaderboard'
     | '/login'
     | '/news-sitemap.xml'
     | '/newsletter'
+    | '/partnership'
     | '/privacy'
     | '/robots.txt'
     | '/search'
     | '/sitemap.xml'
+    | '/staff'
     | '/submit-story'
+    | '/team'
     | '/terms'
     | '/transparency'
     | '/trust-center'
@@ -594,23 +654,28 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdvertiseRoute: typeof AdvertiseRoute
   AuthRoute: typeof AuthRoute
+  BooksRoute: typeof BooksRoute
   CareersRoute: typeof CareersRoute
   ContactRoute: typeof ContactRoute
   ContributeRoute: typeof ContributeRoute
   ContributorRoute: typeof ContributorRouteWithChildren
   CorrectionsRoute: typeof CorrectionsRoute
   DashboardRoute: typeof DashboardRoute
+  EPrintRoute: typeof EPrintRoute
   EditorialPolicyRoute: typeof EditorialPolicyRoute
   FactCheckRoute: typeof FactCheckRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   NewsSitemapDotxmlRoute: typeof NewsSitemapDotxmlRoute
   NewsletterRoute: typeof NewsletterRoute
+  PartnershipRoute: typeof PartnershipRoute
   PrivacyRoute: typeof PrivacyRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StaffRoute: typeof StaffRoute
   SubmitStoryRoute: typeof SubmitStoryRoute
+  TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
   TrustCenterRoute: typeof TrustCenterRoute
@@ -659,11 +724,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/submit-story': {
       id: '/submit-story'
       path: '/submit-story'
       fullPath: '/submit-story'
       preLoaderRoute: typeof SubmitStoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -692,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partnership': {
+      id: '/partnership'
+      path: '/partnership'
+      fullPath: '/partnership'
+      preLoaderRoute: typeof PartnershipRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/newsletter': {
@@ -736,6 +822,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditorialPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/e-print': {
+      id: '/e-print'
+      path: '/e-print'
+      fullPath: '/e-print'
+      preLoaderRoute: typeof EPrintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -776,6 +869,13 @@ declare module '@tanstack/react-router' {
       path: '/careers'
       fullPath: '/careers'
       preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/books': {
+      id: '/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof BooksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1012,23 +1112,28 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdvertiseRoute: AdvertiseRoute,
   AuthRoute: AuthRoute,
+  BooksRoute: BooksRoute,
   CareersRoute: CareersRoute,
   ContactRoute: ContactRoute,
   ContributeRoute: ContributeRoute,
   ContributorRoute: ContributorRouteWithChildren,
   CorrectionsRoute: CorrectionsRoute,
   DashboardRoute: DashboardRoute,
+  EPrintRoute: EPrintRoute,
   EditorialPolicyRoute: EditorialPolicyRoute,
   FactCheckRoute: FactCheckRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   NewsSitemapDotxmlRoute: NewsSitemapDotxmlRoute,
   NewsletterRoute: NewsletterRoute,
+  PartnershipRoute: PartnershipRoute,
   PrivacyRoute: PrivacyRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StaffRoute: StaffRoute,
   SubmitStoryRoute: SubmitStoryRoute,
+  TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
   TrustCenterRoute: TrustCenterRoute,

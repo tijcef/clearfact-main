@@ -280,6 +280,31 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
         </form>
       </div>
 
+      <nav
+        aria-label="ClearFact publications and services"
+        className="border-t border-border bg-accent"
+      >
+        <div className="container-news flex flex-wrap gap-x-5 gap-y-2 py-2 text-sm font-semibold">
+          <Link to="/books" className="hover:underline">
+            Books
+          </Link>
+          <Link to="/e-print" className="hover:underline">
+            E-Print
+          </Link>
+          <Link to="/advertise" className="hover:underline">
+            Advertise & Pay
+          </Link>
+          <Link to="/partnership" className="hover:underline">
+            Partnerships
+          </Link>
+          <Link to="/team" className="hover:underline">
+            Our Team
+          </Link>
+          <Link to="/staff" className="hover:underline">
+            Staff
+          </Link>
+        </div>
+      </nav>
       {/* Category navigation */}
       <nav
         className={`border-t border-border ${open ? "block" : "hidden lg:block"}`}
