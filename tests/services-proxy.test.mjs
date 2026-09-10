@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
-const source = fs.readFileSync(new URL('../src/lib/services-proxy.ts', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../frontend-patch/src/lib/services-proxy.ts', import.meta.url), 'utf8');
 const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
 const { proxyServices } = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
 const env = { CLEARFACT_SERVICES_SECRET: 'test-secret-server-only' };
@@ -38,4 +38,28 @@ globalThis.fetch = async () => Response.json({accepting_requests:false});
 assert.equal((await (await proxyServices(new Request(origin+'/api/services/config'),env)).json()).ready,false);
 globalThis.fetch = async (url, init) => { assert.equal(init.headers['x-clearfact-secret'], undefined); return Response.json({reference:'CF-NO-SECRET',email_queued:true},{status:201}); };
 assert.equal((await proxyServices(write(),{})).status,201);
-console.log('PASS: proxy origin, size, methods, validation, private headers, upstream errors and readiness.');
+let assetCalls = 0;
+globalThis.fetch = async (url, init) => {
+  assetCalls++;
+  if (assetCalls === 1) {
+    assert.equal(String(url), 'https://cms.clearfact.ng/wp-json/clearfact-books/v1/public-asset?product=42&kind=cover');
+    assert.equal(init.headers['x-clearfact-secret'], env.CLEARFACT_SERVICES_SECRET);
+    return Response.json({ url: 'https://cms.clearfact.ng/wp-admin/admin-post.php?action=cfb_file&book=7&kind=cover', mime: 'image/png' });
+  }
+  assert.equal(String(url), 'https://cms.clearfact.ng/wp-admin/admin-post.php?action=cfb_file&book=7&kind=cover');
+  return new Response('image-bytes', { headers: { 'content-type': 'image/png' } });
+};
+const asset = await proxyServices(new Request(origin+'/api/services/book-asset?product=42&kind=cover'), env);
+assert.equal(asset.status, 200);
+assert.equal(asset.headers.get('content-type'), 'image/png');
+assert.equal(await asset.text(), 'image-bytes');
+globalThis.fetch = async () => Response.json([
+  { id: 42, title: 'Test book', cover: 'https://cms.clearfact.ng/wp-content/uploads/cover.jpg', sample: 'https://cms.clearfact.ng/?p=1', url: 'https://cms.clearfact.ng/product/test-book', store: true },
+]);
+const catalogue = await proxyServices(new Request(origin+'/api/services/catalogue?kind=books'), env);
+const [book] = await catalogue.json();
+assert.equal(book.cover, origin+'/api/services/book-asset?product=42&kind=cover');
+assert.equal(book.sample, origin+'/api/services/book-asset?product=42&kind=sample');
+assert.equal(book.url, origin+'/books/buy?product=42');
+assert.equal(book.purchase_ready, false);
+console.log('PASS: proxy origin, size, methods, validation, private headers, upstream errors, readiness and public book boundary.');

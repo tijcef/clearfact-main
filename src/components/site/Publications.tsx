@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { SimplePage } from "./SimplePage";
 import { Button } from "@/components/ui/button";
-import {
-  AUTHOR_PORTAL_URL,
-  getServiceData,
-  safeExternalUrl,
-  type Publication,
-} from "@/lib/services";
+import { getServiceData, safeExternalUrl, type Publication } from "@/lib/services";
 
 export function Publications({ kind }: { kind: "books" | "eprint" }) {
   const [items, setItems] = useState<Publication[]>([]);
@@ -46,22 +42,12 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
     >
       {kind === "books" && (
         <div className="flex flex-wrap gap-4 mb-6 border-b border-border pb-6">
-          <a
-            href={AUTHOR_PORTAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold"
-          >
-            Submit your book / Author portal ↗
-          </a>
-          <a
-            href={AUTHOR_PORTAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold"
-          >
-            My purchases & downloads ↗
-          </a>
+          <Link to="/author" className="font-semibold">
+            Submit your book / Writer Centre →
+          </Link>
+          <Link to="/auth" search={{ redirect: "/author" }} className="font-semibold">
+            Sign in to manage your books →
+          </Link>
         </div>
       )}
       {kind === "eprint" && (
@@ -80,8 +66,8 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
         </div>
       )}
       <div className="grid gap-6 sm:grid-cols-2 not-prose">
-        {items.map((item) => (
-          <article key={item.id} className="overflow-hidden rounded border border-border bg-card">
+      {items.map((item) => (
+        <article key={item.id} className="overflow-hidden rounded border border-border bg-card">
             {safeExternalUrl(item.cover) && (
               <img
                 src={safeExternalUrl(item.cover)}
@@ -101,26 +87,29 @@ export function Publications({ kind }: { kind: "books" | "eprint" }) {
               {item.sample && safeExternalUrl(item.sample) && (
                 <p>
                   <a href={safeExternalUrl(item.sample)} target="_blank" rel="noopener noreferrer">
-                    Read a sample PDF ↗
+                    Read a sample PDF
                   </a>
                 </p>
               )}
               {safeExternalUrl(item.url) ? (
                 <a
                   href={safeExternalUrl(item.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-block font-semibold"
                 >
                   {item.store
-                    ? "View book & buy online"
+                    ? item.purchase_ready === true
+                      ? "Continue to secure checkout"
+                      : "View book details"
                     : item.price && item.price.toLowerCase() !== "free"
                       ? "View / purchase"
-                      : "Read publication"}{" "}
-                  ↗
+                      : "Read publication"}
                 </a>
               ) : (
-                <p className="text-muted-foreground">Release link coming soon.</p>
+                <p className="text-muted-foreground">
+                  {item.store
+                    ? "Secure purchase is being prepared. Please check back soon."
+                    : "Release link coming soon."}
+                </p>
               )}
             </div>
           </article>

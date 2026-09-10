@@ -17,18 +17,15 @@ export const Route = createFileRoute("/staff")({
             Manage WordPress stories, books, e-print editions, service requests, partnerships and
             verified payment receipts.
           </p>
-          <a
-            href="https://cms.clearfact.ng/wp-admin/"
-            rel="nofollow"
-            className="inline-block mt-4 font-semibold"
-          >
-            WordPress staff sign-in ↗
-          </a>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Book and service records are available only to authorised staff through the private
+            staff system. Public visitors are not given its address.
+          </p>
         </section>
         <section className="border border-border rounded p-6">
           <h2 className="!mt-0">Newsroom dashboard</h2>
           <p>Review contributor submissions and use your assigned newsroom tools.</p>
-          <a href="/admin" rel="nofollow" className="inline-block mt-4 font-semibold">
+          <a href="/auth?redirect=%2Fadmin" rel="nofollow" className="inline-block mt-4 font-semibold">
             Open newsroom dashboard
           </a>
         </section>

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AuthorBookDashboard } from "@/components/site/AuthorBookDashboard";
 import { SimplePage } from "@/components/site/SimplePage";
-import { AUTHOR_PORTAL_URL, serviceHead } from "@/lib/services";
+import { serviceHead } from "@/lib/services";
 
 export const Route = createFileRoute("/author")({
   head: () =>
@@ -40,30 +41,7 @@ function AuthorCentre() {
           </section>
         ))}
       </div>
-      <section className="rounded border border-border p-6 my-8">
-        <h2 className="!mt-0">Open the secure author portal</h2>
-        <p>
-          Account creation, book uploads, editorial review, purchases and downloads are handled in
-          ClearFact’s private WordPress/WooCommerce publishing portal. Your profile and submissions
-          remain private until a book is approved.
-        </p>
-        <div className="flex flex-wrap gap-4 mt-5">
-          <a
-            className="inline-flex items-center rounded-sm bg-primary px-5 py-3 font-semibold text-primary-foreground"
-            href={AUTHOR_PORTAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Create profile / sign in ↗
-          </a>
-          <a
-            className="inline-flex items-center rounded-sm border border-border px-5 py-3 font-semibold"
-            href="/books"
-          >
-            Browse published books
-          </a>
-        </div>
-      </section>
+      <AuthorBookDashboard />
       <h2>What happens after submission?</h2>
       <p>
         Your book remains private while it is reviewed. If approved, ClearFact creates a priced
@@ -71,9 +49,9 @@ function AuthorCentre() {
         secure checkout. The full PDF is delivered only after the payment provider confirms payment.
       </p>
       <p>
-        Authors can return to the same portal to see review notes, sales, commission, earnings and
-        payouts. ClearFact staff review and record payouts; the website does not make an unverified
-        bank transfer.
+        Authors can return to this frontend page to see review notes, sales, commission, earnings
+        and payouts. ClearFact staff review and record payouts; the website does not make an
+        unverified bank transfer.
       </p>
       <p>
         Questions about publishing or your profile:{" "}

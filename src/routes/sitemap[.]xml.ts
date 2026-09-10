@@ -22,6 +22,7 @@ const STATIC_PATHS = [
   "/transparency",
   "/fact-check",
   "/newsletter",
+  "/books",
   "/contribute",
   "/submit-story",
 ];
@@ -73,23 +74,18 @@ export const Route = createFileRoute("/sitemap.xml")({
           getCategories(),
         ]);
 
-        if (postResult.status === "rejected") {
+        if (postResult.status === "fulfilled") {
+          posts = postResult.value;
+        } else {
           console.error(
             "WordPress posts were unavailable while generating the sitemap:",
             postResult.reason,
           );
-
-          return new Response("Sitemap temporarily unavailable", {
-            status: 503,
-            headers: {
-              "content-type": "text/plain; charset=utf-8",
-              "cache-control": "no-store",
-              "retry-after": "300",
-            },
-          });
+          // Keep a valid sitemap response during a temporary CMS outage. The
+          // static public URLs remain useful to crawlers; the next cached
+          // refresh will restore article URLs automatically.
+          posts = [];
         }
-
-        posts = postResult.value;
 
         if (categoryResult.status === "fulfilled") {
           publishedCategories = categoryResult.value;

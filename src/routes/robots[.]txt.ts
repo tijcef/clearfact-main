@@ -9,6 +9,9 @@ Disallow: /contributor/
 Disallow: /dashboard
 Disallow: /login
 Disallow: /search
+Disallow: /staff
+Disallow: /author
+Disallow: /books/buy
 Disallow: /api/
 
 Sitemap: https://clearfact.ng/sitemap.xml

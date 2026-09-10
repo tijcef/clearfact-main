@@ -9,15 +9,8 @@ export type Publication = {
   url: string;
   sample?: string;
   store?: boolean;
+  purchase_ready?: boolean;
 };
-
-/**
- * The private publishing, checkout and download workflow lives in the
- * WordPress/WooCommerce portal. Keep this URL in one place so the public
- * catalogue and author page cannot drift apart.
- */
-export const AUTHOR_PORTAL_URL =
-  "https://cms.clearfact.ng/wp-admin/admin-post.php?action=cfb_portal";
 
 export type ServiceConfig = {
   bank: string;
@@ -42,7 +35,21 @@ export function serviceHead(title: string, path: string, description: string, in
 export function safeExternalUrl(value: string) {
   try {
     const u = new URL(value);
-    return u.protocol === "https:" ? u.href : "";
+    if (u.protocol !== "https:") return "";
+
+    // The CMS is a server-side origin. A catalogue response must never turn
+    // it into a browser destination, even if an older WordPress record still
+    // contains a legacy product, media or admin URL.
+    if (
+      ["cms.clearfact.ng", "www.cms.clearfact.ng"].includes(u.hostname) ||
+      u.pathname.includes("/wp-admin") ||
+      u.pathname.includes("admin-post.php") ||
+      u.pathname.includes("wp-login.php")
+    ) {
+      return "";
+    }
+
+    return u.href;
   } catch {
     return "";
   }

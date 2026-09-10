@@ -65,15 +65,9 @@ export const Route = createFileRoute("/news-sitemap.xml")({
           posts = await getRecentSitemapPosts(new Date(cutoff).toISOString());
         } catch (error) {
           console.error("WordPress posts were unavailable for the news sitemap:", error);
-
-          return new Response("News sitemap temporarily unavailable", {
-            status: 503,
-            headers: {
-              "content-type": "text/plain; charset=utf-8",
-              "cache-control": "no-store",
-              "retry-after": "300",
-            },
-          });
+          // An empty but valid News sitemap is safer for crawlers than a
+          // transient 5xx response. The next refresh repopulates it.
+          posts = [];
         }
 
         const recentPosts = posts

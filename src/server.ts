@@ -496,7 +496,16 @@ function pageCacheTtl(request: Request) {
     return null;
   }
 
-  const privatePrefixes = ["/admin", "/auth", "/contributor", "/dashboard", "/login"];
+  const privatePrefixes = [
+    "/admin",
+    "/auth",
+    "/author",
+    "/books/buy",
+    "/contributor",
+    "/dashboard",
+    "/login",
+    "/staff",
+  ];
 
   if (privatePrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
     return null;
@@ -532,10 +541,13 @@ function canServeStaleBeforeOrigin(request: Request) {
     pathname !== "/sitemap.xml" &&
     pathname !== "/news-sitemap.xml" &&
     !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/author") &&
+    !pathname.startsWith("/books/buy") &&
     !pathname.startsWith("/auth") &&
     !pathname.startsWith("/contributor") &&
     !pathname.startsWith("/dashboard") &&
-    !pathname.startsWith("/login")
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/staff")
   );
 }
 

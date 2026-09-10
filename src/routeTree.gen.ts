@@ -53,6 +53,7 @@ import { Route as ContributorPayoutsRouteImport } from './routes/contributor.pay
 import { Route as ContributorOnboardingRouteImport } from './routes/contributor.onboarding'
 import { Route as ContributorNotificationsRouteImport } from './routes/contributor.notifications'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as BooksBuyRouteImport } from './routes/books.buy'
 import { Route as AuthorIdRouteImport } from './routes/author.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
@@ -284,6 +285,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
   path: '/category/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BooksBuyRoute = BooksBuyRouteImport.update({
+  id: '/buy',
+  path: '/buy',
+  getParentRoute: () => BooksRoute,
+} as any)
 const AuthorIdRoute = AuthorIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -337,7 +343,7 @@ export interface FileRoutesByFullPath {
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
   '/author': typeof AuthorRouteWithChildren
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
@@ -371,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
+  '/books/buy': typeof BooksBuyRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
@@ -391,7 +398,7 @@ export interface FileRoutesByTo {
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
   '/author': typeof AuthorRouteWithChildren
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
+  '/books/buy': typeof BooksBuyRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
@@ -446,7 +454,7 @@ export interface FileRoutesById {
   '/advertise': typeof AdvertiseRoute
   '/auth': typeof AuthRoute
   '/author': typeof AuthorRouteWithChildren
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/careers': typeof CareersRoute
   '/contact': typeof ContactRoute
   '/contribute': typeof ContributeRoute
@@ -480,6 +488,7 @@ export interface FileRoutesById {
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/author/$id': typeof AuthorIdRoute
+  '/books/buy': typeof BooksBuyRoute
   '/category/$slug': typeof CategorySlugRoute
   '/contributor/notifications': typeof ContributorNotificationsRoute
   '/contributor/onboarding': typeof ContributorOnboardingRoute
@@ -537,6 +546,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
+    | '/books/buy'
     | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
@@ -590,6 +600,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
+    | '/books/buy'
     | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
@@ -645,6 +656,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/users'
     | '/author/$id'
+    | '/books/buy'
     | '/category/$slug'
     | '/contributor/notifications'
     | '/contributor/onboarding'
@@ -667,7 +679,7 @@ export interface RootRouteChildren {
   AdvertiseRoute: typeof AdvertiseRoute
   AuthRoute: typeof AuthRoute
   AuthorRoute: typeof AuthorRouteWithChildren
-  BooksRoute: typeof BooksRoute
+  BooksRoute: typeof BooksRouteWithChildren
   CareersRoute: typeof CareersRoute
   ContactRoute: typeof ContactRoute
   ContributeRoute: typeof ContributeRoute
@@ -1009,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/books/buy': {
+      id: '/books/buy'
+      path: '/buy'
+      fullPath: '/books/buy'
+      preLoaderRoute: typeof BooksBuyRouteImport
+      parentRoute: typeof BooksRoute
+    }
     '/author/$id': {
       id: '/author/$id'
       path: '/$id'
@@ -1110,6 +1129,16 @@ const AuthorRouteChildren: AuthorRouteChildren = {
 const AuthorRouteWithChildren =
   AuthorRoute._addFileChildren(AuthorRouteChildren)
 
+interface BooksRouteChildren {
+  BooksBuyRoute: typeof BooksBuyRoute
+}
+
+const BooksRouteChildren: BooksRouteChildren = {
+  BooksBuyRoute: BooksBuyRoute,
+}
+
+const BooksRouteWithChildren = BooksRoute._addFileChildren(BooksRouteChildren)
+
 interface ContributorRouteChildren {
   ContributorNotificationsRoute: typeof ContributorNotificationsRoute
   ContributorOnboardingRoute: typeof ContributorOnboardingRoute
@@ -1143,7 +1172,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdvertiseRoute: AdvertiseRoute,
   AuthRoute: AuthRoute,
   AuthorRoute: AuthorRouteWithChildren,
-  BooksRoute: BooksRoute,
+  BooksRoute: BooksRouteWithChildren,
   CareersRoute: CareersRoute,
   ContactRoute: ContactRoute,
   ContributeRoute: ContributeRoute,
