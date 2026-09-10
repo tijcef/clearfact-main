@@ -10,6 +10,15 @@ export type Publication = {
   sample?: string;
   store?: boolean;
 };
+
+/**
+ * The private publishing, checkout and download workflow lives in the
+ * WordPress/WooCommerce portal. Keep this URL in one place so the public
+ * catalogue and author page cannot drift apart.
+ */
+export const AUTHOR_PORTAL_URL =
+  "https://cms.clearfact.ng/wp-admin/admin-post.php?action=cfb_portal";
+
 export type ServiceConfig = {
   bank: string;
   account_name: string;

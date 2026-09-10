@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SimplePage } from "@/components/site/SimplePage";
-import { AuthorBookDashboard } from "@/components/site/AuthorBookDashboard";
-import { serviceHead } from "@/lib/services";
+import { AUTHOR_PORTAL_URL, serviceHead } from "@/lib/services";
 
 export const Route = createFileRoute("/author")({
   head: () =>
@@ -42,17 +41,20 @@ function AuthorCentre() {
         ))}
       </div>
       <section className="rounded border border-border p-6 my-8">
-        <h2 className="!mt-0">Start your author account</h2>
+        <h2 className="!mt-0">Open the secure author portal</h2>
         <p>
-          The secure author portal is hosted with ClearFact’s publishing account system. Your
-          profile and submissions are private until a book is approved.
+          Account creation, book uploads, editorial review, purchases and downloads are handled in
+          ClearFact’s private WordPress/WooCommerce publishing portal. Your profile and submissions
+          remain private until a book is approved.
         </p>
         <div className="flex flex-wrap gap-4 mt-5">
           <a
             className="inline-flex items-center rounded-sm bg-primary px-5 py-3 font-semibold text-primary-foreground"
-            href="#author-dashboard"
+            href={AUTHOR_PORTAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            Create profile / sign in below
+            Create profile / sign in ↗
           </a>
           <a
             className="inline-flex items-center rounded-sm border border-border px-5 py-3 font-semibold"
@@ -62,7 +64,6 @@ function AuthorCentre() {
           </a>
         </div>
       </section>
-      <div id="author-dashboard"><AuthorBookDashboard /></div>
       <h2>What happens after submission?</h2>
       <p>
         Your book remains private while it is reviewed. If approved, ClearFact creates a priced
