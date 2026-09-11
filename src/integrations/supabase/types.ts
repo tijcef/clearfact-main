@@ -525,25 +525,73 @@ export type Database = {
           bio: string | null;
           created_at: string;
           display_name: string | null;
+          full_name: string | null;
           id: string;
+          pen_name: string | null;
           updated_at: string;
           user_id: string;
+          website: string | null;
         };
         Insert: {
           avatar_url?: string | null;
           bio?: string | null;
           created_at?: string;
           display_name?: string | null;
+          full_name?: string | null;
           id?: string;
+          pen_name?: string | null;
           updated_at?: string;
           user_id: string;
+          website?: string | null;
         };
         Update: {
           avatar_url?: string | null;
           bio?: string | null;
           created_at?: string;
           display_name?: string | null;
+          full_name?: string | null;
           id?: string;
+          pen_name?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          website?: string | null;
+        };
+        Relationships: [];
+      };
+      profile_contacts: {
+        Row: {
+          address_line1: string | null;
+          address_line2: string | null;
+          city: string | null;
+          country: string;
+          created_at: string;
+          phone: string | null;
+          postal_code: string | null;
+          state_region: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          country?: string;
+          created_at?: string;
+          phone?: string | null;
+          postal_code?: string | null;
+          state_region?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          country?: string;
+          created_at?: string;
+          phone?: string | null;
+          postal_code?: string | null;
+          state_region?: string | null;
           updated_at?: string;
           user_id?: string;
         };
