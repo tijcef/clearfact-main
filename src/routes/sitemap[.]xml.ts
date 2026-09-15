@@ -13,6 +13,7 @@ const STATIC_PATHS = [
   "/",
   "/about",
   "/contact",
+  "/advertise",
   "/careers",
   "/editorial-policy",
   "/corrections",
@@ -22,7 +23,6 @@ const STATIC_PATHS = [
   "/transparency",
   "/fact-check",
   "/newsletter",
-  "/books",
   "/contribute",
   "/submit-story",
 ];
@@ -61,7 +61,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=60, s-maxage=60",
+            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
           },
         });
       },
@@ -74,18 +74,23 @@ export const Route = createFileRoute("/sitemap.xml")({
           getCategories(),
         ]);
 
-        if (postResult.status === "fulfilled") {
-          posts = postResult.value;
-        } else {
+        if (postResult.status === "rejected") {
           console.error(
             "WordPress posts were unavailable while generating the sitemap:",
             postResult.reason,
           );
-          // Keep a valid sitemap response during a temporary CMS outage. The
-          // static public URLs remain useful to crawlers; the next cached
-          // refresh will restore article URLs automatically.
-          posts = [];
+
+          return new Response("Sitemap temporarily unavailable", {
+            status: 503,
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "no-store",
+              "retry-after": "300",
+            },
+          });
         }
+
+        posts = postResult.value;
 
         if (categoryResult.status === "fulfilled") {
           publishedCategories = categoryResult.value;
@@ -140,7 +145,7 @@ ${urls
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=60, s-maxage=60",
+            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
           },
         });
       },

@@ -251,28 +251,6 @@ function PrivacyPolicy() {
           32 Demsawo, Jimeta, Yola, Adamawa State, Nigeria
         </p>
       </section>
-      <h2>Advertising, payments and partnership applications</h2>
-      <p>
-        When you submit a service request or partnership application, we use your contact details,
-        brief and supplied references to review and respond to it. Requests are held in staff-only
-        records. Payment proof and creative files sent to ads@clearfact.ng are reviewed by
-        authorised staff. Do not send card details, PINs, passwords or banking login information.
-        Any external payment provider processes payment under its own terms and privacy notice.
-      </p>
-      <p>
-        We use a short-lived, hashed network identifier to limit form abuse. To request access to,
-        correction of or deletion of your enquiry details, contact info@clearfact.ng. Records needed
-        for an ongoing service or required accounting obligations may need to be retained.
-      </p>
-      <h2>Bookstore accounts, submissions and purchases</h2>
-      <p>
-        ClearFact uses author account details, book submissions and rights declarations to review
-        and publish books. Full book PDFs are stored privately; approved covers, descriptions,
-        author names, samples and prices are public. We use purchase and payment records to issue
-        order confirmations, control downloads and calculate author earnings and payouts. Authors
-        see their own book sales and earnings, without buyer contact details. Payment credentials
-        are handled by the connected payment provider.
-      </p>
     </SimplePage>
   );
 }

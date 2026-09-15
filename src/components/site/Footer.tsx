@@ -11,12 +11,6 @@ import {
 } from "@/lib/site-navigation";
 
 const policy = [
-  { to: "/books", label: "ClearFact Books" },
-  { to: "/author", label: "Author Centre" },
-  { to: "/e-print", label: "E-Print Newspaper" },
-  { to: "/partnership", label: "Partnerships" },
-  { to: "/team", label: "Our Team" },
-  { to: "/staff", label: "Staff Area" },
   { to: "/about", label: "About Us" },
   { to: "/contact", label: "Contact" },
   { to: "/advertise", label: "Advertise" },

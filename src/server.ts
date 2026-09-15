@@ -1,5 +1,4 @@
 import "./lib/error-capture";
-import { proxyServices } from "./lib/services-proxy";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -189,9 +188,9 @@ function cacheFreshAndStale(
   ctx: ExecutionContextLike,
 ) {
   const pathname = new URL(request.url).pathname;
-  const isNewsContent = pathname.startsWith("/post/") || pathname.startsWith("/category/");
-  const isSitemap = pathname === "/sitemap.xml" || pathname === "/news-sitemap.xml";
-  const staleTtl = isSitemap ? 300 : namespace === "page" && isNewsContent ? ONE_DAY : ONE_WEEK;
+  const isNewsContent =
+    pathname.startsWith("/post/") || pathname.startsWith("/category/");
+  const staleTtl = namespace === "page" && isNewsContent ? ONE_DAY : ONE_WEEK;
   const staleHeaders = new Headers(response.headers);
   staleHeaders.set(
     "cache-control",
@@ -214,7 +213,6 @@ function cacheFreshAndStale(
 }
 
 function apiCacheTtl(pathname: string) {
-  if (pathname.startsWith("/api/wp/posts")) return 60;
   if (pathname.startsWith("/api/wp/categories")) return 300;
   if (pathname.startsWith("/api/wp/tags")) return 900;
   if (pathname.startsWith("/api/wp/users")) return 3600;
@@ -496,16 +494,7 @@ function pageCacheTtl(request: Request) {
     return null;
   }
 
-  const privatePrefixes = [
-    "/admin",
-    "/auth",
-    "/author",
-    "/books/buy",
-    "/contributor",
-    "/dashboard",
-    "/login",
-    "/staff",
-  ];
+  const privatePrefixes = ["/admin", "/auth", "/contributor", "/dashboard", "/login"];
 
   if (privatePrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
     return null;
@@ -525,8 +514,8 @@ function machineRouteCacheTtl(request: Request) {
   if (url.search) return null;
 
   if (url.pathname === "/robots.txt") return 86_400;
-  if (url.pathname === "/sitemap.xml") return 60;
-  if (url.pathname === "/news-sitemap.xml") return 60;
+  if (url.pathname === "/sitemap.xml") return 900;
+  if (url.pathname === "/news-sitemap.xml") return 300;
 
   return null;
 }
@@ -537,18 +526,11 @@ function canServeStaleBeforeOrigin(request: Request) {
   // Public stories and sections may use a one-day stale copy while WordPress
   // refreshes in the background. A confirmed 404/410 clears both cache entries
   // below, so removed stories stop being served on the following request.
-  return (
-    pathname !== "/sitemap.xml" &&
-    pathname !== "/news-sitemap.xml" &&
-    !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/author") &&
-    !pathname.startsWith("/books/buy") &&
+  return !pathname.startsWith("/admin") &&
     !pathname.startsWith("/auth") &&
     !pathname.startsWith("/contributor") &&
     !pathname.startsWith("/dashboard") &&
-    !pathname.startsWith("/login") &&
-    !pathname.startsWith("/staff")
-  );
+    !pathname.startsWith("/login");
 }
 
 async function servePage(
@@ -681,45 +663,17 @@ export default {
       } else if (url.pathname === "/api/document-verify") {
         const code = url.searchParams.get("code") ?? "";
         if (!code.trim()) {
-          response = new Response(JSON.stringify({ valid: false }), {
-            status: 400,
-            headers: {
-              "content-type": "application/json; charset=utf-8",
-              "cache-control": "no-store",
-            },
-          });
+          response = new Response(JSON.stringify({ valid: false }), { status: 400, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
         } else {
           const origin = new URL("https://cms.clearfact.ng/wp-json/clearfact/v1/verify");
           origin.searchParams.set("code", code);
           try {
-            const upstream = await fetchWithTimeout(
-              origin,
-              { headers: { accept: "application/json" } },
-              API_ORIGIN_TIMEOUT_MS,
-            );
-            response = new Response(upstream.body, {
-              status: upstream.status,
-              headers: {
-                "content-type":
-                  upstream.headers.get("content-type") ?? "application/json; charset=utf-8",
-                "cache-control": "no-store",
-              },
-            });
+            const upstream = await fetchWithTimeout(origin, { headers: { accept: "application/json" } }, API_ORIGIN_TIMEOUT_MS);
+            response = new Response(upstream.body, { status: upstream.status, headers: { "content-type": upstream.headers.get("content-type") ?? "application/json; charset=utf-8", "cache-control": "no-store" } });
           } catch {
-            response = new Response(
-              JSON.stringify({ valid: false, error: "verification_unavailable" }),
-              {
-                status: 503,
-                headers: {
-                  "content-type": "application/json; charset=utf-8",
-                  "cache-control": "no-store",
-                },
-              },
-            );
+            response = new Response(JSON.stringify({ valid: false, error: "verification_unavailable" }), { status: 503, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
           }
         }
-      } else if (url.pathname.startsWith("/api/services/")) {
-        response = await proxyServices(request, env);
       } else if (url.pathname.startsWith("/api/wp/")) {
         response = await proxyWordPressRequest(request, executionContext);
       } else if (url.pathname.startsWith("/media/")) {

@@ -53,7 +53,8 @@ export const Route = createFileRoute("/news-sitemap.xml")({
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=60, s-maxage=60",
+            "cache-control":
+              "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
           },
         });
       },
@@ -64,10 +65,19 @@ export const Route = createFileRoute("/news-sitemap.xml")({
         try {
           posts = await getRecentSitemapPosts(new Date(cutoff).toISOString());
         } catch (error) {
-          console.error("WordPress posts were unavailable for the news sitemap:", error);
-          // An empty but valid News sitemap is safer for crawlers than a
-          // transient 5xx response. The next refresh repopulates it.
-          posts = [];
+          console.error(
+            "WordPress posts were unavailable for the news sitemap:",
+            error,
+          );
+
+          return new Response("News sitemap temporarily unavailable", {
+            status: 503,
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "no-store",
+              "retry-after": "300",
+            },
+          });
         }
 
         const recentPosts = posts
@@ -75,23 +85,29 @@ export const Route = createFileRoute("/news-sitemap.xml")({
             const publishedAt = new Date(post.date).getTime();
 
             return (
-              Number.isFinite(publishedAt) && publishedAt >= cutoff && publishedAt <= Date.now()
+              Number.isFinite(publishedAt) &&
+              publishedAt >= cutoff
             );
           })
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          .sort(
+            (a, b) =>
+              new Date(b.date).getTime() -
+              new Date(a.date).getTime(),
+          );
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
-${recentPosts.slice(0, 1000).map(newsUrl).join("\n")}
+${recentPosts.map(newsUrl).join("\n")}
 </urlset>`;
 
         return new Response(xml, {
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=60, s-maxage=60",
+            "cache-control":
+              "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
           },
         });
       },
