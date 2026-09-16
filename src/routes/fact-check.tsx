@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, FileCheck, Search, ShieldCheck } from "lucide-react";
 
-import AdSense from "@/components/AdSense";
 import { VerificationBadge } from "@/components/site/VerificationBadge";
 import {
   getCategories,
@@ -234,7 +233,6 @@ function FactCheck() {
           </div>
         )}
 
-        {checks.length > 0 && <AdSense />}
       </section>
     </div>
   );

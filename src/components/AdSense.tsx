@@ -58,11 +58,31 @@ export default function AdSense({ className = "" }: AdSenseProps) {
           return;
         }
 
-        const adScript = document.querySelector(
+        let adScript = document.querySelector<HTMLScriptElement>(
           'script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]',
         );
 
         if (!adScript) {
+          adScript = document.createElement("script");
+          adScript.async = true;
+          adScript.crossOrigin = "anonymous";
+          adScript.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+          adScript.dataset.clearfactAdsense = "true";
+          adScript.addEventListener(
+            "load",
+            () => {
+              if (!active || !adScript) return;
+              adScript.dataset.clearfactLoaded = "true";
+              displayAd();
+            },
+            { once: true },
+          );
+          document.head.appendChild(adScript);
+          return;
+        }
+
+        if (!window.adsbygoogle && !adScript.dataset.clearfactLoaded) {
+          adScript.addEventListener("load", displayAd, { once: true });
           return;
         }
 

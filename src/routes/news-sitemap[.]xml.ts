@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  getArticleQuality,
   getPublicPostPath,
   getRecentSitemapPosts,
   stripHtml,
@@ -86,7 +87,8 @@ export const Route = createFileRoute("/news-sitemap.xml")({
 
             return (
               Number.isFinite(publishedAt) &&
-              publishedAt >= cutoff
+              publishedAt >= cutoff &&
+              getArticleQuality(post).indexable
             );
           })
           .sort(

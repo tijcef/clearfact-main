@@ -4,6 +4,7 @@ const ROBOTS_TXT = `User-agent: *
 Allow: /
 
 Disallow: /admin/
+Disallow: /article/
 Disallow: /auth
 Disallow: /contributor/
 Disallow: /dashboard

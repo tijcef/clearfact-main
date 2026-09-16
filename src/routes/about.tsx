@@ -78,6 +78,20 @@ Founded by Emmanuel Sunday Tijwun, ClearFact News was established to provide cre
         commercial relationships exist, they are kept separate from our editorial decision-making.
       </p>
 
+      <h2>Original Reporting and Added Value</h2>
+      <p>
+        ClearFact does not treat rewriting a public statement or another publisher&apos;s report as a
+        substitute for journalism. Where a story begins with an announcement, public record or
+        third-party report, our goal is to add useful verification, context, explanation, data,
+        primary-source material, direct reporting or clearly attributed analysis.
+      </p>
+
+      <p>
+        Articles should identify important sources in the body of the report and, where possible,
+        link readers to the underlying record. We also label developing information and distinguish
+        allegations, claims and opinion from established facts.
+      </p>
+
       <h2>Accuracy and Verification</h2>
       <p>
         We make reasonable efforts to verify information before publication. Our journalists and

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getCategories,
+  getArticleQuality,
   getPublicPostPath,
   getSitemapPosts,
   type SitemapPost,
@@ -13,8 +14,6 @@ const STATIC_PATHS = [
   "/",
   "/about",
   "/contact",
-  "/advertise",
-  "/careers",
   "/editorial-policy",
   "/corrections",
   "/privacy",
@@ -22,9 +21,6 @@ const STATIC_PATHS = [
   "/trust-center",
   "/transparency",
   "/fact-check",
-  "/newsletter",
-  "/contribute",
-  "/submit-story",
 ];
 
 type SitemapUrl = {
@@ -112,7 +108,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         );
 
         const articleUrls: SitemapUrl[] = posts
-          .filter((post) => post.slug)
+          .filter((post) => post.slug && getArticleQuality(post).indexable)
           .map((post) => ({
             loc: `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`,
             lastmod: normalizeDate(post.modified || post.date),
