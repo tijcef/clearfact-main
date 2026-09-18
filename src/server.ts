@@ -2,6 +2,10 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import {
+  newsSitemapGetResponse,
+  newsSitemapHeadResponse,
+} from "./lib/news-sitemap";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -660,6 +664,21 @@ export default {
             },
           },
         );
+      } else if (url.pathname === "/news-sitemap.xml") {
+        if (request.method === "HEAD") {
+          response = newsSitemapHeadResponse();
+        } else if (request.method === "GET") {
+          response = await newsSitemapGetResponse();
+        } else {
+          response = new Response("Method Not Allowed", {
+            status: 405,
+            headers: {
+              allow: "GET, HEAD",
+              "cache-control": "no-store",
+              "content-type": "text/plain; charset=utf-8",
+            },
+          });
+        }
       } else if (url.pathname === "/api/document-verify") {
         const code = url.searchParams.get("code") ?? "";
         if (!code.trim()) {
