@@ -1,5 +1,4 @@
 import {
-  getArticleQuality,
   getPublicPostPath,
   getRecentSitemapPosts,
   stripHtml,
@@ -51,7 +50,7 @@ export function newsSitemapHeadResponse() {
     headers: {
       "content-type": "application/xml; charset=utf-8",
       "cache-control":
-        "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
+        "public, max-age=0, s-maxage=300, stale-while-revalidate=600",
     },
   });
 }
@@ -85,8 +84,7 @@ export async function newsSitemapGetResponse() {
       return (
         Number.isFinite(publishedAt) &&
         publishedAt >= cutoff &&
-        Boolean(post.slug) &&
-        getArticleQuality(post).indexable
+        Boolean(post.slug)
       );
     })
     .sort(
@@ -107,7 +105,7 @@ ${recentPosts.map(newsUrl).join("\n")}
     headers: {
       "content-type": "application/xml; charset=utf-8",
       "cache-control":
-        "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
+        "public, max-age=0, s-maxage=300, stale-while-revalidate=600",
     },
   });
 }
