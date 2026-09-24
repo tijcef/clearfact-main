@@ -1,14 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin } from "lucide-react";
 
-import {
-  FaFacebook,
-  FaInstagram,
-  FaYoutube,
-  FaXTwitter,
-  FaLinkedin,
-  FaWhatsapp,
-} from "react-icons/fa6";
+import { SocialFollow } from "./SocialMedia";
 import { categories, moreCategories } from "@/lib/site-navigation";
 
 const policy = [
@@ -50,67 +43,7 @@ export function Footer() {
           </div>
 
           {/* Social Media */}
-          <div className="mt-4 flex gap-3">
-            <a
-              href="https://x.com/clearfactng"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="X"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
-            >
-              <FaXTwitter className="h-4 w-4" />
-            </a>
-
-            <a
-              href="https://facebook.com/clearfactng"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
-            >
-              <FaFacebook className="h-4 w-4" />
-            </a>
-
-            <a
-              href="https://instagram.com/clearfactng"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
-            >
-              <FaInstagram className="h-4 w-4" />
-            </a>
-
-            <a
-              href="https://youtube.com/@clearfactng"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="YouTube"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
-            >
-              <FaYoutube className="h-4 w-4" />
-            </a>
-
-            <a
-              href="https://linkedin.com/company/clearfact-news"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
-            >
-              <FaLinkedin className="h-4 w-4" />
-            </a>
-
-            <a
-              href="https://wa.me/2347079405543"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
-            >
-              <FaWhatsapp className="h-4 w-4" />
-            </a>
-          </div>
+          <SocialFollow inverse className="mt-4" />
         </div>
 
         {/* Sections */}

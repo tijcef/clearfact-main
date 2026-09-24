@@ -12,8 +12,7 @@ import {
   stripHtml,
 } from "@/lib/wordpress";
 import Comments from "@/components/Comments";
-
-import { FaFacebook, FaLinkedin, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
+import { ArticleShare } from "@/components/site/SocialMedia";
 
 export const Route = createFileRoute("/post/$slug")({
   loader: async ({ params }) => {
@@ -368,6 +367,14 @@ function ArticlePage() {
           </span>
         </div>
 
+        <div className="mb-7 rounded-xl border border-border bg-muted/25 p-4 lg:hidden">
+          <ArticleShare url={articleUrl} title={articleTitle} />
+        </div>
+
+        <aside className="fixed left-[max(1rem,calc(50%-37rem))] top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-border bg-background/95 p-2 shadow-lg backdrop-blur xl:block" aria-label="Share this article">
+          <ArticleShare url={articleUrl} title={articleTitle} layout="rail" />
+        </aside>
+
         {featuredImage && (
           <img
             src={featuredImage}
@@ -424,46 +431,10 @@ function ArticlePage() {
           <p className="text-muted-foreground leading-7">{authorDescription}</p>
         </div>
 
-        <div className="mt-8 border-t pt-6">
-          <h3 className="font-semibold mb-4">Share this article</h3>
-
-          <div className="flex items-center gap-5">
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on Facebook"
-            >
-              <FaFacebook size={24} />
-            </a>
-
-            <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(articleTitle)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on X"
-            >
-              <FaXTwitter size={24} />
-            </a>
-
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(articleTitle + " " + articleUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on WhatsApp"
-            >
-              <FaWhatsapp size={24} />
-            </a>
-
-            <a
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on LinkedIn"
-            >
-              <FaLinkedin size={24} />
-            </a>
-          </div>
+        <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5 md:p-6">
+          <h3 className="mb-1 font-serif text-xl font-bold">Help verified news travel further</h3>
+          <p className="mb-4 text-sm text-muted-foreground">Share this report with your network.</p>
+          <ArticleShare url={articleUrl} title={articleTitle} showLabel={false} />
         </div>
 
         <Comments postId={post.id} />
