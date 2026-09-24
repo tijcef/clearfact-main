@@ -11,19 +11,29 @@ import { filterNavigationCategories } from "@/lib/site-navigation";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    try {
-      const [posts, categories] = await Promise.all([getPosts(24), getCategories()]);
+    const [postResult, categoryResult] = await Promise.allSettled([
+      getPosts(24),
+      getCategories(),
+    ]);
 
-      return {
-        posts: Array.isArray(posts) ? posts : [],
-        categories: Array.isArray(categories) ? categories : [],
-      };
-    } catch (error) {
-      console.error("Homepage posts failed to load:", error);
-      throw new Error("The ClearFact newsroom is temporarily unavailable.", {
-        cause: error,
-      });
+    if (postResult.status === "rejected") {
+      console.error("Homepage posts failed to load:", postResult.reason);
     }
+
+    if (categoryResult.status === "rejected") {
+      console.error("Homepage categories failed to load:", categoryResult.reason);
+    }
+
+    return {
+      posts:
+        postResult.status === "fulfilled" && Array.isArray(postResult.value)
+          ? postResult.value
+          : [],
+      categories:
+        categoryResult.status === "fulfilled" && Array.isArray(categoryResult.value)
+          ? categoryResult.value
+          : [],
+    };
   },
 
   head: () => {

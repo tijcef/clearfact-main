@@ -144,6 +144,7 @@ function withCacheStatus(response: Response, status: "HIT" | "MISS" | "STALE") {
 function withSecurityHeaders(response: Response, isHttps = true) {
   const headers = new Headers(response.headers);
 
+  headers.set("x-clearfact-build", "v6-seo-hardening");
   headers.set("x-content-type-options", "nosniff");
   headers.set("x-frame-options", "SAMEORIGIN");
   headers.set("referrer-policy", "strict-origin-when-cross-origin");
@@ -521,7 +522,9 @@ function pageCacheTtl(request: Request) {
     return null;
   }
 
-  if (url.pathname === "/") return 600;
+  // Keep the homepage uncached at the Worker layer while Google indexing is
+  // being stabilised. This prevents an old regional 404 from persisting at edge.
+  if (url.pathname === "/") return null;
   if (url.pathname.startsWith("/post/")) return 600;
   if (url.pathname.startsWith("/category/")) return 300;
   return 900;
@@ -659,6 +662,110 @@ async function servePage(
   return withCacheStatus(cacheableResponse, "MISS");
 }
 
+
+function escapeFallbackHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function plainTextFromWp(value: unknown) {
+  return String(value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '\"')
+    .replace(/&#039;|&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function homepageFallbackResponse(method: string): Promise<Response> {
+  try {
+    const endpoint = new URL(`${WP_REST_ORIGIN}/posts`);
+    endpoint.searchParams.set("per_page", "12");
+    endpoint.searchParams.set("status", "publish");
+    endpoint.searchParams.set("orderby", "date");
+    endpoint.searchParams.set("order", "desc");
+    endpoint.searchParams.set("_fields", "id,slug,date,title,excerpt");
+
+    const upstream = await fetchWithTimeout(
+      endpoint,
+      { headers: { accept: "application/json" } },
+      API_ORIGIN_TIMEOUT_MS,
+    );
+
+    if (!upstream.ok) {
+      throw new Error(`Homepage fallback WordPress request failed: ${upstream.status}`);
+    }
+
+    const posts = (await upstream.json()) as Array<{
+      slug?: string;
+      date?: string;
+      title?: { rendered?: string };
+      excerpt?: { rendered?: string };
+    }>;
+
+    const usable = posts.filter((post) => post?.slug && post?.title?.rendered);
+    if (!usable.length) {
+      throw new Error("Homepage fallback returned no published stories");
+    }
+
+    const stories = usable
+      .map((post) => {
+        const title = escapeFallbackHtml(plainTextFromWp(post.title?.rendered));
+        const excerpt = escapeFallbackHtml(plainTextFromWp(post.excerpt?.rendered));
+        const slug = encodeURIComponent(String(post.slug));
+        const date = post.date ? escapeFallbackHtml(post.date.slice(0, 10)) : "";
+        return `<article><h2><a href="/post/${slug}">${title}</a></h2>${date ? `<p><time>${date}</time></p>` : ""}${excerpt ? `<p>${excerpt}</p>` : ""}</article>`;
+      })
+      .join("\n");
+
+    const html = `<!doctype html>
+<html lang="en-NG">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClearFact News | Verified Journalism From Nigeria</title>
+<meta name="description" content="ClearFact News delivers verified, transparent and timely journalism from Nigeria.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="https://clearfact.ng/">
+<style>body{font-family:Arial,sans-serif;max-width:900px;margin:auto;padding:24px;line-height:1.6;color:#111}header{border-bottom:3px solid #111;margin-bottom:24px}article{padding:18px 0;border-bottom:1px solid #ddd}a{color:#0b4a8b;text-decoration:none}h1,h2{line-height:1.2}</style>
+</head>
+<body>
+<header><h1>ClearFact News</h1><p>Verified · Transparent · Nigerian</p></header>
+<main><h2>Latest verified reports</h2>${stories}</main>
+<footer><p><a href="/about">About</a> · <a href="/editorial-policy">Editorial Policy</a> · <a href="/corrections">Corrections</a></p></footer>
+</body>
+</html>`;
+
+    return new Response(method === "HEAD" ? null : html, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store, max-age=0",
+        "cloudflare-cdn-cache-control": "no-store",
+        "x-robots-tag": "index, follow, max-image-preview:large",
+        "x-clearfact-homepage-fallback": "1",
+      },
+    });
+  } catch (error) {
+    console.error("Homepage fallback failed:", error);
+    return new Response(method === "HEAD" ? null : renderErrorPage(), {
+      status: 503,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "retry-after": "60",
+        "x-robots-tag": "noindex, follow",
+      },
+    });
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const url = new URL(request.url);
@@ -720,7 +827,52 @@ export default {
       } else if (url.pathname.startsWith("/media/")) {
         response = await proxyWordPressMedia(request, executionContext);
       } else {
-        response = await servePage(request, env, executionContext);
+        // Normalize HEAD to the same SSR path as GET. Some indexing/monitoring
+        // clients probe with HEAD first; they must see the same status as a browser.
+        const pageRequest =
+          request.method === "HEAD"
+            ? new Request(request.url, {
+                method: "GET",
+                headers: request.headers,
+                redirect: request.redirect,
+              })
+            : request;
+
+        response = await servePage(pageRequest, env, executionContext);
+
+        if (request.method === "HEAD") {
+          response = new Response(null, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
+        }
+
+        // A public homepage should never become a hard 404 because of a transient
+        // SSR/deployment edge mismatch. If TanStack unexpectedly returns 404/410,
+        // serve a substantive WordPress-backed homepage; if even that fails, use
+        // a retryable 503 instead of telling Google the homepage does not exist.
+        if (
+          url.pathname === "/" &&
+          (request.method === "GET" || request.method === "HEAD") &&
+          (response.status === 404 || response.status === 410)
+        ) {
+          response = await homepageFallbackResponse(request.method);
+        }
+      }
+
+      if (url.pathname === "/") {
+        const headers = new Headers(response.headers);
+        if (response.status >= 200 && response.status < 400) {
+          headers.set("x-robots-tag", "index, follow, max-image-preview:large");
+        }
+        headers.set("cache-control", "no-store, max-age=0");
+        headers.set("cloudflare-cdn-cache-control", "no-store");
+        response = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        });
       }
 
       // These utility/private areas must never be indexed. Use an HTTP header so
