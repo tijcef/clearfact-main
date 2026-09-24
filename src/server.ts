@@ -35,6 +35,23 @@ const API_ORIGIN_TIMEOUT_MS = 12_000;
 const COMMENT_WRITE_TIMEOUT_MS = 30_000;
 const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
 
+const NOINDEX_PATH_PREFIXES = [
+  "/admin",
+  "/article",
+  "/auth",
+  "/contributor",
+  "/dashboard",
+  "/login",
+  "/search",
+  "/api",
+] as const;
+
+function shouldNoIndexPath(pathname: string) {
+  return NOINDEX_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -706,7 +723,9 @@ export default {
         response = await servePage(request, env, executionContext);
       }
 
-      if (url.pathname.startsWith("/api/")) {
+      // These utility/private areas must never be indexed. Use an HTTP header so
+      // the rule applies to HTML and API responses alike, including nested routes.
+      if (shouldNoIndexPath(url.pathname)) {
         const headers = new Headers(response.headers);
         headers.set("x-robots-tag", "noindex, nofollow");
         response = new Response(response.body, {

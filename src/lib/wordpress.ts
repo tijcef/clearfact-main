@@ -445,6 +445,7 @@ export async function getPostBySlug(slug: string) {
     const posts = await requestJson<any[]>(
       `/posts${buildQuery({
         slug: candidate,
+        status: "publish",
         per_page: 1,
         _embed: "wp:featuredmedia,wp:term,author",
         acf_format: "standard",
@@ -783,17 +784,17 @@ export function getArticleQuality(post: any): ArticleQuality {
   const substantialUnlinkedReporting =
     !statementBased && wordCount >= 700 && paragraphCount >= 8 && headingCount >= 2;
 
-  // Search engines should be allowed to discover normal, substantive stories
-  // even when optional WordPress editorial fields have not yet been completed.
-  // Keep only genuinely thin/malformed articles out of the index.
-  const indexable =
+  // Indexing is a publishing-state decision, not a content-quality decision.
+  // All callers use this helper with public WordPress posts, and public REST
+  // responses / sitemap queries are restricted to status=publish. A slug is the
+  // only routing requirement for a published story to have a canonical URL.
+  const indexable = Boolean(post?.slug);
+
+  // Advertising is intentionally independent from search indexing. Keep ads on
+  // stronger pages without preventing any published article from being indexed.
+  const adEligible =
     hasUsableTitle &&
     hasArticleStructure &&
-    wordCount >= MIN_INDEXABLE_ARTICLE_WORDS;
-
-  // Advertising remains intentionally stricter than search indexing.
-  const adEligible =
-    indexable &&
     wordCount >= MIN_AD_ELIGIBLE_ARTICLE_WORDS &&
     hasUsefulExcerpt &&
     hasEvidenceSignal;

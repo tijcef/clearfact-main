@@ -3,15 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 const ROBOTS_TXT = `User-agent: *
 Allow: /
 
-Disallow: /admin/
-Disallow: /article/
-Disallow: /auth
-Disallow: /contributor/
-Disallow: /dashboard
-Disallow: /login
-Disallow: /search
-Disallow: /api/
-
+# Private/utility routes are intentionally crawlable so bots can read their
+# X-Robots-Tag: noindex headers. They are never included in the sitemap.
 Sitemap: https://clearfact.ng/sitemap.xml
 Sitemap: https://clearfact.ng/news-sitemap.xml
 `;

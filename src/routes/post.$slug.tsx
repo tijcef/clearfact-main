@@ -221,10 +221,10 @@ export const Route = createFileRoute("/post/$slug")({
         },
 
         {
+          // This loader resolves public WordPress posts. Published stories are
+          // always indexable; editorial/ad-quality checks must never noindex them.
           name: "robots",
-          content: quality.indexable
-            ? "index,follow,max-image-preview:large"
-            : "noindex,follow",
+          content: "index,follow,max-image-preview:large",
         },
 
         {

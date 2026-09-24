@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getCategories,
-  getArticleQuality,
   getPublicPostPath,
   getSitemapPosts,
   type SitemapPost,
@@ -107,8 +106,11 @@ export const Route = createFileRoute("/sitemap.xml")({
           }),
         );
 
+        // getSitemapPosts() requests WordPress with status=publish, so every
+        // published article with a slug belongs in the public sitemap. Search
+        // indexing must not depend on content length, excerpts or ad-quality metadata.
         const articleUrls: SitemapUrl[] = posts
-          .filter((post) => post.slug && getArticleQuality(post).indexable)
+          .filter((post) => Boolean(post.slug))
           .map((post) => ({
             loc: `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`,
             lastmod: normalizeDate(post.modified || post.date),
