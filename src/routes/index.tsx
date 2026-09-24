@@ -1,28 +1,21 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  getCategories,
-  getFeaturedImageUrl,
-  getPosts,
-  normalizeWpSlug,
-  stripHtml,
-} from "../lib/wordpress";
+import { getFeaturedImageUrl, getPosts, normalizeWpSlug, stripHtml } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
-import { filterNavigationCategories } from "@/lib/site-navigation";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {
-      const [posts, categories] = await Promise.all([getPosts(24), getCategories()]);
+      const posts = await getPosts(24);
 
       return {
         posts: Array.isArray(posts) ? posts : [],
-        categories: Array.isArray(categories) ? categories : [],
       };
     } catch (error) {
       console.error("Homepage posts failed to load:", error);
-      throw new Error("The ClearFact newsroom is temporarily unavailable.", {
-        cause: error,
-      });
+
+      return {
+        posts: [],
+      };
     }
   },
 
@@ -36,7 +29,7 @@ export const Route = createFileRoute("/")({
           "@id": "https://clearfact.ng/#organization",
 
           name: "ClearFact News",
-          legalName: "ClearFact Media Ltd",
+          legalName: "Clearfact Media Ltd",
           url: "https://clearfact.ng/",
 
           logo: {
@@ -47,14 +40,7 @@ export const Route = createFileRoute("/")({
           description:
             "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
 
-          email: "info@clearfact.ng",
-          publishingPrinciples: "https://clearfact.ng/editorial-policy",
-          correctionsPolicy: "https://clearfact.ng/corrections",
-          founder: {
-            "@type": "Person",
-            name: "Emmanuel Sunday Tijwun",
-            url: "https://clearfact.ng/about",
-          },
+          email: "clearfactmedia@gmail.com",
 
           address: {
             "@type": "PostalAddress",
@@ -168,7 +154,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { posts, categories } = Route.useLoaderData();
+  const { posts } = Route.useLoaderData();
 
   if (!posts.length) {
     return (
@@ -200,7 +186,6 @@ function Home() {
   const latestPosts = posts.slice(5, 11);
 
   const trendingPosts = posts.filter((post: any) => post.acf?.trending);
-  const homepageCategories = filterNavigationCategories(categories).all;
 
   const getVerificationColor = (status: string) => {
     switch (status) {
@@ -325,29 +310,6 @@ function Home() {
         </section>
       )}
 
-      <section className="mb-12 grid gap-5 rounded-2xl border border-border bg-muted/25 p-6 md:grid-cols-3 md:p-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">ClearFact standard</p>
-          <h2 className="mt-2 font-serif text-2xl font-bold">Reporting that adds context</h2>
-        </div>
-        <p className="text-sm leading-7 text-muted-foreground">
-          We aim to go beyond repeating announcements by identifying the underlying record,
-          explaining what is known, distinguishing claims from established facts and linking readers
-          to relevant evidence where available.
-        </p>
-        <div className="flex flex-col items-start gap-2 text-sm font-semibold">
-          <Link to="/editorial-policy" className="text-primary hover:underline">
-            Read our editorial standards →
-          </Link>
-          <Link to="/trust-center" className="text-primary hover:underline">
-            See how verification works →
-          </Link>
-          <Link to="/corrections" className="text-primary hover:underline">
-            Corrections and accountability →
-          </Link>
-        </div>
-      </section>
-
       <form action="/search" method="get" className="mb-12" role="search">
         <label htmlFor="home-search" className="sr-only">
           Search ClearFact News
@@ -406,14 +368,22 @@ function Home() {
         </section>
       )}
 
-      {homepageCategories.map((category) => (
-        <CategorySection
-          key={category.slug}
-          title={category.name}
-          slug={category.slug}
-          posts={posts}
-        />
-      ))}
+      <CategorySection title="News" slug="news" posts={posts} />
+      <CategorySection title="Politics" slug="politics" posts={posts} />
+      <CategorySection title="Crime & Security" slug="crime-security" posts={posts} />
+      <CategorySection title="Law & Judiciary" slug="law-judiciary" posts={posts} />
+      <CategorySection title="Business" slug="business" posts={posts} />
+      <CategorySection title="Investigations" slug="investigations" posts={posts} />
+      <CategorySection
+        title="Accountability Journalism"
+        slug="accountability-journalism"
+        posts={posts}
+      />
+      <CategorySection title="Education" slug="education" posts={posts} />
+      <CategorySection title="Health" slug="health" posts={posts} />
+      <CategorySection title="Technology" slug="technology" posts={posts} />
+      <CategorySection title="Opportunities" slug="opportunities" posts={posts} />
+      <CategorySection title="Entertainment" slug="entertainment" posts={posts} />
 
       <section className="content-auto mb-16 rounded-2xl bg-primary p-8 text-primary-foreground md:flex md:items-center md:justify-between md:gap-8 md:p-12">
         <div>

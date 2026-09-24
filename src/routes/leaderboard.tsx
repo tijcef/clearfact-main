@@ -31,7 +31,6 @@ export const Route = createFileRoute("/leaderboard")({
         content:
           "Top journalists, most trusted reporters and highest-impact stories on ClearFact News.",
       },
-      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: Leaderboard,

@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhistleblowerRouteImport } from './routes/whistleblower'
-import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as TrustCenterRouteImport } from './routes/trust-center'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -60,11 +59,6 @@ import { Route as AdminEditIdRouteImport } from './routes/admin.edit.$id'
 const WhistleblowerRoute = WhistleblowerRouteImport.update({
   id: '/whistleblower',
   path: '/whistleblower',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrustCenterRoute = TrustCenterRouteImport.update({
@@ -320,7 +314,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
-  '/verify': typeof VerifyRoute
   '/whistleblower': typeof WhistleblowerRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/moderation': typeof AdminModerationRoute
@@ -367,7 +360,6 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
-  '/verify': typeof VerifyRoute
   '/whistleblower': typeof WhistleblowerRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/moderation': typeof AdminModerationRoute
@@ -417,7 +409,6 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/trust-center': typeof TrustCenterRoute
-  '/verify': typeof VerifyRoute
   '/whistleblower': typeof WhistleblowerRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/moderation': typeof AdminModerationRoute
@@ -468,7 +459,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/transparency'
     | '/trust-center'
-    | '/verify'
     | '/whistleblower'
     | '/admin/dashboard'
     | '/admin/moderation'
@@ -515,7 +505,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/transparency'
     | '/trust-center'
-    | '/verify'
     | '/whistleblower'
     | '/admin/dashboard'
     | '/admin/moderation'
@@ -564,7 +553,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/transparency'
     | '/trust-center'
-    | '/verify'
     | '/whistleblower'
     | '/admin/dashboard'
     | '/admin/moderation'
@@ -614,7 +602,6 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
   TrustCenterRoute: typeof TrustCenterRoute
-  VerifyRoute: typeof VerifyRoute
   WhistleblowerRoute: typeof WhistleblowerRoute
   AuthorIdRoute: typeof AuthorIdRoute
   CategorySlugRoute: typeof CategorySlugRoute
@@ -629,13 +616,6 @@ declare module '@tanstack/react-router' {
       path: '/whistleblower'
       fullPath: '/whistleblower'
       preLoaderRoute: typeof WhistleblowerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trust-center': {
@@ -1032,7 +1012,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
   TrustCenterRoute: TrustCenterRoute,
-  VerifyRoute: VerifyRoute,
   WhistleblowerRoute: WhistleblowerRoute,
   AuthorIdRoute: AuthorIdRoute,
   CategorySlugRoute: CategorySlugRoute,

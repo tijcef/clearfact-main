@@ -2,10 +2,6 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import {
-  newsSitemapGetResponse,
-  newsSitemapHeadResponse,
-} from "./lib/news-sitemap";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -26,13 +22,11 @@ type CloudflareRequestInit = RequestInit & {
   };
 };
 
-const WP_REST_ORIGIN = "https://cms.clearfact.ng/wp-json/wp/v2";
-const WP_MEDIA_ORIGIN = "https://cms.clearfact.ng/wp-content/uploads/";
+const WP_REST_ORIGIN = "https://cms.tijcef.org/wp-json/wp/v2";
+const WP_MEDIA_ORIGIN = "https://cms.tijcef.org/wp-content/uploads/";
 const ONE_YEAR = 31_536_000;
 const ONE_WEEK = 604_800;
-const ONE_DAY = 86_400;
 const API_ORIGIN_TIMEOUT_MS = 12_000;
-const COMMENT_WRITE_TIMEOUT_MS = 30_000;
 const MEDIA_ORIGIN_TIMEOUT_MS = 8_000;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -49,12 +43,7 @@ async function getServerEntry(): Promise<ServerEntry> {
 function brandedErrorResponse(): Response {
   return new Response(renderErrorPage(), {
     status: 500,
-    headers: {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
-      "retry-after": "60",
-      "x-robots-tag": "noindex, follow",
-    },
+    headers: { "content-type": "text/html; charset=utf-8" },
   });
 }
 
@@ -191,14 +180,10 @@ function cacheFreshAndStale(
   namespace: "page" | "wp",
   ctx: ExecutionContextLike,
 ) {
-  const pathname = new URL(request.url).pathname;
-  const isNewsContent =
-    pathname.startsWith("/post/") || pathname.startsWith("/category/");
-  const staleTtl = namespace === "page" && isNewsContent ? ONE_DAY : ONE_WEEK;
   const staleHeaders = new Headers(response.headers);
   staleHeaders.set(
     "cache-control",
-    `public, max-age=0, s-maxage=${staleTtl}, stale-while-revalidate=${staleTtl}`,
+    `public, max-age=0, s-maxage=${ONE_WEEK}, stale-while-revalidate=${ONE_WEEK}`,
   );
 
   const staleResponse = new Response(response.clone().body, {
@@ -217,9 +202,8 @@ function cacheFreshAndStale(
 }
 
 function apiCacheTtl(pathname: string) {
-  if (pathname.startsWith("/api/wp/categories")) return 300;
+  if (pathname.startsWith("/api/wp/categories")) return 900;
   if (pathname.startsWith("/api/wp/tags")) return 900;
-  if (pathname.startsWith("/api/wp/users")) return 3600;
   if (pathname.startsWith("/api/wp/comments")) return 60;
   return 900;
 }
@@ -238,7 +222,7 @@ async function proxyWordPressRequest(
     restPath = restPath.slice("/wp/v2".length);
   }
 
-  if (!/^\/(?:posts|categories|tags|comments|users)(?:\/|$)/.test(restPath)) {
+  if (!/^\/(?:posts|categories|tags|comments)(?:\/|$)/.test(restPath)) {
     return new Response("Not found", { status: 404 });
   }
 
@@ -299,11 +283,7 @@ async function proxyWordPressRequest(
   let originResponse: Response;
 
   try {
-    originResponse = await fetchWithTimeout(
-      originUrl,
-      init,
-      isCommentWrite ? COMMENT_WRITE_TIMEOUT_MS : API_ORIGIN_TIMEOUT_MS,
-    );
+    originResponse = await fetchWithTimeout(originUrl, init, API_ORIGIN_TIMEOUT_MS);
   } catch (error) {
     console.error("WordPress origin request failed:", error);
 
@@ -487,13 +467,8 @@ function pageCacheTtl(request: Request) {
 
   const url = new URL(request.url);
   const accept = request.headers.get("accept") ?? "";
-  const acceptsHtml =
-    !accept ||
-    accept.includes("text/html") ||
-    accept.includes("application/xhtml+xml") ||
-    accept.includes("*/*");
 
-  if (!acceptsHtml || url.search) return null;
+  if (!accept.includes("text/html") || url.search) return null;
   if (request.headers.has("authorization") || request.headers.has("cookie")) {
     return null;
   }
@@ -505,36 +480,9 @@ function pageCacheTtl(request: Request) {
   }
 
   if (url.pathname === "/") return 600;
-  if (url.pathname.startsWith("/post/")) return 600;
-  if (url.pathname.startsWith("/category/")) return 300;
+  if (url.pathname.startsWith("/post/")) return 300;
+  if (url.pathname.startsWith("/category/")) return 180;
   return 900;
-}
-
-function machineRouteCacheTtl(request: Request) {
-  if (request.method !== "GET") return null;
-
-  const url = new URL(request.url);
-
-  if (url.search) return null;
-
-  if (url.pathname === "/robots.txt") return 86_400;
-  if (url.pathname === "/sitemap.xml") return 900;
-  if (url.pathname === "/news-sitemap.xml") return 300;
-
-  return null;
-}
-
-function canServeStaleBeforeOrigin(request: Request) {
-  const pathname = new URL(request.url).pathname;
-
-  // Public stories and sections may use a one-day stale copy while WordPress
-  // refreshes in the background. A confirmed 404/410 clears both cache entries
-  // below, so removed stories stop being served on the following request.
-  return !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/auth") &&
-    !pathname.startsWith("/contributor") &&
-    !pathname.startsWith("/dashboard") &&
-    !pathname.startsWith("/login");
 }
 
 async function servePage(
@@ -543,8 +491,7 @@ async function servePage(
   ctx: ExecutionContextLike,
   serveStaleImmediately = true,
 ) {
-  const machineTtl = machineRouteCacheTtl(request);
-  const ttl = machineTtl ?? pageCacheTtl(request);
+  const ttl = pageCacheTtl(request);
   const cache = ttl ? getDefaultCache() : undefined;
 
   if (cache) {
@@ -554,7 +501,7 @@ async function servePage(
       return withCacheStatus(cached, "HIT");
     }
 
-    if (serveStaleImmediately && canServeStaleBeforeOrigin(request)) {
+    if (serveStaleImmediately) {
       const stale = await getStaleResponse(cache, request, "page");
 
       if (stale) {
@@ -582,31 +529,16 @@ async function servePage(
     throw error;
   }
 
-  if (response.status >= 500) {
+  if (!response.ok) {
     const stale = await getStaleResponse(cache, request, "page");
     if (stale) return stale;
-  }
-
-  if (response.status === 404 || response.status === 410) {
-    if (cache) {
-      runInBackground(ctx, cache.delete(staleCacheKey(request, "page")));
-    }
-
-    const headers = new Headers(response.headers);
-    headers.set("cache-control", "no-store");
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
   }
 
   if (
     !cache ||
     !ttl ||
     !response.ok ||
-    (machineTtl === null && !response.headers.get("content-type")?.includes("text/html")) ||
+    !response.headers.get("content-type")?.includes("text/html") ||
     response.headers.has("set-cookie")
   ) {
     return response;
@@ -615,19 +547,7 @@ async function servePage(
   const headers = new Headers(response.headers);
   headers.set("cache-control", `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=86400`);
 
-  let responseBody: ArrayBuffer;
-
-  try {
-    responseBody = await response.arrayBuffer();
-  } catch (error) {
-    console.error("Page response was interrupted before caching:", error);
-    return response;
-  }
-
-  // Buffer the rendered response before cloning it into fresh and stale cache
-  // entries. Cloning a live SSR stream can create backpressure and leave an
-  // otherwise successful category page or sitemap waiting indefinitely.
-  const cacheableResponse = new Response(responseBody, {
+  const cacheableResponse = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
@@ -642,11 +562,6 @@ export default {
     const url = new URL(request.url);
 
     try {
-      if (url.hostname === "www.clearfact.ng") {
-        url.hostname = "clearfact.ng";
-        return withSecurityHeaders(Response.redirect(url.toString(), 301), true);
-      }
-
       const executionContext = ctx as ExecutionContextLike;
       let response: Response;
 
@@ -664,51 +579,12 @@ export default {
             },
           },
         );
-      } else if (url.pathname === "/news-sitemap.xml") {
-        if (request.method === "HEAD") {
-          response = newsSitemapHeadResponse();
-        } else if (request.method === "GET") {
-          response = await newsSitemapGetResponse();
-        } else {
-          response = new Response("Method Not Allowed", {
-            status: 405,
-            headers: {
-              allow: "GET, HEAD",
-              "cache-control": "no-store",
-              "content-type": "text/plain; charset=utf-8",
-            },
-          });
-        }
-      } else if (url.pathname === "/api/document-verify") {
-        const code = url.searchParams.get("code") ?? "";
-        if (!code.trim()) {
-          response = new Response(JSON.stringify({ valid: false }), { status: 400, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
-        } else {
-          const origin = new URL("https://cms.clearfact.ng/wp-json/clearfact/v1/verify");
-          origin.searchParams.set("code", code);
-          try {
-            const upstream = await fetchWithTimeout(origin, { headers: { accept: "application/json" } }, API_ORIGIN_TIMEOUT_MS);
-            response = new Response(upstream.body, { status: upstream.status, headers: { "content-type": upstream.headers.get("content-type") ?? "application/json; charset=utf-8", "cache-control": "no-store" } });
-          } catch {
-            response = new Response(JSON.stringify({ valid: false, error: "verification_unavailable" }), { status: 503, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
-          }
-        }
       } else if (url.pathname.startsWith("/api/wp/")) {
         response = await proxyWordPressRequest(request, executionContext);
       } else if (url.pathname.startsWith("/media/")) {
         response = await proxyWordPressMedia(request, executionContext);
       } else {
         response = await servePage(request, env, executionContext);
-      }
-
-      if (url.pathname.startsWith("/api/")) {
-        const headers = new Headers(response.headers);
-        headers.set("x-robots-tag", "noindex, nofollow");
-        response = new Response(response.body, {
-          status: response.status,
-          statusText: response.statusText,
-          headers,
-        });
       }
 
       return withSecurityHeaders(response, url.protocol === "https:");

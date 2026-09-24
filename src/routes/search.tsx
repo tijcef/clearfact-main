@@ -8,7 +8,6 @@ import {
 } from "@/lib/wordpress";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { filterEditorialCategories } from "@/lib/site-navigation";
 
 import { useEffect, useState } from "react";
 
@@ -33,7 +32,7 @@ export const Route = createFileRoute("/search")({
       },
       {
         name: "robots",
-        content: "noindex,follow",
+        content: "index,follow",
       },
     ],
 
@@ -68,9 +67,7 @@ function SearchPage() {
         const data = await getCategories();
 
         setWordpressCategories(
-          Array.isArray(data)
-            ? filterEditorialCategories(data).filter((item) => item.slug !== "uncategorized")
-            : [],
+          Array.isArray(data) ? data.filter((item: any) => item.slug !== "uncategorized") : [],
         );
       } catch (error) {
         console.error("Failed to load categories:", error);

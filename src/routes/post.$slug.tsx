@@ -1,25 +1,19 @@
 import AdSense from "@/components/AdSense";
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
-  getArticleQuality,
-  getExternalCitationUrls,
   getFeaturedImageUrl,
   getPublicPostPath,
   getPostBySlug,
   getRelatedPosts,
   normalizeWpSlug,
-  sanitizeWpArticleHtml,
+  proxyWpMediaInHtml,
   stripHtml,
 } from "@/lib/wordpress";
 import Comments from "@/components/Comments";
-import { ArticleShare } from "@/components/site/SocialMedia";
-import { getPublicCategoryName, getPublicCategorySlug } from "@/lib/site-navigation";
-import { getClearFactAuthorBio, SITE_NAME, SITE_ORIGIN } from "@/lib/site-config";
 
-const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
-const LOGO_URL = `${SITE_ORIGIN}/logo.jpg`;
+import { FaFacebook, FaLinkedin, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
 
 export const Route = createFileRoute("/post/$slug")({
   loader: async ({ params }) => {
@@ -29,9 +23,11 @@ export const Route = createFileRoute("/post/$slug")({
       post = await getPostBySlug(params.slug);
     } catch (error) {
       console.error(`Article ${params.slug} failed to load:`, error);
-      throw new Error("This report is temporarily unavailable.", {
-        cause: error,
-      });
+
+      return {
+        post: null,
+        unavailable: true,
+      };
     }
 
     if (!post) {
@@ -40,6 +36,7 @@ export const Route = createFileRoute("/post/$slug")({
 
     return {
       post,
+      unavailable: false,
     };
   },
 
@@ -47,58 +44,26 @@ export const Route = createFileRoute("/post/$slug")({
 
   head: ({ loaderData }) => {
     if (!loaderData?.post) {
-      return {
-        meta: [
-          {
-            title: "Report temporarily unavailable | ClearFact News",
-          },
-          {
-            name: "robots",
-            content: "noindex,follow",
-          },
-        ],
-      };
+      return {};
     }
 
     const post = loaderData.post;
 
-    const rawDescription = stripHtml(post.excerpt?.rendered || post.content?.rendered || "")
-      .replace(/\s+/g, " ")
-      .trim();
+    const description = post.excerpt?.rendered?.replace(/<[^>]+>/g, "")?.slice(0, 160) || "";
 
-    const description =
-      rawDescription.length <= 160
-        ? rawDescription
-        : `${rawDescription.slice(0, 157).replace(/\s+\S*$/, "")}…`;
+    const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "";
 
     const title = stripHtml(post.title.rendered);
 
-    const relativeImage = getFeaturedImageUrl(post, "", "full");
-    const image = relativeImage ? new URL(relativeImage, SITE_ORIGIN).toString() : "";
-
-    const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
+    const articleUrl = `https://clearfact.ng${getPublicPostPath(post.slug)}`;
 
     const category = post._embedded?.["wp:term"]?.[0]?.[0];
 
-    const categoryName = category ? getPublicCategoryName(category) : "News";
+    const categoryName = category?.name || "News";
+    const categorySlug = category?.slug || "news";
 
-    const categorySlug = category ? getPublicCategorySlug(category.slug) : "news";
-
-    const author = post._embedded?.author?.[0];
-
-    const authorName = author?.name || post.authors?.[0]?.display_name || SITE_NAME;
-
-    const authorId = Number(author?.id || post.author || 0);
-
-    const authorUrl =
-      Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
-
-    const citations = getExternalCitationUrls(post.content?.rendered || "");
-    const quality = getArticleQuality(post);
-
-    const publishedDate = new Date(post.date).toISOString();
-
-    const modifiedDate = new Date(post.modified || post.date).toISOString();
+    const authorName =
+      post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || "ClearFact News";
 
     const schema = {
       "@context": "https://schema.org",
@@ -106,10 +71,7 @@ export const Route = createFileRoute("/post/$slug")({
       "@graph": [
         {
           "@type": "NewsArticle",
-
           "@id": `${articleUrl}#article`,
-
-          url: articleUrl,
 
           mainEntityOfPage: {
             "@type": "WebPage",
@@ -117,91 +79,54 @@ export const Route = createFileRoute("/post/$slug")({
           },
 
           headline: title,
-
           description,
-
-          ...(image
-            ? {
-                image: [image],
-              }
-            : {}),
-
-          datePublished: publishedDate,
-
-          dateModified: modifiedDate,
-
-          dateCreated: publishedDate,
-
-          inLanguage: "en-NG",
-
+          image: image ? [image] : [],
+          datePublished: post.date,
+          dateModified: post.modified,
           articleSection: categoryName,
-
-          wordCount: quality.wordCount,
-
-          isAccessibleForFree: true,
 
           author: {
             "@type": "Person",
             name: authorName,
-            ...(authorUrl ? { url: authorUrl } : {}),
           },
-
-          ...(citations.length ? { citation: citations } : {}),
 
           publisher: {
             "@type": "NewsMediaOrganization",
-
-            "@id": ORGANIZATION_ID,
-
-            name: SITE_NAME,
-
-            legalName: "ClearFact Media Ltd",
-
-            url: SITE_ORIGIN,
-
-            publishingPrinciples: `${SITE_ORIGIN}/editorial-policy`,
-            correctionsPolicy: `${SITE_ORIGIN}/corrections`,
+            "@id": "https://clearfact.ng/#organization",
+            name: "ClearFact News",
+            legalName: "Clearfact Media Ltd",
+            url: "https://clearfact.ng/",
 
             logo: {
               "@type": "ImageObject",
-              url: LOGO_URL,
+              url: "https://clearfact.ng/logo.jpg",
             },
           },
+
+          isAccessibleForFree: true,
         },
 
         {
           "@type": "BreadcrumbList",
-
           "@id": `${articleUrl}#breadcrumb`,
 
           itemListElement: [
             {
               "@type": "ListItem",
-
               position: 1,
-
               name: "Home",
-
-              item: `${SITE_ORIGIN}/`,
+              item: "https://clearfact.ng/",
             },
-
             {
               "@type": "ListItem",
-
               position: 2,
-
               name: categoryName,
-
-              item: `${SITE_ORIGIN}/category/${categorySlug}`,
+              item: `https://clearfact.ng/category/${categorySlug}`,
             },
-
             {
               "@type": "ListItem",
-
               position: 3,
-
               name: title,
-
               item: articleUrl,
             },
           ],
@@ -211,111 +136,20 @@ export const Route = createFileRoute("/post/$slug")({
 
     return {
       meta: [
-        {
-          title: `${title} | ClearFact News`,
-        },
-
-        {
-          name: "description",
-          content: description,
-        },
-
-        {
-          name: "robots",
-          content: quality.indexable
-            ? "index,follow,max-image-preview:large"
-            : "noindex,follow",
-        },
-
-        {
-          property: "og:title",
-          content: title,
-        },
-
-        {
-          property: "og:description",
-          content: description,
-        },
-
-        {
-          property: "og:type",
-          content: "article",
-        },
-
-        {
-          property: "og:url",
-          content: articleUrl,
-        },
-
-        ...(image
-          ? [
-              {
-                property: "og:image",
-                content: image,
-              },
-              {
-                property: "og:image:alt",
-                content: title,
-              },
-            ]
-          : []),
-
-        {
-          property: "og:site_name",
-          content: SITE_NAME,
-        },
-
-        {
-          property: "article:published_time",
-          content: publishedDate,
-        },
-
-        {
-          property: "article:modified_time",
-          content: modifiedDate,
-        },
-
-        {
-          property: "article:section",
-          content: categoryName,
-        },
-
-        {
-          name: "twitter:card",
-          content: "summary_large_image",
-        },
-
-        {
-          name: "twitter:title",
-          content: title,
-        },
-
-        {
-          name: "twitter:description",
-          content: description,
-        },
-
-        ...(image
-          ? [
-              {
-                name: "twitter:image",
-                content: image,
-              },
-              {
-                name: "twitter:image:alt",
-                content: title,
-              },
-            ]
-          : []),
+        { title: `${title} | ClearFact News` },
+        { name: "description", content: description },
+        { name: "robots", content: "index,follow,max-image-preview:large" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: articleUrl },
+        ...(image ? [{ property: "og:image", content: image }] : []),
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        ...(image ? [{ name: "twitter:image", content: image }] : []),
       ],
-
-      links: [
-        {
-          rel: "canonical",
-          href: articleUrl,
-        },
-      ],
-
+      links: [{ rel: "canonical", href: articleUrl }],
       scripts: [
         {
           type: "application/ld+json",
@@ -325,45 +159,28 @@ export const Route = createFileRoute("/post/$slug")({
     };
   },
 
-  notFoundComponent: () => (
-    <>
-      <title>Article not found | ClearFact News</title>
-      <meta name="robots" content="noindex,follow" />
-      <div className="container-news py-16">
-        <h1 className="font-serif text-4xl font-bold">Article not found</h1>
-        <p className="mt-3 text-muted-foreground">
-          This report has been removed or does not exist.
-        </p>
-        <Link to="/" className="mt-6 inline-flex font-semibold text-primary hover:underline">
-          Return to the latest news
-        </Link>
-      </div>
-    </>
-  ),
+  notFoundComponent: () => <div className="container-news py-16">Article not found.</div>,
 });
 
 function ArticlePage() {
-  const { post } = Route.useLoaderData();
+  const { post, unavailable } = Route.useLoaderData();
 
   const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
-
   const [progress, setProgress] = useState(0);
-
   const [previousPost, setPreviousPost] = useState<any>(null);
-
   const [nextPost, setNextPost] = useState<any>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const updateProgress = () => {
       const scrollTop = window.scrollY;
-
       const height = document.documentElement.scrollHeight - window.innerHeight;
 
       setProgress(height > 0 ? (scrollTop / height) * 100 : 0);
     };
 
     window.addEventListener("scroll", updateProgress);
-
     updateProgress();
 
     return () => window.removeEventListener("scroll", updateProgress);
@@ -380,14 +197,11 @@ function ArticlePage() {
           post?.categories?.length
             ? getRelatedPosts(post.categories[0], post.id, 8)
             : Promise.resolve([]),
-
           getAdjacentPosts(post.date_gmt || post.date, post.id),
         ]);
 
         setRelatedPosts(related);
-
         setPreviousPost(adjacent.previousPost);
-
         setNextPost(adjacent.nextPost);
       } catch (error) {
         console.error("Failed to load related articles:", error);
@@ -397,53 +211,90 @@ function ArticlePage() {
     void loadRelatedAndNavigation();
   }, [post]);
 
+  useEffect(() => {
+    if (!unavailable || post || retryAttempt >= 2) {
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => {
+        void router.invalidate().finally(() => {
+          setRetryAttempt((attempt) => attempt + 1);
+        });
+      },
+      retryAttempt === 0 ? 500 : 1_500,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [post, retryAttempt, router, unavailable]);
+
+  if (!post) {
+    return (
+      <main className="container-news py-12">
+        <section className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm md:p-12">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-600">
+            ClearFact Newsroom
+          </p>
+
+          <h1 className="mt-3 font-serif text-3xl font-bold">
+            {retryAttempt < 2 ? "Opening this report…" : "This report needs another moment"}
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
+            {retryAttempt < 2
+              ? "The newsroom is reconnecting automatically. You do not need to refresh the page."
+              : "The news server is responding slowly. Try the report again while ClearFact keeps the rest of the site available."}
+          </p>
+
+          {retryAttempt >= 2 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+                onClick={() => {
+                  setRetryAttempt(0);
+                  void router.invalidate();
+                }}
+              >
+                Retry report
+              </button>
+
+              <Link
+                to="/"
+                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold"
+              >
+                Latest news
+              </Link>
+            </div>
+          )}
+        </section>
+      </main>
+    );
+  }
+
   const featuredImage = getFeaturedImageUrl(post, "", "large");
 
-  const cleanContent = sanitizeWpArticleHtml(post.content?.rendered || "");
+  const cleanContent = proxyWpMediaInHtml(
+    post.content.rendered
+      .replace(/<div[^>]*wp-block-spacer[^>]*>.*?<\/div>/gis, "")
+      .replace(/style="height:[^"]*"/gi, ""),
+  );
 
-  const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
+  const articleUrl = `https://clearfact.ng${getPublicPostPath(post.slug)}`;
 
   const articleTitle = stripHtml(post.title.rendered);
 
-  const category = post._embedded?.["wp:term"]?.[0]?.[0];
+  const categoryName = post._embedded?.["wp:term"]?.[0]?.[0]?.name || "News";
 
-  const categoryName = category ? getPublicCategoryName(category) : "News";
-
-  const categorySlug = category ? getPublicCategorySlug(category.slug) : "news";
+  const categorySlug = post._embedded?.["wp:term"]?.[0]?.[0]?.slug || "news";
 
   const authorName =
-    post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
-
-  const authorId = Number(post._embedded?.author?.[0]?.id || post.author || 0);
-
-  const hasAuthorProfile = Number.isInteger(authorId) && authorId > 0;
-
-  const embeddedAuthorDescription = stripHtml(post._embedded?.author?.[0]?.description || "");
+    post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || "ClearFact News";
 
   const authorDescription =
-    embeddedAuthorDescription.length >= 80
-      ? embeddedAuthorDescription
-      : getClearFactAuthorBio(authorName);
-
-  const quality = getArticleQuality(post);
-
-  const excerpt = stripHtml(post.excerpt?.rendered || "");
-
-  const editorialAddedValue = stripHtml(post.clearfact_editorial?.added_value || "");
-
-  const featuredMedia = post._embedded?.["wp:featuredmedia"]?.[0];
-
-  const featuredImageAlt = stripHtml(featuredMedia?.alt_text || "") || articleTitle;
-
-  const featuredImageCaption = stripHtml(featuredMedia?.caption?.rendered || "");
-
-  const externalCitations = getExternalCitationUrls(cleanContent);
-
-  const publishedAt = new Date(post.date);
-
-  const modifiedAt = new Date(post.modified || post.date);
-
-  const wasUpdated = modifiedAt.getTime() - publishedAt.getTime() > 60 * 60 * 1_000;
+    post._embedded?.author?.[0]?.description ||
+    post.authors?.[0]?.description ||
+    `${authorName} writes for ClearFact News, an independent Nigerian newsroom committed to verified, transparent, and fact-based journalism.`;
 
   const headings = Array.from(cleanContent.matchAll(/<h2[^>]*>(.*?)<\/h2>/g)).map(
     (match, index) => ({
@@ -456,39 +307,23 @@ function ArticlePage() {
 
   const contentWithIds = cleanContent.replace(/<h2([^>]*)>/g, () => {
     headingIndex += 1;
-
     return `<h2 id="section-${headingIndex}">`;
   });
 
   return (
     <>
-      <div
-        className="fixed top-0 left-0 z-50 h-1 bg-red-600"
-        style={{
-          width: `${progress}%`,
-        }}
-      />
+      <div className="fixed top-0 left-0 z-50 h-1 bg-red-600" style={{ width: `${progress}%` }} />
 
       <article className="container-news py-12 px-4 max-w-5xl mx-auto">
-        <nav className="mb-5 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <nav className="mb-5 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-primary">
             Home
           </Link>
-
           <span> / </span>
-
-          <Link
-            to="/category/$slug"
-            params={{
-              slug: categorySlug,
-            }}
-            className="hover:text-primary"
-          >
+          <Link to="/category/$slug" params={{ slug: categorySlug }} className="hover:text-primary">
             {categoryName}
           </Link>
-
           <span> / </span>
-
           <span>{articleTitle}</span>
         </nav>
 
@@ -498,100 +333,46 @@ function ArticlePage() {
           </span>
         </div>
 
-        <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-4">
+        <h1 className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-6">
           {articleTitle}
         </h1>
 
-        {excerpt.length >= 70 && (
-          <p className="mb-6 max-w-4xl text-lg leading-8 text-muted-foreground md:text-xl">
-            {excerpt}
-          </p>
-        )}
-
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
           <span>
-            By{" "}
-            {hasAuthorProfile ? (
-              <Link
-                to="/author/$id"
-                params={{ id: String(authorId) }}
-                className="font-semibold text-foreground hover:text-primary hover:underline"
-              >
-                {authorName}
-              </Link>
-            ) : (
-              <strong>{authorName}</strong>
-            )}
+            By <strong>{authorName}</strong>
           </span>
 
           <span>•</span>
 
           <time dateTime={post.date}>
-            {publishedAt.toLocaleDateString("en-NG", {
+            {new Date(post.date).toLocaleDateString("en-NG", {
               day: "numeric",
               month: "long",
               year: "numeric",
             })}
           </time>
 
-          {wasUpdated && (
-            <>
-              <span>•</span>
-              <time dateTime={post.modified}>
-                Updated{" "}
-                {modifiedAt.toLocaleDateString("en-NG", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </time>
-            </>
-          )}
-
           <span>•</span>
 
           <span>
             {Math.max(
               1,
-              Math.ceil(
-                stripHtml(post.content?.rendered || "")
-                  .split(/\s+/)
-                  .filter(Boolean).length / 200,
-              ),
+              Math.ceil(post.content.rendered.replace(/<[^>]+>/g, "").split(" ").length / 200),
             )}{" "}
             min read
           </span>
         </div>
 
-        <div className="mb-7 rounded-xl border border-border bg-muted/25 p-4 lg:hidden">
-          <ArticleShare url={articleUrl} title={articleTitle} />
-        </div>
-
-        <aside
-          className="fixed left-[max(1rem,calc(50%-37rem))] top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-border bg-background/95 p-2 shadow-lg backdrop-blur xl:block"
-          aria-label="Share this article"
-        >
-          <ArticleShare url={articleUrl} title={articleTitle} layout="rail" />
-        </aside>
-
         {featuredImage && (
-          <figure className="mb-8">
-            <img
-              src={featuredImage}
-              alt={featuredImageAlt}
-              className="w-full rounded-xl"
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-              sizes="(min-width: 1024px) 960px, 100vw"
-            />
-
-            {featuredImageCaption && (
-              <figcaption className="mt-2 text-sm leading-6 text-muted-foreground">
-                {featuredImageCaption}
-              </figcaption>
-            )}
-          </figure>
+          <img
+            src={featuredImage}
+            alt={articleTitle}
+            className="w-full rounded-xl mb-8"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            sizes="(min-width: 1024px) 960px, 100vw"
+          />
         )}
 
         {headings.length >= 2 && (
@@ -611,96 +392,73 @@ function ArticlePage() {
         )}
 
         <div
-          className="article-body prose prose-lg dark:prose-invert mx-auto"
+          className="
+            prose
+            prose-lg
+            lg:prose-xl
+            max-w-none
+            prose-p:leading-8
+            prose-p:mb-7
+            prose-h2:mt-12
+            prose-h2:mb-6
+            prose-h2:text-3xl
+            prose-h2:font-bold
+            prose-h3:mt-10
+            prose-h3:mb-4
+            prose-blockquote:border-l-4
+            prose-blockquote:pl-4
+          "
           dangerouslySetInnerHTML={{
             __html: contentWithIds,
           }}
         />
 
-        <aside className="mt-10 rounded-xl border border-border bg-muted/30 p-5 md:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">
-                Reporting transparency
-              </p>
-              <h2 className="mt-1 font-serif text-xl font-bold">How to verify this report</h2>
-            </div>
-
-            <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
-              {quality.wordCount.toLocaleString()} words · {externalCitations.length} external source{externalCitations.length === 1 ? "" : "s"}
-            </div>
-          </div>
-
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            ClearFact attributes claims and records inside the article so readers can distinguish
-            sourced information from context and analysis. Material errors are corrected under our
-            published corrections policy.
-          </p>
-
-          {quality.hasEditorialAddedValue && editorialAddedValue && (
-            <div className="mt-4 rounded-lg border border-border bg-background p-4">
-              <h3 className="text-sm font-bold">What ClearFact added</h3>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{editorialAddedValue}</p>
-            </div>
-          )}
-
-          {externalCitations.length > 0 && (
-            <>
-              <h3 className="mt-5 text-sm font-bold">External records and sources linked in this report</h3>
-              <ul className="mt-3 space-y-2 text-sm">
-                {externalCitations.map((url) => (
-                  <li key={url}>
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="break-all font-medium text-primary hover:underline"
-                    >
-                      {new URL(url).hostname.replace(/^www\./, "")}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
-            <Link to="/editorial-policy" className="text-primary hover:underline">
-              Editorial standards →
-            </Link>
-            <Link to="/corrections" className="text-primary hover:underline">
-              Request a correction →
-            </Link>
-            <Link to="/trust-center" className="text-primary hover:underline">
-              Trust Center →
-            </Link>
-          </div>
-        </aside>
-
-        {quality.adEligible && <AdSense key={post.id} />}
-
         <div className="mt-10 border-t pt-6">
-          <h2 className="font-bold text-xl mb-2">About the Author</h2>
+          <h3 className="font-bold text-xl mb-2">About the Author</h3>
 
           <p className="text-muted-foreground leading-7">{authorDescription}</p>
-
-          {hasAuthorProfile && (
-            <Link
-              to="/author/$id"
-              params={{ id: String(authorId) }}
-              className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
-            >
-              View {authorName}&apos;s profile and reports →
-            </Link>
-          )}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5 md:p-6">
-          <h3 className="mb-1 font-serif text-xl font-bold">Help verified news travel further</h3>
+        <div className="mt-8 border-t pt-6">
+          <h3 className="font-semibold mb-4">Share this article</h3>
 
-          <p className="mb-4 text-sm text-muted-foreground">Share this report with your network.</p>
+          <div className="flex items-center gap-5">
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on Facebook"
+            >
+              <FaFacebook size={24} />
+            </a>
 
-          <ArticleShare url={articleUrl} title={articleTitle} showLabel={false} />
+            <a
+              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(articleTitle)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on X"
+            >
+              <FaXTwitter size={24} />
+            </a>
+
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(articleTitle + " " + articleUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on WhatsApp"
+            >
+              <FaWhatsapp size={24} />
+            </a>
+
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on LinkedIn"
+            >
+              <FaLinkedin size={24} />
+            </a>
+          </div>
         </div>
 
         <Comments postId={post.id} />
@@ -714,9 +472,7 @@ function ArticlePage() {
                 <Link
                   key={item.id}
                   to="/post/$slug"
-                  params={{
-                    slug: normalizeWpSlug(item.slug),
-                  }}
+                  params={{ slug: normalizeWpSlug(item.slug) }}
                   className="block border border-border rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 bg-card"
                 >
                   {getFeaturedImageUrl(item) && (
@@ -744,9 +500,7 @@ function ArticlePage() {
             {previousPost && (
               <Link
                 to="/post/$slug"
-                params={{
-                  slug: normalizeWpSlug(previousPost.slug),
-                }}
+                params={{ slug: normalizeWpSlug(previousPost.slug) }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md"
               >
                 <span className="text-sm text-muted-foreground">← Previous Article</span>
@@ -758,9 +512,7 @@ function ArticlePage() {
             {nextPost && (
               <Link
                 to="/post/$slug"
-                params={{
-                  slug: normalizeWpSlug(nextPost.slug),
-                }}
+                params={{ slug: normalizeWpSlug(nextPost.slug) }}
                 className="border rounded-xl p-5 hover:border-primary hover:shadow-md md:text-right"
               >
                 <span className="text-sm text-muted-foreground">Next Article →</span>
@@ -770,6 +522,8 @@ function ArticlePage() {
             )}
           </div>
         )}
+
+        <AdSense />
 
         <div className="mt-10">
           <Link to="/" className="text-sm font-semibold text-primary hover:underline">

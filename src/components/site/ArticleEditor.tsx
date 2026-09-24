@@ -26,10 +26,10 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-import { fallbackEditorialCategories } from "@/lib/site-navigation";
+import { categories, moreCategories } from "@/lib/site-navigation";
 import { analyzeArticle, type ArticleAnalysis } from "@/lib/ai-analysis.functions";
 
-const CATEGORIES = fallbackEditorialCategories;
+const CATEGORIES = [...categories, ...moreCategories];
 
 type Source = { title: string; url: string; note?: string };
 

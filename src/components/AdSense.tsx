@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { ADSENSE_CLIENT, ADSENSE_SLOT } from "@/lib/site-config";
 
 declare global {
   interface Window {
@@ -7,13 +6,40 @@ declare global {
   }
 }
 
-type AdSenseProps = {
-  className?: string;
-};
+const ADSENSE_SCRIPT_ID = "clearfact-adsense";
+const ADSENSE_CLIENT = "ca-pub-8967021504063466";
+let adsensePromise: Promise<void> | undefined;
 
-export default function AdSense({ className = "" }: AdSenseProps) {
-  const containerRef = useRef<HTMLElement>(null);
-  const requestedRef = useRef(false);
+function loadAdsense() {
+  if (adsensePromise) {
+    return adsensePromise;
+  }
+
+  adsensePromise = new Promise<void>((resolve, reject) => {
+    const existing = document.getElementById(ADSENSE_SCRIPT_ID) as HTMLScriptElement | null;
+
+    if (existing) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = ADSENSE_SCRIPT_ID;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+    script.addEventListener("load", () => resolve(), { once: true });
+    script.addEventListener("error", () => reject(new Error("AdSense script failed to load")), {
+      once: true,
+    });
+    document.head.appendChild(script);
+  });
+
+  return adsensePromise;
+}
+
+export default function AdSense() {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -23,101 +49,23 @@ export default function AdSense({ className = "" }: AdSenseProps) {
     }
 
     let active = true;
-    let unresolvedAdTimeout: number | undefined;
-    const ad = container.querySelector<HTMLElement>(".adsbygoogle");
 
-    if (!ad) {
-      return;
-    }
-
-    const syncAdVisibility = () => {
-      const adStatus = ad.getAttribute("data-ad-status");
-      const requestStatus = ad.getAttribute("data-adsbygoogle-status");
-      const isUnfilled = adStatus === "unfilled";
-
-      if ((adStatus || requestStatus) && unresolvedAdTimeout !== undefined) {
-        window.clearTimeout(unresolvedAdTimeout);
-        unresolvedAdTimeout = undefined;
-      }
-
-      container.hidden = isUnfilled;
-      container.classList.toggle("mt-0", isUnfilled);
-      container.classList.toggle("mt-10", !isUnfilled);
-    };
-
-    const adStatusObserver = new MutationObserver(syncAdVisibility);
-
-    adStatusObserver.observe(ad, {
-      attributes: true,
-      attributeFilter: ["data-ad-status", "data-adsbygoogle-status"],
-    });
-
-    const displayAd = () => {
+    const displayAd = async () => {
       try {
-        if (!active) {
-          return;
+        await loadAdsense();
+
+        if (active) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
         }
-
-        let adScript = document.querySelector<HTMLScriptElement>(
-          'script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]',
-        );
-
-        if (!adScript) {
-          adScript = document.createElement("script");
-          adScript.async = true;
-          adScript.crossOrigin = "anonymous";
-          adScript.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-          adScript.dataset.clearfactAdsense = "true";
-          adScript.addEventListener(
-            "load",
-            () => {
-              if (!active || !adScript) return;
-              adScript.dataset.clearfactLoaded = "true";
-              displayAd();
-            },
-            { once: true },
-          );
-          document.head.appendChild(adScript);
-          return;
-        }
-
-        if (!window.adsbygoogle && !adScript.dataset.clearfactLoaded) {
-          adScript.addEventListener("load", displayAd, { once: true });
-          return;
-        }
-
-        if (requestedRef.current || ad.getAttribute("data-adsbygoogle-status")) {
-          return;
-        }
-
-        requestedRef.current = true;
-        window.adsbygoogle = window.adsbygoogle || [];
-        window.adsbygoogle.push({});
-
-        // Only start the fallback timer after the ad has actually been requested.
-        // A reader who reaches a below-the-fold placement later must still be able
-        // to trigger it, even if the page has already been open for 20 seconds.
-        unresolvedAdTimeout = window.setTimeout(() => {
-          if (!ad.getAttribute("data-ad-status") && !ad.getAttribute("data-adsbygoogle-status")) {
-            container.hidden = true;
-          }
-        }, 20_000);
       } catch {
-        requestedRef.current = false;
-        // Ad blockers, offline readers, or unavailable AdSense
-        // should never break the article experience.
+        // Ad blockers and offline readers should not affect the article.
       }
     };
 
     if (typeof IntersectionObserver === "undefined") {
-      displayAd();
-
+      void displayAd();
       return () => {
         active = false;
-        if (unresolvedAdTimeout !== undefined) {
-          window.clearTimeout(unresolvedAdTimeout);
-        }
-        adStatusObserver.disconnect();
       };
     }
 
@@ -125,32 +73,22 @@ export default function AdSense({ className = "" }: AdSenseProps) {
       ([entry]) => {
         if (entry.isIntersecting) {
           observer.disconnect();
-          displayAd();
+          void displayAd();
         }
       },
-      {
-        rootMargin: "600px 0px",
-      },
+      { rootMargin: "600px 0px" },
     );
 
     observer.observe(container);
 
     return () => {
       active = false;
-      if (unresolvedAdTimeout !== undefined) {
-        window.clearTimeout(unresolvedAdTimeout);
-      }
       observer.disconnect();
-      adStatusObserver.disconnect();
     };
   }, []);
 
   return (
-    <aside
-      ref={containerRef}
-      className={`mt-10 min-h-[250px] w-full overflow-hidden ${className}`.trim()}
-      aria-label="Advertisement"
-    >
+    <div ref={containerRef} className="mt-10 min-h-24 overflow-hidden" aria-label="Advertisement">
       <ins
         className="adsbygoogle"
         style={{
@@ -158,10 +96,10 @@ export default function AdSense({ className = "" }: AdSenseProps) {
           textAlign: "center",
         }}
         data-ad-client={ADSENSE_CLIENT}
-        data-ad-slot={ADSENSE_SLOT}
+        data-ad-slot="9755481370"
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
-    </aside>
+    </div>
   );
 }

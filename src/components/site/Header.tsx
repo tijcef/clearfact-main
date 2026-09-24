@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { SocialFollow } from "./SocialMedia";
-import { getCategories, normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
+import logo from "@/assets/logo.jpg";
+import { normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
 import {
-  fallbackNavigationCategories,
-  filterNavigationCategories,
-  type NavigationCategory,
-  type WordPressCategory,
+  mainCategories as MAIN_CATEGORIES,
+  moreCategories as MORE_CATEGORIES,
 } from "@/lib/site-navigation";
 
 type TickerPost = {
@@ -39,8 +37,8 @@ function Logo() {
   return (
     <Link to="/" className="flex items-center gap-3 md:gap-4" aria-label="ClearFact News home">
       <img
-        src="/logo.jpg"
-        alt="ClearFact News logo"
+        src={logo}
+        alt="ClearFact News Logo"
         className="h-11 w-auto object-contain md:h-12"
         width="120"
         height="120"
@@ -60,7 +58,7 @@ function Logo() {
   );
 }
 
-export function Header({ categories = [] }: { categories?: WordPressCategory[] }) {
+export function Header() {
   const routePosts = useRouterState({
     select: (state) =>
       state.matches.flatMap((match) => {
@@ -70,15 +68,6 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
   });
   const routeTickerPosts = routePosts.slice(0, 8);
   const [open, setOpen] = useState(false);
-  const initialCategories = categories.length
-    ? filterNavigationCategories(categories)
-    : fallbackNavigationCategories;
-  const [activeMainCategories, setActiveMainCategories] = useState<NavigationCategory[]>([
-    ...initialCategories.main,
-  ]);
-  const [activeMoreCategories, setActiveMoreCategories] = useState<NavigationCategory[]>([
-    ...initialCategories.more,
-  ]);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tickerPosts, setTickerPosts] = useState<TickerPost[]>(routeTickerPosts);
   const [tickerLoading, setTickerLoading] = useState(routeTickerPosts.length === 0);
@@ -87,36 +76,6 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
   useEffect(() => {
     primePostCache(routePosts);
   }, [routePosts]);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadActiveCategories() {
-      try {
-        const available = await getCategories();
-        const filtered = filterNavigationCategories(available);
-        if (active && (filtered.main.length || filtered.more.length)) {
-          setActiveMainCategories(filtered.main);
-          setActiveMoreCategories(filtered.more);
-        }
-      } catch (error) {
-        if (active) console.error("Unable to load active categories:", error);
-      }
-    }
-
-    void loadActiveCategories();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!categories.length) return;
-
-    const filtered = filterNavigationCategories(categories);
-    setActiveMainCategories(filtered.main);
-    setActiveMoreCategories(filtered.more);
-  }, [categories]);
 
   useEffect(() => {
     let active = true;
@@ -201,16 +160,9 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
           <span className="hidden md:inline">{date} · Nigeria</span>
 
           <div className="flex items-center gap-3 md:gap-4 overflow-x-auto whitespace-nowrap py-2">
-            <SocialFollow compact inverse className="hidden xl:flex" />
-
-            <span className="hidden h-4 w-px bg-primary-foreground/20 xl:block" />
             <Link to="/trust-center" className="inline-flex items-center gap-1 hover:text-gold">
               <ShieldCheck className="h-3.5 w-3.5" />
               Trust Center
-            </Link>
-
-            <Link to="/fact-check" className="hover:text-gold">
-              Fact Check
             </Link>
 
             <Link to="/newsletter" className="hover:text-gold">
@@ -278,6 +230,15 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
             />
           </label>
         </form>
+
+        <Link
+          to="/category/$slug"
+          params={{ slug: "accountability-journalism" }}
+          className="hidden sm:inline-flex shrink-0 items-center gap-1.5 h-9 px-3 rounded-sm bg-gold text-gold-foreground text-sm font-semibold hover:opacity-90"
+        >
+          <ShieldCheck className="h-4 w-4" />
+          Accountability
+        </Link>
       </div>
 
       {/* Category navigation */}
@@ -287,7 +248,7 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
       >
         <div className="container-news flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 py-2 text-sm">
           <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
-            {activeMainCategories.map((category) => (
+            {MAIN_CATEGORIES.map((category) => (
               <Link
                 key={category.slug}
                 to="/category/$slug"
@@ -305,20 +266,18 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
           </div>
 
           <div className="relative">
-            {activeMoreCategories.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setMoreOpen((value) => !value)}
-                className="w-full lg:w-auto text-left px-3 py-2 lg:px-2 lg:py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
-                aria-expanded={moreOpen}
-              >
-                More {moreOpen ? "▲" : "▼"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setMoreOpen((value) => !value)}
+              className="w-full lg:w-auto text-left px-3 py-2 lg:px-2 lg:py-1 rounded-sm whitespace-nowrap font-medium text-foreground/80 hover:text-foreground hover:bg-accent"
+              aria-expanded={moreOpen}
+            >
+              More {moreOpen ? "▲" : "▼"}
+            </button>
 
-            {activeMoreCategories.length > 0 && moreOpen && (
+            {moreOpen && (
               <div className="lg:absolute lg:top-full lg:right-0 mt-1 lg:mt-2 w-full lg:w-60 bg-background border border-border rounded-lg shadow-xl z-[999] overflow-hidden">
-                {activeMoreCategories.map((category) => (
+                {MORE_CATEGORIES.map((category) => (
                   <Link
                     key={category.slug}
                     to="/category/$slug"
@@ -335,15 +294,6 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
               </div>
             )}
           </div>
-
-          {open && (
-            <div className="mt-2 border-t border-border px-3 pt-3 lg:hidden">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Follow ClearFact
-              </p>
-              <SocialFollow />
-            </div>
-          )}
         </div>
       </nav>
 
@@ -380,12 +330,11 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
                 ))}
               </div>
             ) : (
-              <Link
-                to="/"
-                className="whitespace-nowrap text-sm font-medium text-slate-300 hover:text-amber-400"
-              >
-                {tickerLoading ? "Browse the latest verified reports" : "View the latest news"}
-              </Link>
+              <p className="whitespace-nowrap text-sm font-medium text-slate-300">
+                {tickerLoading
+                  ? "Connecting to the live newsroom…"
+                  : "Live updates will resume automatically · Browse the latest verified reports below."}
+              </p>
             )}
           </div>
         </div>

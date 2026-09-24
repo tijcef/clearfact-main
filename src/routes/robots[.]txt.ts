@@ -1,42 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ROBOTS_TXT = `User-agent: *
-Allow: /
-
-Disallow: /admin/
-Disallow: /article/
-Disallow: /auth
-Disallow: /contributor/
-Disallow: /dashboard
-Disallow: /login
-Disallow: /search
-Disallow: /api/
-
-Sitemap: https://clearfact.ng/sitemap.xml
-Sitemap: https://clearfact.ng/news-sitemap.xml
-`;
-
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
-      HEAD: async () => {
-        return new Response(null, {
-          status: 200,
-          headers: {
-            "content-type": "text/plain; charset=utf-8",
-            "cache-control": "public, max-age=3600, s-maxage=86400",
-          },
-        });
-      },
       GET: async () => {
-        return new Response(ROBOTS_TXT, {
-          status: 200,
-          headers: {
-            "content-type": "text/plain; charset=utf-8",
-            "cache-control":
-              "public, max-age=3600, s-maxage=86400",
+        return new Response(
+          `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /contributor
+Disallow: /dashboard
+Disallow: /login
+
+Sitemap: https://clearfact.ng/sitemap.xml
+Sitemap: https://clearfact.ng/news-sitemap.xml`,
+          {
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "public, max-age=3600, s-maxage=86400",
+            },
           },
-        });
+        );
       },
     },
   },

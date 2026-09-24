@@ -1,13 +1,12 @@
-export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
+export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
 
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
-const SERVER_GET_TIMEOUT_MS = 30_000;
+const SERVER_GET_TIMEOUT_MS = 12_500;
 const BROWSER_GET_TIMEOUT_MS = 15_000;
-const WRITE_TIMEOUT_MS = 30_000;
+const WRITE_TIMEOUT_MS = 10_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
-const POST_DETAIL_CACHE_TTL_MS = 5 * 60 * 1_000;
 
 const LIST_FIELDS = [
   "id",
@@ -17,27 +16,11 @@ const LIST_FIELDS = [
   "modified",
   "title",
   "excerpt",
+  "content",
   "categories",
   "featured_media",
   "acf",
-  "clearfact_editorial",
   "authors",
-  "_links",
-  "_embedded",
-].join(",");
-
-const CATEGORY_LIST_FIELDS = [
-  "id",
-  "slug",
-  "date",
-  "date_gmt",
-  "modified",
-  "title",
-  "excerpt",
-  "categories",
-  "featured_media",
-  "acf",
-  "clearfact_editorial",
   "_links",
   "_embedded",
 ].join(",");
@@ -57,99 +40,7 @@ type CloudflareRequestInit = RequestInit & {
 
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<unknown>>();
-const serverGetWaiters: Array<() => void> = [];
-let activeServerGets = 0;
-const postDetailCache = new Map<
-  string,
-  {
-    expiresAt: number;
-    post: any;
-  }
->();
-
-async function withServerGetSlot<T>(task: () => Promise<T>): Promise<T> {
-  if (activeServerGets < 1) {
-    activeServerGets += 1;
-  } else {
-    await new Promise<void>((resolve) => serverGetWaiters.push(resolve));
-  }
-
-  try {
-    return await task();
-  } finally {
-    const next = serverGetWaiters.shift();
-
-    if (next) {
-      next();
-    } else {
-      activeServerGets -= 1;
-    }
-  }
-}
-
-function sanitizePublicAuthor(author: unknown) {
-  if (!author || typeof author !== "object") return author;
-
-  const value = author as Record<string, unknown>;
-
-  return {
-    ...(typeof value.id === "number" ? { id: value.id } : {}),
-    ...(typeof value.name === "string" ? { name: value.name } : {}),
-    ...(typeof value.display_name === "string" ? { display_name: value.display_name } : {}),
-    ...(typeof value.slug === "string" ? { slug: value.slug } : {}),
-    ...(typeof value.description === "string" ? { description: value.description } : {}),
-    ...(typeof value.url === "string" ? { url: value.url } : {}),
-    ...(value.avatar_urls && typeof value.avatar_urls === "object"
-      ? { avatar_urls: value.avatar_urls }
-      : {}),
-  };
-}
-
-function sanitizePublicPost(post: unknown) {
-  if (!post || typeof post !== "object") return post;
-
-  const value = post as Record<string, any>;
-  const embedded = value._embedded;
-
-  return {
-    ...value,
-    ...(Array.isArray(value.authors) ? { authors: value.authors.map(sanitizePublicAuthor) } : {}),
-    ...(embedded && typeof embedded === "object"
-      ? {
-          _embedded: {
-            ...embedded,
-            ...(Array.isArray(embedded.author)
-              ? { author: embedded.author.map(sanitizePublicAuthor) }
-              : {}),
-          },
-        }
-      : {}),
-  };
-}
-
-function sanitizePublicWordPressData<T>(path: string, value: T): T {
-  if (path.startsWith("/posts") && Array.isArray(value)) {
-    return value.map(sanitizePublicPost) as T;
-  }
-
-  if (path.startsWith("/users/")) {
-    return sanitizePublicAuthor(value) as T;
-  }
-
-  return value;
-}
-
-export class WordPressRequestError extends Error {
-  readonly status: number;
-  readonly code?: string;
-
-  constructor(message: string, status: number, code?: string) {
-    super(message);
-    this.name = "WordPressRequestError";
-    this.status = status;
-    this.code = code;
-  }
-}
+const postDetailCache = new Map<string, any>();
 
 export function primePostCache(posts: unknown) {
   if (!Array.isArray(posts)) {
@@ -163,10 +54,7 @@ export function primePostCache(posts: unknown) {
       typeof post.slug === "string" &&
       typeof post.content?.rendered === "string"
     ) {
-      postDetailCache.set(normalizeWpSlug(post.slug), {
-        expiresAt: Date.now() + POST_DETAIL_CACHE_TTL_MS,
-        post,
-      });
+      postDetailCache.set(normalizeWpSlug(post.slug), post);
     }
   });
 }
@@ -236,77 +124,50 @@ async function requestJson<T>(
       };
     }
 
+    const controller = new AbortController();
     const timeoutMs =
       method === "GET"
         ? typeof window === "undefined"
           ? SERVER_GET_TIMEOUT_MS
           : BROWSER_GET_TIMEOUT_MS
         : WRITE_TIMEOUT_MS;
-    const execute = async () => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-      try {
-        const response = await fetch(endpoint, {
-          ...init,
-          signal: controller.signal,
-        });
+    try {
+      const response = await fetch(endpoint, {
+        ...init,
+        signal: controller.signal,
+      });
 
-        if (!response.ok) {
-          let message = `WordPress request failed (${response.status} ${response.statusText})`;
-          let code: string | undefined;
-
-          try {
-            const payload = (await response.json()) as { code?: unknown; message?: unknown };
-
-            if (typeof payload.message === "string" && payload.message.trim()) {
-              message = payload.message.trim();
-            }
-
-            if (typeof payload.code === "string" && payload.code.trim()) {
-              code = payload.code.trim();
-            }
-          } catch {
-            // Some hosts return an HTML error page instead of a WordPress JSON error.
-          }
-
-          throw new WordPressRequestError(message, response.status, code);
-        }
-
-        const value = sanitizePublicWordPressData(path, (await response.json()) as T);
-
-        if (method === "GET") {
-          memoryCache.set(cacheKey, {
-            expiresAt: Date.now() + cacheTtl * 1_000,
-            staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
-            value,
-          });
-        }
-
-        return value;
-      } catch (error) {
-        if (method === "GET" && staleEntry) {
-          console.warn(`Using cached WordPress data after ${endpoint} failed.`);
-          return staleEntry.value as T;
-        }
-
-        if (error instanceof Error && error.name === "AbortError") {
-          throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
-        }
-
-        throw error;
-      } finally {
-        clearTimeout(timeout);
+      if (!response.ok) {
+        throw new Error(`WordPress request failed (${response.status} ${response.statusText})`);
       }
-    };
 
-    const shouldThrottleServerGet =
-      method === "GET" &&
-      typeof window === "undefined" &&
-      path.startsWith("/posts") &&
-      !path.includes("per_page=100");
+      const value = (await response.json()) as T;
 
-    return shouldThrottleServerGet ? withServerGetSlot(execute) : execute();
+      if (method === "GET") {
+        memoryCache.set(cacheKey, {
+          expiresAt: Date.now() + cacheTtl * 1_000,
+          staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
+          value,
+        });
+      }
+
+      return value;
+    } catch (error) {
+      if (method === "GET" && staleEntry) {
+        console.warn(`Using cached WordPress data after ${endpoint} failed.`);
+        return staleEntry.value as T;
+      }
+
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   const pending = request();
@@ -353,38 +214,6 @@ export async function getCategories() {
   );
 }
 
-export type WordPressAuthor = {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  url?: string;
-  link?: string;
-  avatar_urls?: Record<string, string>;
-};
-
-export async function getAuthorById(authorId: number) {
-  return requestJson<WordPressAuthor>(
-    `/users/${authorId}${buildQuery({
-      _fields: "id,name,slug,description,url,link,avatar_urls",
-    })}`,
-    { cacheTtl: 3600 },
-  );
-}
-
-export async function getPostsByAuthor(authorId: number, limit = 24) {
-  const posts = await requestJson<any[]>(
-    `/posts${listQuery({
-      author: authorId,
-      per_page: Math.min(Math.max(limit, 1), 100),
-    })}`,
-    { cacheTtl: 600 },
-  );
-
-  primePostCache(posts);
-  return posts;
-}
-
 export async function getCategoryBySlug(slug: string) {
   const categories = await requestJson<any[]>(
     `/categories${buildQuery({
@@ -425,14 +254,10 @@ export async function searchPosts(query: string, limit = 24) {
 
 export async function getPostBySlug(slug: string) {
   const publicSlug = normalizeWpSlug(slug);
-  const cached = postDetailCache.get(publicSlug);
+  const cachedPost = postDetailCache.get(publicSlug);
 
-  if (cached?.expiresAt && cached.expiresAt > Date.now()) {
-    return cached.post;
-  }
-
-  if (cached) {
-    postDetailCache.delete(publicSlug);
+  if (cachedPost) {
+    return cachedPost;
   }
 
   const containsUnicode = [...publicSlug].some(
@@ -463,12 +288,9 @@ export async function getPostBySlug(slug: string) {
 
 export async function getPostsByCategory(categoryId: number, limit = 24) {
   const posts = await requestJson<any[]>(
-    `/posts${buildQuery({
+    `/posts${listQuery({
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
-      _embed: "wp:featuredmedia",
-      acf_format: "standard",
-      _fields: CATEGORY_LIST_FIELDS,
     })}`,
     { cacheTtl: 600 },
   );
@@ -535,22 +357,17 @@ export async function getComments(postId: number) {
   );
 }
 
-export async function submitComment(postId: number, name: string, content: string) {
-  return requestJson<{
-    id: number;
-    status?: string;
-    author_name?: string;
-    date?: string;
-    content?: { rendered?: string };
-  }>("/comments", {
+export async function submitComment(postId: number, name: string, email: string, content: string) {
+  return requestJson("/comments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       post: postId,
-      author_name: name.trim(),
-      content: content.trim(),
+      author_name: name,
+      author_email: email,
+      content,
     }),
     cacheTtl: 0,
   });
@@ -564,82 +381,34 @@ export type SitemapPost = {
   title?: {
     rendered?: string;
   };
-  excerpt?: {
-    rendered?: string;
-  };
-  content?: {
-    rendered?: string;
-  };
 };
 
-export async function getSitemapPosts(maxPages = 500) {
-  const posts: SitemapPost[] = [];
-  const concurrency = 4;
-
-  for (let firstPage = 1; firstPage <= maxPages; firstPage += concurrency) {
-    const pageNumbers = Array.from(
-      { length: Math.min(concurrency, maxPages - firstPage + 1) },
-      (_, index) => firstPage + index,
-    );
-    const batches = await Promise.all(
-      pageNumbers.map(async (page) => {
-        try {
-          return await requestJson<SitemapPost[]>(
-            `/posts${buildQuery({
-              per_page: 100,
-              page,
-              status: "publish",
-              orderby: "date",
-              order: "desc",
-              _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
-            })}`,
-            { cacheTtl: 900 },
-          );
-        } catch (error) {
-          if (
-            error instanceof WordPressRequestError &&
-            error.status === 400 &&
-            error.code === "rest_post_invalid_page_number"
-          ) {
-            return [];
-          }
-
-          throw new Error(`WordPress sitemap page ${page} failed to load.`, {
-            cause: error,
-          });
-        }
-      }),
-    );
-
-    for (const batch of batches) {
-      posts.push(...batch);
-
-      if (batch.length < 100) {
-        return posts;
-      }
-    }
-  }
-
-  return posts;
-}
-
-/** Fetch only posts eligible for the time-sensitive Google News sitemap. */
-export async function getRecentSitemapPosts(after: string, maxPages = 10) {
+export async function getSitemapPosts(maxPages = 10) {
   const posts: SitemapPost[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {
-    const batch = await requestJson<SitemapPost[]>(
-      `/posts${buildQuery({
-        after,
-        per_page: 100,
-        page,
-        status: "publish",
-        orderby: "date",
-        order: "desc",
-        _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
-      })}`,
-      { cacheTtl: 300 },
-    );
+    let batch: SitemapPost[];
+
+    try {
+      batch = await requestJson<SitemapPost[]>(
+        `/posts${buildQuery({
+          per_page: 100,
+          page,
+          status: "publish",
+          orderby: "date",
+          order: "desc",
+          _fields: "id,slug,date,modified,title",
+        })}`,
+        { cacheTtl: 900 },
+      );
+    } catch (error) {
+      if (posts.length) {
+        console.warn("A later WordPress sitemap page failed; returning the pages already loaded.");
+        break;
+      }
+
+      throw error;
+    }
 
     posts.push(...batch);
 
@@ -709,90 +478,7 @@ export function decodeHtmlEntities(value = "") {
 }
 
 export function stripHtml(value = "") {
-  return decodeHtmlEntities(value.replace(/<[^>]*>/g, ""))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export const MIN_INDEXABLE_ARTICLE_WORDS = 350;
-export const MIN_SOURCED_ARTICLE_WORDS = 220;
-export const MIN_AD_ELIGIBLE_ARTICLE_WORDS = 450;
-
-export type ArticleQuality = {
-  wordCount: number;
-  citationCount: number;
-  paragraphCount: number;
-  headingCount: number;
-  hasUsefulExcerpt: boolean;
-  hasEditorialAddedValue: boolean;
-  reportingType: string;
-  statementBased: boolean;
-  substantialUnlinkedReporting: boolean;
-  indexable: boolean;
-  adEligible: boolean;
-};
-
-/**
- * Conservative public quality gate used for indexing and advertising. It does
- * not attempt to judge whether a story is journalistically "good". Instead it
- * prevents obviously thin pages from being promoted to search engines or used
- * as ad inventory while still keeping the URL available to readers.
- */
-export function getArticleQuality(post: any): ArticleQuality {
-  const html = String(post?.content?.rendered ?? "");
-  const text = stripHtml(html);
-  const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
-  const citationCount = getExternalCitationUrls(html).length;
-  const paragraphCount = (html.match(/<p\b/gi) ?? []).length;
-  const headingCount = (html.match(/<h[2-4]\b/gi) ?? []).length;
-  const excerpt = stripHtml(post?.excerpt?.rendered ?? "");
-  const title = stripHtml(post?.title?.rendered ?? "");
-  const editorial =
-    post?.clearfact_editorial && typeof post.clearfact_editorial === "object"
-      ? post.clearfact_editorial
-      : {};
-  const reportingType = String(editorial.reporting_type ?? "").trim().toLowerCase();
-  const addedValue = stripHtml(String(editorial.added_value ?? ""));
-  const checklistComplete = editorial.checklist_complete === true;
-  const originalReportingTypes = new Set(["original", "primary_analysis", "fact_check"]);
-  const hasEditorialAddedValue =
-    checklistComplete && originalReportingTypes.has(reportingType) && addedValue.length >= 40;
-  const hasUsefulExcerpt = excerpt.length >= 70;
-  const hasUsableTitle = title.length >= 12;
-  const hasArticleStructure = paragraphCount >= 3 || headingCount >= 1;
-  const statementBased =
-    /\b(?:in|according to) (?:a |an )?(?:press )?statement\b|\bstatement (?:issued|released)\b|\bpress release\b/i.test(
-      text,
-    );
-  const hasEvidenceSignal = citationCount >= 1 || hasEditorialAddedValue;
-  const substantialUnlinkedReporting =
-    !statementBased && wordCount >= 700 && paragraphCount >= 8 && headingCount >= 2;
-
-  const indexable =
-    hasUsableTitle &&
-    hasArticleStructure &&
-    hasUsefulExcerpt &&
-    ((wordCount >= MIN_SOURCED_ARTICLE_WORDS && hasEvidenceSignal) ||
-      (wordCount >= MIN_INDEXABLE_ARTICLE_WORDS && substantialUnlinkedReporting));
-
-  const adEligible =
-    indexable &&
-    wordCount >= MIN_AD_ELIGIBLE_ARTICLE_WORDS &&
-    hasEvidenceSignal;
-
-  return {
-    wordCount,
-    citationCount,
-    paragraphCount,
-    headingCount,
-    hasUsefulExcerpt,
-    hasEditorialAddedValue,
-    reportingType,
-    statementBased,
-    substantialUnlinkedReporting,
-    indexable,
-    adEligible,
-  };
+  return decodeHtmlEntities(value.replace(/<[^>]*>/g, "")).trim();
 }
 
 export function proxyWpMediaUrl(sourceUrl?: string) {
@@ -801,7 +487,7 @@ export function proxyWpMediaUrl(sourceUrl?: string) {
   try {
     const url = new URL(sourceUrl, "https://clearfact.ng");
 
-    if (url.hostname === "cms.clearfact.ng" && url.pathname.startsWith(WP_MEDIA_PATH)) {
+    if (url.hostname === "cms.tijcef.org" && url.pathname.startsWith(WP_MEDIA_PATH)) {
       const mediaPath = url.pathname.slice(WP_MEDIA_PATH.length);
       return `/media/${mediaPath}${url.search}`;
     }
@@ -839,46 +525,5 @@ export function getFeaturedImageUrl(
 }
 
 export function proxyWpMediaInHtml(html: string) {
-  return html.replace(/https?:\/\/cms\.clearfact\.ng\/wp-content\/uploads\//gi, "/media/");
-}
-
-export function sanitizeWpArticleHtml(html = "") {
-  return proxyWpMediaInHtml(html)
-    .replace(/[\u200e\u200f\ufeff]/g, "")
-    .replace(/<div[^>]*class=["'][^"']*\bwp-block-spacer\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "")
-    .replace(/(?:<br\s*\/?\s*>\s*){3,}/gi, "<br><br>")
-    .replace(/<p[^>]*>\s*Word\s*<\/p>\s*$/i, "")
-    .replace(/(^|>)\s*Word\s*$/i, "$1")
-    .replace(
-      /<p[^>]*>(?:\s|&nbsp;|&#160;|\u00a0|<br\s*\/?\s*>|<\/?(?:span|strong|em|b|i|small)[^>]*>)*<\/p>/gi,
-      "",
-    )
-    .replace(
-      /<div[^>]*>(?:\s|&nbsp;|&#160;|\u00a0|<br\s*\/?\s*>|<\/?(?:span|strong|em|b|i|small)[^>]*>)*<\/div>/gi,
-      "",
-    )
-    .trim();
-}
-
-export function getExternalCitationUrls(html = "") {
-  const urls = new Set<string>();
-  const linkPattern = /<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi;
-
-  for (const match of html.matchAll(linkPattern)) {
-    try {
-      const url = new URL(decodeHtmlEntities(match[1]), "https://clearfact.ng");
-
-      if (
-        ["http:", "https:"].includes(url.protocol) &&
-        !["clearfact.ng", "www.clearfact.ng", "cms.clearfact.ng"].includes(url.hostname)
-      ) {
-        url.hash = "";
-        urls.add(url.toString());
-      }
-    } catch {
-      // Invalid or non-web links are not citations.
-    }
-  }
-
-  return Array.from(urls).slice(0, 12);
+  return html.replace(/https?:\/\/cms\.tijcef\.org\/wp-content\/uploads\//gi, "/media/");
 }

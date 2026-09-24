@@ -1,14 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
-import { SocialFollow } from "./SocialMedia";
-import { useEffect, useState } from "react";
-import { getCategories } from "@/lib/wordpress";
 import {
-  fallbackNavigationCategories,
-  filterNavigationCategories,
-  type WordPressCategory,
-} from "@/lib/site-navigation";
+  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaXTwitter,
+  FaLinkedin,
+  FaWhatsapp,
+} from "react-icons/fa6";
+import { categories, moreCategories } from "@/lib/site-navigation";
 
 const policy = [
   { to: "/about", label: "About Us" },
@@ -17,46 +18,11 @@ const policy = [
   { to: "/careers", label: "Careers" },
   { to: "/editorial-policy", label: "Editorial Policy" },
   { to: "/corrections", label: "Corrections Policy" },
-  { to: "/transparency", label: "Transparency Dashboard" },
-  { to: "/trust-center", label: "Trust Center" },
   { to: "/privacy", label: "Privacy Policy" },
   { to: "/terms", label: "Terms & Conditions" },
 ];
 
-export function Footer({ categories = [] }: { categories?: WordPressCategory[] }) {
-  const [activeCategories, setActiveCategories] = useState(
-    () =>
-      (categories.length
-        ? filterNavigationCategories(categories)
-        : fallbackNavigationCategories) as ReturnType<typeof filterNavigationCategories>,
-  );
-
-  useEffect(() => {
-    if (categories.length) {
-      setActiveCategories(filterNavigationCategories(categories));
-    }
-  }, [categories]);
-
-  useEffect(() => {
-    let active = true;
-
-    getCategories()
-      .then((available) => {
-        if (active) {
-          const filtered = filterNavigationCategories(available);
-
-          if (filtered.main.length || filtered.more.length) {
-            setActiveCategories(filtered);
-          }
-        }
-      })
-      .catch((error) => console.error("Unable to load active footer categories:", error));
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
+export function Footer() {
   return (
     <footer className="mt-16 bg-primary text-primary-foreground">
       <div className="container-news py-12 grid gap-10 md:grid-cols-4">
@@ -71,36 +37,80 @@ export function Footer({ categories = [] }: { categories?: WordPressCategory[] }
             to a national and global audience.
           </p>
 
-          {/* Contact Information */}
-          <div className="mt-5 space-y-3 text-sm">
-            {/* Office */}
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-gold mt-0.5 shrink-0" />
-
-              <span>32 Demsawo, Jimeta, Yola, Nigeria</span>
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gold" />
+              <span>32 Demsawo, Jimeta, Yola</span>
             </div>
 
-            {/* Email */}
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gold shrink-0" />
-
-              <a href="mailto:info@clearfact.ng" className="hover:text-gold transition-colors">
-                info@clearfact.ng
-              </a>
-            </div>
-
-            {/* Phone */}
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-gold shrink-0" />
-
-              <a href="tel:+2347079405543" className="hover:text-gold transition-colors">
-                +234 707 940 5543
-              </a>
+              <Mail className="h-4 w-4 text-gold" />
+              <span>clearfactmedia@gmail.com</span>
             </div>
           </div>
 
           {/* Social Media */}
-          <SocialFollow inverse className="mt-5" />
+          <div className="mt-4 flex gap-3">
+            <a
+              href="https://x.com/clearfactng"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
+            >
+              <FaXTwitter className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://facebook.com/clearfactng"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
+            >
+              <FaFacebook className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://instagram.com/clearfactng"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
+            >
+              <FaInstagram className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://youtube.com/@clearfactng"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground"
+            >
+              <FaYoutube className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://linkedin.com/company/clearfact-news"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
+            >
+              <FaLinkedin className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://wa.me/2347079405543"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="WhatsApp"
+              className="p-2 rounded-sm bg-primary-foreground/10 hover:bg-gold hover:text-gold-foreground text-xs font-bold"
+            >
+              <FaWhatsapp className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         {/* Sections */}
@@ -108,13 +118,9 @@ export function Footer({ categories = [] }: { categories?: WordPressCategory[] }
           <h4 className="font-serif text-lg mb-3">Sections</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {activeCategories.main.slice(0, 8).map((c) => (
+            {categories.slice(0, 8).map((c) => (
               <li key={c.slug}>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: c.slug }}
-                  className="hover:text-gold transition-colors"
-                >
+                <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}
                 </Link>
               </li>
@@ -127,32 +133,22 @@ export function Footer({ categories = [] }: { categories?: WordPressCategory[] }
           <h4 className="font-serif text-lg mb-3">More</h4>
 
           <ul className="space-y-2 text-sm text-primary-foreground/85">
-            {activeCategories.more.map((c) => (
+            {moreCategories.map((c) => (
               <li key={c.slug}>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: c.slug }}
-                  className="hover:text-gold transition-colors"
-                >
+                <Link to="/category/$slug" params={{ slug: c.slug }} className="hover:text-gold">
                   {c.name}
                 </Link>
               </li>
             ))}
 
             <li>
-              <Link to="/fact-check" className="hover:text-gold transition-colors">
-                Fact Check Center
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/trust-center" className="hover:text-gold transition-colors">
+              <Link to="/trust-center" className="hover:text-gold">
                 Trust Center
               </Link>
             </li>
 
             <li>
-              <Link to="/submit-story" className="hover:text-gold transition-colors">
+              <Link to="/submit-story" className="hover:text-gold">
                 Submit a Story
               </Link>
             </li>
@@ -166,7 +162,7 @@ export function Footer({ categories = [] }: { categories?: WordPressCategory[] }
           <ul className="space-y-2 text-sm text-primary-foreground/85">
             {policy.map((p) => (
               <li key={p.to}>
-                <Link to={p.to} className="hover:text-gold transition-colors">
+                <Link to={p.to} className="hover:text-gold">
                   {p.label}
                 </Link>
               </li>
@@ -180,9 +176,7 @@ export function Footer({ categories = [] }: { categories?: WordPressCategory[] }
         <div className="container-news py-4 flex flex-col md:flex-row gap-2 items-center justify-between text-xs text-primary-foreground/70">
           <span>© {new Date().getFullYear()} ClearFact News. All rights reserved.</span>
 
-          <span className="text-center">
-            Truth over speed · Verification over virality · Transparency over secrecy.
-          </span>
+          <span>Truth over speed · Verification over virality · Transparency over secrecy.</span>
         </div>
       </div>
     </footer>
