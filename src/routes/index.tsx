@@ -8,7 +8,6 @@ import {
 } from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
 import { filterNavigationCategories } from "@/lib/site-navigation";
-import AdSense from "@/components/AdSense";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -49,6 +48,13 @@ export const Route = createFileRoute("/")({
             "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
 
           email: "info@clearfact.ng",
+          publishingPrinciples: "https://clearfact.ng/editorial-policy",
+          correctionsPolicy: "https://clearfact.ng/corrections",
+          founder: {
+            "@type": "Person",
+            name: "Emmanuel Sunday Tijwun",
+            url: "https://clearfact.ng/about",
+          },
 
           address: {
             "@type": "PostalAddress",
@@ -319,6 +325,29 @@ function Home() {
         </section>
       )}
 
+      <section className="mb-12 grid gap-5 rounded-2xl border border-border bg-muted/25 p-6 md:grid-cols-3 md:p-8">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">ClearFact standard</p>
+          <h2 className="mt-2 font-serif text-2xl font-bold">Reporting that adds context</h2>
+        </div>
+        <p className="text-sm leading-7 text-muted-foreground">
+          We aim to go beyond repeating announcements by identifying the underlying record,
+          explaining what is known, distinguishing claims from established facts and linking readers
+          to relevant evidence where available.
+        </p>
+        <div className="flex flex-col items-start gap-2 text-sm font-semibold">
+          <Link to="/editorial-policy" className="text-primary hover:underline">
+            Read our editorial standards →
+          </Link>
+          <Link to="/trust-center" className="text-primary hover:underline">
+            See how verification works →
+          </Link>
+          <Link to="/corrections" className="text-primary hover:underline">
+            Corrections and accountability →
+          </Link>
+        </div>
+      </section>
+
       <form action="/search" method="get" className="mb-12" role="search">
         <label htmlFor="home-search" className="sr-only">
           Search ClearFact News
@@ -360,8 +389,6 @@ function Home() {
           ))}
         </div>
       </section>
-
-      <AdSense className="mb-16" />
 
       {trendingPosts.length > 0 && (
         <section className="mb-16">

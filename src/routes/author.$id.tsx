@@ -5,7 +5,7 @@ import { Loader2, User } from "lucide-react";
 import { VerificationBadge } from "@/components/site/VerificationBadge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { getClearFactAuthorBio } from "@/lib/site-config";
+import { getClearFactAuthorBio, hasCuratedAuthorBio } from "@/lib/site-config";
 import {
   getAuthorById,
   getFeaturedImageUrl,
@@ -70,10 +70,16 @@ export const Route = createFileRoute("/author/$id")({
     }
 
     const { author, posts } = data;
-    const description = getClearFactAuthorBio(author.name);
+    const wordpressDescription = stripHtml(author.description || "");
+    const description =
+      wordpressDescription.length >= 80
+        ? wordpressDescription
+        : getClearFactAuthorBio(author.name);
     const canonical = `https://clearfact.ng/author/${author.id}`;
     const avatar = author.avatar_urls?.["96"] || author.avatar_urls?.["48"];
-    const isSubstantialProfile = description.length >= 100 && posts.length >= 3;
+    const hasSubstantiveBio =
+      wordpressDescription.length >= 80 || hasCuratedAuthorBio(author.name);
+    const isSubstantialProfile = hasSubstantiveBio && posts.length >= 3;
     const schema = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
@@ -132,7 +138,11 @@ function AuthorPage() {
 function WordPressAuthorPage({ data }: { data: WordPressAuthorData }) {
   const { author, posts } = data;
   const avatar = author.avatar_urls?.["96"] || author.avatar_urls?.["48"];
-  const description = getClearFactAuthorBio(author.name);
+  const wordpressDescription = stripHtml(author.description || "");
+  const description =
+    wordpressDescription.length >= 80
+      ? wordpressDescription
+      : getClearFactAuthorBio(author.name);
 
   return (
     <main className="container-news py-10 md:py-14">

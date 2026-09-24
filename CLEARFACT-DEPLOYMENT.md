@@ -29,6 +29,17 @@ second Worker or change the custom domain while deploying this update. Purge
 the existing Cloudflare cache after the deployment so corrected status codes,
 canonical tags and reduced HTML payloads are served immediately.
 
+## Required WordPress quality/SEO plugins
+
+Two plugins in `backend-tools/` are part of this AdSense/search-quality update:
+
+1. Upload and activate `clearfact-headless-seo-guard.zip`. This prevents `cms.clearfact.ng` from behaving like a second public copy of the newsroom, disables the CMS sitemap and consolidates normal WordPress post/category/author URLs to `clearfact.ng`. The REST API, media, wp-admin and previews remain available.
+2. Upload and activate `clearfact-editorial-quality.zip`. This adds the **ClearFact Editorial Value** panel to WordPress posts and exposes a safe `clearfact_editorial` REST field used by the frontend quality gate.
+3. Edit important published stories and complete the editorial-value panel honestly. Add direct links to primary records or credible source material where appropriate, and explain what ClearFact independently added when the story contains original reporting, document/data analysis or fact checking.
+4. Purge WordPress and Cloudflare caches after activating the plugins and after updating a batch of stories.
+
+The public frontend remains available even if the editorial-quality plugin is temporarily absent. In that case it falls back to article structure, excerpt, word count and visible source links, but original-reporting metadata will not be available.
+
 ## WordPress category cleanup
 
 From the existing WordPress installation, run the included one-time taxonomy
@@ -64,21 +75,13 @@ WordPress origin may take several seconds to complete its spam and moderation ch
 Plugin version 1.1.0 also removes Email and Website from the native WordPress
 comment form, keeping it consistent with the name-and-comment-only frontend.
 
-## Brand isolation
+## Author and brand trust signals
 
-The public frontend uses only the ClearFact production domain and
-`cms.clearfact.ng`. WordPress author-profile descriptions and external profile
-URLs are not exposed in rendered page data; author boxes use a ClearFact-specific
-newsroom biography instead. This prevents unrelated affiliations or legacy CMS
-details from appearing as ClearFact branding.
+The public frontend uses the ClearFact production domain and `cms.clearfact.ng` only as its content API/media origin. Author pages prefer a substantive WordPress newsroom biography when one is available and otherwise fall back to a ClearFact-specific biography. Thin author profiles remain `noindex`. Keep each regular author biography factual, role-specific and focused on the writer's reporting background or beat.
 
 ## AdSense account checks
 
-The code now declares the publisher account, uses responsive manual placements
-on the homepage, category pages and articles, and leaves Auto Ads available on
-substantive public content. Ads are not loaded on newsroom, contributor, login,
-error or policy pages. Unfilled or blocked units collapse without breaking the
-page. Account-level controls still have to be completed in Google AdSense:
+The code now keeps the AdSense ownership meta tag and valid `ads.txt`, but it no longer loads ad units on the homepage, category archives or the Fact Check hub. The AdSense script is loaded lazily only when a public article passes the quality gate. An article must be substantive and must also show either a linked external source record or a completed original-value signal from the WordPress editorial checklist before an ad placement can load. Weak articles remain readable but are marked `noindex,follow`, excluded from both sitemaps and withheld from ad inventory. Unfilled or blocked units collapse without breaking the article. Account-level controls still have to be completed in Google AdSense:
 
 1. In **Privacy & messaging**, publish a GDPR message using a Google-certified
    consent management platform for visitors in the EEA, United Kingdom and
@@ -87,9 +90,7 @@ page. Account-level controls still have to be completed in Google AdSense:
    **Policy center** before requesting another review.
 3. Confirm `https://clearfact.ng/ads.txt` is reachable and contains the same
    publisher ID used by the application: `pub-8967021504063466`.
-4. Test in a private browser with extensions disabled. Consent controls should
-   appear where legally required and ads should request only after the page's ad
-   placement approaches the viewport.
+4. Test in a private browser with extensions disabled. Consent controls should appear where legally required. Confirm that archive/policy pages do not request AdSense, and that a quality-eligible article requests its ad only when the placement approaches the viewport.
 
 ## Production checks
 
@@ -107,8 +108,8 @@ page. Account-level controls still have to be completed in Google AdSense:
   redirects to `/category/accountability`.
 - Inspect the rendered HTML and confirm each public indexable page has one
   preferred canonical URL and its expected robots directive.
-- Confirm that WordPress remains available at
-  `https://cms.clearfact.ng/wp-json/wp/v2/posts`.
+- Confirm that WordPress remains available at `https://cms.clearfact.ng/wp-json/wp/v2/posts`, while opening a normal CMS post URL returns a permanent redirect to the matching `clearfact.ng/post/...` page.
+- Open one strong article and one deliberately weak/test article. The strong article should render `index,follow` and appear in the sitemap; the weak article should render `noindex,follow`, stay out of the sitemap and contain no AdSense request.
 - Submit a comment from an article while logged out. It should be accepted or
   held for moderation, not return `rest_comment_login_required`.
 - In Google Search Console, resubmit `/sitemap.xml` and `/news-sitemap.xml`,
@@ -116,6 +117,4 @@ page. Account-level controls still have to be completed in Google AdSense:
   newly published articles. Request indexing only after the live test confirms
   the preferred canonical URL and an `index,follow` robots directive.
 
-The frontend now avoids shipping full article bodies in listing-page HTML,
-keeps preferred category URLs consistent, makes the fact-check hub data-driven,
-and prevents temporary CMS failures from being indexed as empty pages.
+The frontend keeps listing pages lightweight, consolidates preferred URLs, filters thin articles out of search/news sitemaps, surfaces source/editorial transparency on article pages, withholds ad inventory from weak content and prevents temporary CMS failures or duplicate CMS pages from becoming indexable public content.

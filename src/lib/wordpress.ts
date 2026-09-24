@@ -20,6 +20,7 @@ const LIST_FIELDS = [
   "categories",
   "featured_media",
   "acf",
+  "clearfact_editorial",
   "authors",
   "_links",
   "_embedded",
@@ -36,6 +37,7 @@ const CATEGORY_LIST_FIELDS = [
   "categories",
   "featured_media",
   "acf",
+  "clearfact_editorial",
   "_links",
   "_embedded",
 ].join(",");
@@ -95,6 +97,8 @@ function sanitizePublicAuthor(author: unknown) {
     ...(typeof value.name === "string" ? { name: value.name } : {}),
     ...(typeof value.display_name === "string" ? { display_name: value.display_name } : {}),
     ...(typeof value.slug === "string" ? { slug: value.slug } : {}),
+    ...(typeof value.description === "string" ? { description: value.description } : {}),
+    ...(typeof value.url === "string" ? { url: value.url } : {}),
     ...(value.avatar_urls && typeof value.avatar_urls === "object"
       ? { avatar_urls: value.avatar_urls }
       : {}),
@@ -560,6 +564,12 @@ export type SitemapPost = {
   title?: {
     rendered?: string;
   };
+  excerpt?: {
+    rendered?: string;
+  };
+  content?: {
+    rendered?: string;
+  };
 };
 
 export async function getSitemapPosts(maxPages = 500) {
@@ -581,7 +591,7 @@ export async function getSitemapPosts(maxPages = 500) {
               status: "publish",
               orderby: "date",
               order: "desc",
-              _fields: "id,slug,date,modified,title",
+              _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
             })}`,
             { cacheTtl: 900 },
           );
@@ -626,7 +636,7 @@ export async function getRecentSitemapPosts(after: string, maxPages = 10) {
         status: "publish",
         orderby: "date",
         order: "desc",
-        _fields: "id,slug,date,modified,title",
+        _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
       })}`,
       { cacheTtl: 300 },
     );
@@ -702,6 +712,87 @@ export function stripHtml(value = "") {
   return decodeHtmlEntities(value.replace(/<[^>]*>/g, ""))
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export const MIN_INDEXABLE_ARTICLE_WORDS = 350;
+export const MIN_SOURCED_ARTICLE_WORDS = 220;
+export const MIN_AD_ELIGIBLE_ARTICLE_WORDS = 450;
+
+export type ArticleQuality = {
+  wordCount: number;
+  citationCount: number;
+  paragraphCount: number;
+  headingCount: number;
+  hasUsefulExcerpt: boolean;
+  hasEditorialAddedValue: boolean;
+  reportingType: string;
+  statementBased: boolean;
+  substantialUnlinkedReporting: boolean;
+  indexable: boolean;
+  adEligible: boolean;
+};
+
+/**
+ * Conservative public quality gate used for indexing and advertising. It does
+ * not attempt to judge whether a story is journalistically "good". Instead it
+ * prevents obviously thin pages from being promoted to search engines or used
+ * as ad inventory while still keeping the URL available to readers.
+ */
+export function getArticleQuality(post: any): ArticleQuality {
+  const html = String(post?.content?.rendered ?? "");
+  const text = stripHtml(html);
+  const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  const citationCount = getExternalCitationUrls(html).length;
+  const paragraphCount = (html.match(/<p\b/gi) ?? []).length;
+  const headingCount = (html.match(/<h[2-4]\b/gi) ?? []).length;
+  const excerpt = stripHtml(post?.excerpt?.rendered ?? "");
+  const title = stripHtml(post?.title?.rendered ?? "");
+  const editorial =
+    post?.clearfact_editorial && typeof post.clearfact_editorial === "object"
+      ? post.clearfact_editorial
+      : {};
+  const reportingType = String(editorial.reporting_type ?? "").trim().toLowerCase();
+  const addedValue = stripHtml(String(editorial.added_value ?? ""));
+  const checklistComplete = editorial.checklist_complete === true;
+  const originalReportingTypes = new Set(["original", "primary_analysis", "fact_check"]);
+  const hasEditorialAddedValue =
+    checklistComplete && originalReportingTypes.has(reportingType) && addedValue.length >= 40;
+  const hasUsefulExcerpt = excerpt.length >= 70;
+  const hasUsableTitle = title.length >= 12;
+  const hasArticleStructure = paragraphCount >= 3 || headingCount >= 1;
+  const statementBased =
+    /\b(?:in|according to) (?:a |an )?(?:press )?statement\b|\bstatement (?:issued|released)\b|\bpress release\b/i.test(
+      text,
+    );
+  const hasEvidenceSignal = citationCount >= 1 || hasEditorialAddedValue;
+  const substantialUnlinkedReporting =
+    !statementBased && wordCount >= 700 && paragraphCount >= 8 && headingCount >= 2;
+
+  const indexable =
+    hasUsableTitle &&
+    hasArticleStructure &&
+    hasUsefulExcerpt &&
+    ((wordCount >= MIN_SOURCED_ARTICLE_WORDS && hasEvidenceSignal) ||
+      (wordCount >= MIN_INDEXABLE_ARTICLE_WORDS && substantialUnlinkedReporting));
+
+  const adEligible =
+    indexable &&
+    wordCount >= MIN_AD_ELIGIBLE_ARTICLE_WORDS &&
+    hasEvidenceSignal;
+
+  return {
+    wordCount,
+    citationCount,
+    paragraphCount,
+    headingCount,
+    hasUsefulExcerpt,
+    hasEditorialAddedValue,
+    reportingType,
+    statementBased,
+    substantialUnlinkedReporting,
+    indexable,
+    adEligible,
+  };
 }
 
 export function proxyWpMediaUrl(sourceUrl?: string) {

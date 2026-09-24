@@ -17,6 +17,8 @@ const policy = [
   { to: "/careers", label: "Careers" },
   { to: "/editorial-policy", label: "Editorial Policy" },
   { to: "/corrections", label: "Corrections Policy" },
+  { to: "/transparency", label: "Transparency Dashboard" },
+  { to: "/trust-center", label: "Trust Center" },
   { to: "/privacy", label: "Privacy Policy" },
   { to: "/terms", label: "Terms & Conditions" },
 ];

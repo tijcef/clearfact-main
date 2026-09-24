@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getCategories,
+  getArticleQuality,
   getPublicPostPath,
   getSitemapPosts,
   type SitemapPost,
@@ -13,8 +14,6 @@ const STATIC_PATHS = [
   "/",
   "/about",
   "/contact",
-  "/advertise",
-  "/careers",
   "/editorial-policy",
   "/corrections",
   "/privacy",
@@ -22,9 +21,6 @@ const STATIC_PATHS = [
   "/trust-center",
   "/transparency",
   "/fact-check",
-  "/newsletter",
-  "/contribute",
-  "/submit-story",
 ];
 
 type SitemapUrl = {
@@ -56,6 +52,15 @@ function normalizeDate(value?: string | null) {
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
+      HEAD: async () => {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "content-type": "application/xml; charset=utf-8",
+            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+          },
+        });
+      },
       GET: async () => {
         let posts: SitemapPost[] = [];
         let publishedCategories: WordPressCategory[] = [];
@@ -103,7 +108,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         );
 
         const articleUrls: SitemapUrl[] = posts
-          .filter((post) => post.slug)
+          .filter((post) => post.slug && getArticleQuality(post).indexable)
           .map((post) => ({
             loc: `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`,
             lastmod: normalizeDate(post.modified || post.date),

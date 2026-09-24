@@ -5,7 +5,6 @@ import {
   useRouter,
   HeadContent,
   Scripts,
-  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -15,28 +14,9 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getCategories } from "@/lib/wordpress";
-import { ADSENSE_CLIENT, isAdSupportedPath } from "@/lib/site-config";
+import { ADSENSE_CLIENT } from "@/lib/site-config";
 
 const GA_MEASUREMENT_ID = "G-GZZJ1W1D3P";
-
-function AdSenseScript() {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  });
-
-  if (!isAdSupportedPath(pathname)) {
-    return null;
-  }
-
-  return (
-    <script
-      id="clearfact-adsense"
-      async
-      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-      crossOrigin="anonymous"
-    />
-  );
-}
 
 function NotFoundComponent() {
   return (
@@ -270,8 +250,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
           }}
         />
 
-        {/* Google AdSense is limited to substantive public content routes. */}
-        <AdSenseScript />
       </head>
 
       <body>

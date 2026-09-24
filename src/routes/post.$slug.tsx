@@ -3,6 +3,7 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
+  getArticleQuality,
   getExternalCitationUrls,
   getFeaturedImageUrl,
   getPublicPostPath,
@@ -93,6 +94,7 @@ export const Route = createFileRoute("/post/$slug")({
       Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
 
     const citations = getExternalCitationUrls(post.content?.rendered || "");
+    const quality = getArticleQuality(post);
 
     const publishedDate = new Date(post.date).toISOString();
 
@@ -134,6 +136,8 @@ export const Route = createFileRoute("/post/$slug")({
 
           articleSection: categoryName,
 
+          wordCount: quality.wordCount,
+
           isAccessibleForFree: true,
 
           author: {
@@ -154,6 +158,9 @@ export const Route = createFileRoute("/post/$slug")({
             legalName: "ClearFact Media Ltd",
 
             url: SITE_ORIGIN,
+
+            publishingPrinciples: `${SITE_ORIGIN}/editorial-policy`,
+            correctionsPolicy: `${SITE_ORIGIN}/corrections`,
 
             logo: {
               "@type": "ImageObject",
@@ -215,7 +222,9 @@ export const Route = createFileRoute("/post/$slug")({
 
         {
           name: "robots",
-          content: "index,follow,max-image-preview:large",
+          content: quality.indexable
+            ? "index,follow,max-image-preview:large"
+            : "noindex,follow",
         },
 
         {
@@ -409,7 +418,18 @@ function ArticlePage() {
 
   const hasAuthorProfile = Number.isInteger(authorId) && authorId > 0;
 
-  const authorDescription = getClearFactAuthorBio(authorName);
+  const embeddedAuthorDescription = stripHtml(post._embedded?.author?.[0]?.description || "");
+
+  const authorDescription =
+    embeddedAuthorDescription.length >= 80
+      ? embeddedAuthorDescription
+      : getClearFactAuthorBio(authorName);
+
+  const quality = getArticleQuality(post);
+
+  const excerpt = stripHtml(post.excerpt?.rendered || "");
+
+  const editorialAddedValue = stripHtml(post.clearfact_editorial?.added_value || "");
 
   const featuredMedia = post._embedded?.["wp:featuredmedia"]?.[0];
 
@@ -478,9 +498,15 @@ function ArticlePage() {
           </span>
         </div>
 
-        <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-6">
+        <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-4">
           {articleTitle}
         </h1>
+
+        {excerpt.length >= 70 && (
+          <p className="mb-6 max-w-4xl text-lg leading-8 text-muted-foreground md:text-xl">
+            {excerpt}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-8 border-b pb-4">
           <span>
@@ -591,32 +617,67 @@ function ArticlePage() {
           }}
         />
 
-        {externalCitations.length > 0 && (
-          <aside className="mt-10 rounded-xl border border-border bg-muted/30 p-5">
-            <h2 className="font-serif text-xl font-bold">Sources referenced in this report</h2>
+        <aside className="mt-10 rounded-xl border border-border bg-muted/30 p-5 md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">
+                Reporting transparency
+              </p>
+              <h2 className="mt-1 font-serif text-xl font-bold">How to verify this report</h2>
+            </div>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              These external records and reports are linked in the article for reader verification.
-            </p>
+            <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
+              {quality.wordCount.toLocaleString()} words · {externalCitations.length} external source{externalCitations.length === 1 ? "" : "s"}
+            </div>
+          </div>
 
-            <ul className="mt-4 space-y-2 text-sm">
-              {externalCitations.map((url) => (
-                <li key={url}>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all font-medium text-primary hover:underline"
-                  >
-                    {new URL(url).hostname.replace(/^www\./, "")}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </aside>
-        )}
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            ClearFact attributes claims and records inside the article so readers can distinguish
+            sourced information from context and analysis. Material errors are corrected under our
+            published corrections policy.
+          </p>
 
-        <AdSense key={post.id} />
+          {quality.hasEditorialAddedValue && editorialAddedValue && (
+            <div className="mt-4 rounded-lg border border-border bg-background p-4">
+              <h3 className="text-sm font-bold">What ClearFact added</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{editorialAddedValue}</p>
+            </div>
+          )}
+
+          {externalCitations.length > 0 && (
+            <>
+              <h3 className="mt-5 text-sm font-bold">External records and sources linked in this report</h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                {externalCitations.map((url) => (
+                  <li key={url}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all font-medium text-primary hover:underline"
+                    >
+                      {new URL(url).hostname.replace(/^www\./, "")}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
+            <Link to="/editorial-policy" className="text-primary hover:underline">
+              Editorial standards →
+            </Link>
+            <Link to="/corrections" className="text-primary hover:underline">
+              Request a correction →
+            </Link>
+            <Link to="/trust-center" className="text-primary hover:underline">
+              Trust Center →
+            </Link>
+          </div>
+        </aside>
+
+        {quality.adEligible && <AdSense key={post.id} />}
 
         <div className="mt-10 border-t pt-6">
           <h2 className="font-bold text-xl mb-2">About the Author</h2>

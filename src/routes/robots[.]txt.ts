@@ -4,6 +4,7 @@ const ROBOTS_TXT = `User-agent: *
 Allow: /
 
 Disallow: /admin/
+Disallow: /article/
 Disallow: /auth
 Disallow: /contributor/
 Disallow: /dashboard
@@ -18,6 +19,15 @@ Sitemap: https://clearfact.ng/news-sitemap.xml
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
+      HEAD: async () => {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "content-type": "text/plain; charset=utf-8",
+            "cache-control": "public, max-age=3600, s-maxage=86400",
+          },
+        });
+      },
       GET: async () => {
         return new Response(ROBOTS_TXT, {
           status: 200,
