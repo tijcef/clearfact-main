@@ -81,7 +81,7 @@ The public frontend uses the ClearFact production domain and `cms.clearfact.ng` 
 
 ## AdSense account checks
 
-The code now keeps the AdSense ownership meta tag and valid `ads.txt`, but it no longer loads ad units on the homepage, category archives or the Fact Check hub. The AdSense script is loaded lazily only when a public article passes the quality gate. An article must be substantive and must also show either a linked external source record or a completed original-value signal from the WordPress editorial checklist before an ad placement can load. Weak articles remain readable but are marked `noindex,follow`, excluded from both sitemaps and withheld from ad inventory. Unfilled or blocked units collapse without breaking the article. Account-level controls still have to be completed in Google AdSense:
+The code keeps the AdSense ownership meta tag and valid `ads.txt`, and it does not load ad units on the homepage, category archives or the Fact Check hub. Every genuinely published WordPress article remains indexable and belongs in the main sitemap. AdSense eligibility is intentionally separate and stricter: the script is loaded lazily only when a public article passes the ad-quality gate. Articles that do not yet qualify for ads remain indexable and readable; they simply do not request an ad unit. Unfilled or blocked units collapse without breaking the article. Account-level controls still have to be completed in Google AdSense:
 
 1. In **Privacy & messaging**, publish a GDPR message using a Google-certified
    consent management platform for visitors in the EEA, United Kingdom and
@@ -109,7 +109,7 @@ The code now keeps the AdSense ownership meta tag and valid `ads.txt`, but it no
 - Inspect the rendered HTML and confirm each public indexable page has one
   preferred canonical URL and its expected robots directive.
 - Confirm that WordPress remains available at `https://cms.clearfact.ng/wp-json/wp/v2/posts`, while opening a normal CMS post URL returns a permanent redirect to the matching `clearfact.ng/post/...` page.
-- Open one strong article and one deliberately weak/test article. The strong article should render `index,follow` and appear in the sitemap; the weak article should render `noindex,follow`, stay out of the sitemap and contain no AdSense request.
+- Open two published articles, including one with minimal editorial metadata. Both should render `index,follow` and appear in the main sitemap. A page that does not satisfy the separate AdSense quality gate should remain indexable but should not request an ad unit.
 - Submit a comment from an article while logged out. It should be accepted or
   held for moderation, not return `rest_comment_login_required`.
 - In Google Search Console, resubmit `/sitemap.xml` and `/news-sitemap.xml`,
@@ -117,4 +117,4 @@ The code now keeps the AdSense ownership meta tag and valid `ads.txt`, but it no
   newly published articles. Request indexing only after the live test confirms
   the preferred canonical URL and an `index,follow` robots directive.
 
-The frontend keeps listing pages lightweight, consolidates preferred URLs, filters thin articles out of search/news sitemaps, surfaces source/editorial transparency on article pages, withholds ad inventory from weak content and prevents temporary CMS failures or duplicate CMS pages from becoming indexable public content.
+The frontend keeps listing pages lightweight, consolidates preferred URLs, includes every genuinely published article in search discovery, surfaces source/editorial transparency on article pages, withholds ad inventory from pages that do not satisfy the separate ad-quality gate, and prevents temporary CMS failures or duplicate CMS pages from becoming indexable public content.
