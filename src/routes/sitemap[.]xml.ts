@@ -57,7 +57,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+            "cache-control": "public, max-age=0, s-maxage=300, stale-while-revalidate=600",
           },
         });
       },
@@ -141,7 +141,7 @@ ${urls
           status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
-            "cache-control": "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+            "cache-control": "public, max-age=0, s-maxage=300, stale-while-revalidate=600",
           },
         });
       },

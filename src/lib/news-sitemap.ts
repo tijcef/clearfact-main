@@ -1,4 +1,5 @@
 import {
+  getArticleQuality,
   getPublicPostPath,
   getRecentSitemapPosts,
   stripHtml,
@@ -84,7 +85,8 @@ export async function newsSitemapGetResponse() {
       return (
         Number.isFinite(publishedAt) &&
         publishedAt >= cutoff &&
-        Boolean(post.slug)
+        Boolean(post.slug) &&
+        getArticleQuality(post).indexable
       );
     })
     .sort(

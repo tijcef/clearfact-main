@@ -628,18 +628,32 @@ export async function getRecentSitemapPosts(after: string, maxPages = 10) {
   const posts: SitemapPost[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {
-    const batch = await requestJson<SitemapPost[]>(
-      `/posts${buildQuery({
-        after,
-        per_page: 100,
-        page,
-        status: "publish",
-        orderby: "date",
-        order: "desc",
-        _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
-      })}`,
-      { cacheTtl: 300 },
-    );
+    let batch: SitemapPost[];
+
+    try {
+      batch = await requestJson<SitemapPost[]>(
+        `/posts${buildQuery({
+          after,
+          per_page: 100,
+          page,
+          status: "publish",
+          orderby: "date",
+          order: "desc",
+          _fields: "id,slug,date,modified,title,excerpt,content,clearfact_editorial",
+        })}`,
+        { cacheTtl: 300 },
+      );
+    } catch (error) {
+      if (
+        error instanceof WordPressRequestError &&
+        error.status === 400 &&
+        error.code === "rest_post_invalid_page_number"
+      ) {
+        break;
+      }
+
+      throw error;
+    }
 
     posts.push(...batch);
 
@@ -714,7 +728,7 @@ export function stripHtml(value = "") {
     .trim();
 }
 
-export const MIN_INDEXABLE_ARTICLE_WORDS = 350;
+export const MIN_INDEXABLE_ARTICLE_WORDS = 220;
 export const MIN_SOURCED_ARTICLE_WORDS = 220;
 export const MIN_AD_ELIGIBLE_ARTICLE_WORDS = 450;
 
@@ -733,10 +747,11 @@ export type ArticleQuality = {
 };
 
 /**
- * Conservative public quality gate used for indexing and advertising. It does
- * not attempt to judge whether a story is journalistically "good". Instead it
- * prevents obviously thin pages from being promoted to search engines or used
- * as ad inventory while still keeping the URL available to readers.
+ * Public article quality signals used for search indexing and advertising.
+ * Search indexing deliberately uses a simpler, objective threshold so a valid
+ * published story is not hidden merely because optional editorial metadata, a
+ * manual excerpt or an external citation is missing. Ad eligibility remains
+ * stricter and still requires stronger evidence/value signals.
  */
 export function getArticleQuality(post: any): ArticleQuality {
   const html = String(post?.content?.rendered ?? "");
@@ -768,16 +783,19 @@ export function getArticleQuality(post: any): ArticleQuality {
   const substantialUnlinkedReporting =
     !statementBased && wordCount >= 700 && paragraphCount >= 8 && headingCount >= 2;
 
+  // Search engines should be allowed to discover normal, substantive stories
+  // even when optional WordPress editorial fields have not yet been completed.
+  // Keep only genuinely thin/malformed articles out of the index.
   const indexable =
     hasUsableTitle &&
     hasArticleStructure &&
-    hasUsefulExcerpt &&
-    ((wordCount >= MIN_SOURCED_ARTICLE_WORDS && hasEvidenceSignal) ||
-      (wordCount >= MIN_INDEXABLE_ARTICLE_WORDS && substantialUnlinkedReporting));
+    wordCount >= MIN_INDEXABLE_ARTICLE_WORDS;
 
+  // Advertising remains intentionally stricter than search indexing.
   const adEligible =
     indexable &&
     wordCount >= MIN_AD_ELIGIBLE_ARTICLE_WORDS &&
+    hasUsefulExcerpt &&
     hasEvidenceSignal;
 
   return {

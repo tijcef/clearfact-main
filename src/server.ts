@@ -2,6 +2,10 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import {
+  newsSitemapGetResponse,
+  newsSitemapHeadResponse,
+} from "./lib/news-sitemap";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -514,7 +518,7 @@ function machineRouteCacheTtl(request: Request) {
   if (url.search) return null;
 
   if (url.pathname === "/robots.txt") return 86_400;
-  if (url.pathname === "/sitemap.xml") return 900;
+  if (url.pathname === "/sitemap.xml") return 300;
   if (url.pathname === "/news-sitemap.xml") return 300;
 
   return null;
@@ -609,7 +613,12 @@ async function servePage(
   }
 
   const headers = new Headers(response.headers);
-  headers.set("cache-control", `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=86400`);
+  const pathname = new URL(request.url).pathname;
+  const staleWhileRevalidate = pathname === "/sitemap.xml" ? 600 : 86400;
+  headers.set(
+    "cache-control",
+    `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=${staleWhileRevalidate}`,
+  );
 
   let responseBody: ArrayBuffer;
 
@@ -660,6 +669,21 @@ export default {
             },
           },
         );
+      } else if (url.pathname === "/news-sitemap.xml") {
+        if (request.method === "HEAD") {
+          response = newsSitemapHeadResponse();
+        } else if (request.method === "GET") {
+          response = await newsSitemapGetResponse();
+        } else {
+          response = new Response("Method Not Allowed", {
+            status: 405,
+            headers: {
+              allow: "GET, HEAD",
+              "cache-control": "no-store",
+              "content-type": "text/plain; charset=utf-8",
+            },
+          });
+        }
       } else if (url.pathname === "/api/document-verify") {
         const code = url.searchParams.get("code") ?? "";
         if (!code.trim()) {
