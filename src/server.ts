@@ -562,6 +562,11 @@ export default {
     const url = new URL(request.url);
 
     try {
+      if (url.hostname === "www.clearfact.ng") {
+        url.hostname = "clearfact.ng";
+        return withSecurityHeaders(Response.redirect(url.toString(), 301), true);
+      }
+
       const executionContext = ctx as ExecutionContextLike;
       let response: Response;
 

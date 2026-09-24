@@ -7,11 +7,14 @@ export const Route = createFileRoute("/robots.txt")({
         return new Response(
           `User-agent: *
 Allow: /
-Disallow: /admin
+Disallow: /admin/
 Disallow: /auth
-Disallow: /contributor
+Disallow: /contributor/
 Disallow: /dashboard
 Disallow: /login
+Disallow: /search
+Disallow: /article/
+Disallow: /api/
 
 Sitemap: https://clearfact.ng/sitemap.xml
 Sitemap: https://clearfact.ng/news-sitemap.xml`,
