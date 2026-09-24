@@ -1,12 +1,13 @@
-export const WP_API = "https://cms.tijcef.org/wp-json/wp/v2";
+export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
 
 const WP_PROXY = "/api/wp";
 const WP_MEDIA_PATH = "/wp-content/uploads/";
 const DEFAULT_LIST_SIZE = 36;
-const SERVER_GET_TIMEOUT_MS = 12_500;
+const SERVER_GET_TIMEOUT_MS = 30_000;
 const BROWSER_GET_TIMEOUT_MS = 15_000;
-const WRITE_TIMEOUT_MS = 10_000;
+const WRITE_TIMEOUT_MS = 30_000;
 const MEMORY_STALE_TTL_MS = 24 * 60 * 60 * 1_000;
+const POST_DETAIL_CACHE_TTL_MS = 5 * 60 * 1_000;
 
 const LIST_FIELDS = [
   "id",
@@ -16,11 +17,25 @@ const LIST_FIELDS = [
   "modified",
   "title",
   "excerpt",
-  "content",
   "categories",
   "featured_media",
   "acf",
   "authors",
+  "_links",
+  "_embedded",
+].join(",");
+
+const CATEGORY_LIST_FIELDS = [
+  "id",
+  "slug",
+  "date",
+  "date_gmt",
+  "modified",
+  "title",
+  "excerpt",
+  "categories",
+  "featured_media",
+  "acf",
   "_links",
   "_embedded",
 ].join(",");
@@ -40,7 +55,97 @@ type CloudflareRequestInit = RequestInit & {
 
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<unknown>>();
-const postDetailCache = new Map<string, any>();
+const serverGetWaiters: Array<() => void> = [];
+let activeServerGets = 0;
+const postDetailCache = new Map<
+  string,
+  {
+    expiresAt: number;
+    post: any;
+  }
+>();
+
+async function withServerGetSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeServerGets < 1) {
+    activeServerGets += 1;
+  } else {
+    await new Promise<void>((resolve) => serverGetWaiters.push(resolve));
+  }
+
+  try {
+    return await task();
+  } finally {
+    const next = serverGetWaiters.shift();
+
+    if (next) {
+      next();
+    } else {
+      activeServerGets -= 1;
+    }
+  }
+}
+
+function sanitizePublicAuthor(author: unknown) {
+  if (!author || typeof author !== "object") return author;
+
+  const value = author as Record<string, unknown>;
+
+  return {
+    ...(typeof value.id === "number" ? { id: value.id } : {}),
+    ...(typeof value.name === "string" ? { name: value.name } : {}),
+    ...(typeof value.display_name === "string" ? { display_name: value.display_name } : {}),
+    ...(typeof value.slug === "string" ? { slug: value.slug } : {}),
+    ...(value.avatar_urls && typeof value.avatar_urls === "object"
+      ? { avatar_urls: value.avatar_urls }
+      : {}),
+  };
+}
+
+function sanitizePublicPost(post: unknown) {
+  if (!post || typeof post !== "object") return post;
+
+  const value = post as Record<string, any>;
+  const embedded = value._embedded;
+
+  return {
+    ...value,
+    ...(Array.isArray(value.authors) ? { authors: value.authors.map(sanitizePublicAuthor) } : {}),
+    ...(embedded && typeof embedded === "object"
+      ? {
+          _embedded: {
+            ...embedded,
+            ...(Array.isArray(embedded.author)
+              ? { author: embedded.author.map(sanitizePublicAuthor) }
+              : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+function sanitizePublicWordPressData<T>(path: string, value: T): T {
+  if (path.startsWith("/posts") && Array.isArray(value)) {
+    return value.map(sanitizePublicPost) as T;
+  }
+
+  if (path.startsWith("/users/")) {
+    return sanitizePublicAuthor(value) as T;
+  }
+
+  return value;
+}
+
+export class WordPressRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "WordPressRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
 
 export function primePostCache(posts: unknown) {
   if (!Array.isArray(posts)) {
@@ -54,7 +159,10 @@ export function primePostCache(posts: unknown) {
       typeof post.slug === "string" &&
       typeof post.content?.rendered === "string"
     ) {
-      postDetailCache.set(normalizeWpSlug(post.slug), post);
+      postDetailCache.set(normalizeWpSlug(post.slug), {
+        expiresAt: Date.now() + POST_DETAIL_CACHE_TTL_MS,
+        post,
+      });
     }
   });
 }
@@ -124,50 +232,77 @@ async function requestJson<T>(
       };
     }
 
-    const controller = new AbortController();
     const timeoutMs =
       method === "GET"
         ? typeof window === "undefined"
           ? SERVER_GET_TIMEOUT_MS
           : BROWSER_GET_TIMEOUT_MS
         : WRITE_TIMEOUT_MS;
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const execute = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const response = await fetch(endpoint, {
-        ...init,
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`WordPress request failed (${response.status} ${response.statusText})`);
-      }
-
-      const value = (await response.json()) as T;
-
-      if (method === "GET") {
-        memoryCache.set(cacheKey, {
-          expiresAt: Date.now() + cacheTtl * 1_000,
-          staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
-          value,
+      try {
+        const response = await fetch(endpoint, {
+          ...init,
+          signal: controller.signal,
         });
-      }
 
-      return value;
-    } catch (error) {
-      if (method === "GET" && staleEntry) {
-        console.warn(`Using cached WordPress data after ${endpoint} failed.`);
-        return staleEntry.value as T;
-      }
+        if (!response.ok) {
+          let message = `WordPress request failed (${response.status} ${response.statusText})`;
+          let code: string | undefined;
 
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
-      }
+          try {
+            const payload = (await response.json()) as { code?: unknown; message?: unknown };
 
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
+            if (typeof payload.message === "string" && payload.message.trim()) {
+              message = payload.message.trim();
+            }
+
+            if (typeof payload.code === "string" && payload.code.trim()) {
+              code = payload.code.trim();
+            }
+          } catch {
+            // Some hosts return an HTML error page instead of a WordPress JSON error.
+          }
+
+          throw new WordPressRequestError(message, response.status, code);
+        }
+
+        const value = sanitizePublicWordPressData(path, (await response.json()) as T);
+
+        if (method === "GET") {
+          memoryCache.set(cacheKey, {
+            expiresAt: Date.now() + cacheTtl * 1_000,
+            staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
+            value,
+          });
+        }
+
+        return value;
+      } catch (error) {
+        if (method === "GET" && staleEntry) {
+          console.warn(`Using cached WordPress data after ${endpoint} failed.`);
+          return staleEntry.value as T;
+        }
+
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new Error(`WordPress request timed out after ${timeoutMs / 1_000} seconds`);
+        }
+
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+
+    const shouldThrottleServerGet =
+      method === "GET" &&
+      typeof window === "undefined" &&
+      path.startsWith("/posts") &&
+      !path.includes("per_page=100");
+
+    return shouldThrottleServerGet ? withServerGetSlot(execute) : execute();
   };
 
   const pending = request();
@@ -214,6 +349,38 @@ export async function getCategories() {
   );
 }
 
+export type WordPressAuthor = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  url?: string;
+  link?: string;
+  avatar_urls?: Record<string, string>;
+};
+
+export async function getAuthorById(authorId: number) {
+  return requestJson<WordPressAuthor>(
+    `/users/${authorId}${buildQuery({
+      _fields: "id,name,slug,description,url,link,avatar_urls",
+    })}`,
+    { cacheTtl: 3600 },
+  );
+}
+
+export async function getPostsByAuthor(authorId: number, limit = 24) {
+  const posts = await requestJson<any[]>(
+    `/posts${listQuery({
+      author: authorId,
+      per_page: Math.min(Math.max(limit, 1), 100),
+    })}`,
+    { cacheTtl: 600 },
+  );
+
+  primePostCache(posts);
+  return posts;
+}
+
 export async function getCategoryBySlug(slug: string) {
   const categories = await requestJson<any[]>(
     `/categories${buildQuery({
@@ -254,10 +421,14 @@ export async function searchPosts(query: string, limit = 24) {
 
 export async function getPostBySlug(slug: string) {
   const publicSlug = normalizeWpSlug(slug);
-  const cachedPost = postDetailCache.get(publicSlug);
+  const cached = postDetailCache.get(publicSlug);
 
-  if (cachedPost) {
-    return cachedPost;
+  if (cached?.expiresAt && cached.expiresAt > Date.now()) {
+    return cached.post;
+  }
+
+  if (cached) {
+    postDetailCache.delete(publicSlug);
   }
 
   const containsUnicode = [...publicSlug].some(
@@ -288,9 +459,12 @@ export async function getPostBySlug(slug: string) {
 
 export async function getPostsByCategory(categoryId: number, limit = 24) {
   const posts = await requestJson<any[]>(
-    `/posts${listQuery({
+    `/posts${buildQuery({
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
+      _embed: "wp:featuredmedia",
+      acf_format: "standard",
+      _fields: CATEGORY_LIST_FIELDS,
     })}`,
     { cacheTtl: 600 },
   );
@@ -357,17 +531,22 @@ export async function getComments(postId: number) {
   );
 }
 
-export async function submitComment(postId: number, name: string, email: string, content: string) {
-  return requestJson("/comments", {
+export async function submitComment(postId: number, name: string, content: string) {
+  return requestJson<{
+    id: number;
+    status?: string;
+    author_name?: string;
+    date?: string;
+    content?: { rendered?: string };
+  }>("/comments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       post: postId,
-      author_name: name,
-      author_email: email,
-      content,
+      author_name: name.trim(),
+      content: content.trim(),
     }),
     cacheTtl: 0,
   });
@@ -383,32 +562,74 @@ export type SitemapPost = {
   };
 };
 
-export async function getSitemapPosts(maxPages = 10) {
+export async function getSitemapPosts(maxPages = 500) {
+  const posts: SitemapPost[] = [];
+  const concurrency = 4;
+
+  for (let firstPage = 1; firstPage <= maxPages; firstPage += concurrency) {
+    const pageNumbers = Array.from(
+      { length: Math.min(concurrency, maxPages - firstPage + 1) },
+      (_, index) => firstPage + index,
+    );
+    const batches = await Promise.all(
+      pageNumbers.map(async (page) => {
+        try {
+          return await requestJson<SitemapPost[]>(
+            `/posts${buildQuery({
+              per_page: 100,
+              page,
+              status: "publish",
+              orderby: "date",
+              order: "desc",
+              _fields: "id,slug,date,modified,title",
+            })}`,
+            { cacheTtl: 900 },
+          );
+        } catch (error) {
+          if (
+            error instanceof WordPressRequestError &&
+            error.status === 400 &&
+            error.code === "rest_post_invalid_page_number"
+          ) {
+            return [];
+          }
+
+          throw new Error(`WordPress sitemap page ${page} failed to load.`, {
+            cause: error,
+          });
+        }
+      }),
+    );
+
+    for (const batch of batches) {
+      posts.push(...batch);
+
+      if (batch.length < 100) {
+        return posts;
+      }
+    }
+  }
+
+  return posts;
+}
+
+/** Fetch only posts eligible for the time-sensitive Google News sitemap. */
+export async function getRecentSitemapPosts(after: string, maxPages = 10) {
   const posts: SitemapPost[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {
-    let batch: SitemapPost[];
-
-    try {
-      batch = await requestJson<SitemapPost[]>(
-        `/posts${buildQuery({
-          per_page: 100,
-          page,
-          status: "publish",
-          orderby: "date",
-          order: "desc",
-          _fields: "id,slug,date,modified,title",
-        })}`,
-        { cacheTtl: 900 },
-      );
-    } catch (error) {
-      if (posts.length) {
-        console.warn("A later WordPress sitemap page failed; returning the pages already loaded.");
-        break;
-      }
-
-      throw error;
-    }
+    const batch = await requestJson<SitemapPost[]>(
+      `/posts${buildQuery({
+        after,
+        per_page: 100,
+        page,
+        status: "publish",
+        orderby: "date",
+        order: "desc",
+        _fields: "id,slug,date,modified,title",
+      })}`,
+      { cacheTtl: 300 },
+    );
 
     posts.push(...batch);
 
@@ -478,7 +699,9 @@ export function decodeHtmlEntities(value = "") {
 }
 
 export function stripHtml(value = "") {
-  return decodeHtmlEntities(value.replace(/<[^>]*>/g, "")).trim();
+  return decodeHtmlEntities(value.replace(/<[^>]*>/g, ""))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function proxyWpMediaUrl(sourceUrl?: string) {
@@ -487,7 +710,7 @@ export function proxyWpMediaUrl(sourceUrl?: string) {
   try {
     const url = new URL(sourceUrl, "https://clearfact.ng");
 
-    if (url.hostname === "cms.tijcef.org" && url.pathname.startsWith(WP_MEDIA_PATH)) {
+    if (url.hostname === "cms.clearfact.ng" && url.pathname.startsWith(WP_MEDIA_PATH)) {
       const mediaPath = url.pathname.slice(WP_MEDIA_PATH.length);
       return `/media/${mediaPath}${url.search}`;
     }
@@ -525,5 +748,46 @@ export function getFeaturedImageUrl(
 }
 
 export function proxyWpMediaInHtml(html: string) {
-  return html.replace(/https?:\/\/cms\.tijcef\.org\/wp-content\/uploads\//gi, "/media/");
+  return html.replace(/https?:\/\/cms\.clearfact\.ng\/wp-content\/uploads\//gi, "/media/");
+}
+
+export function sanitizeWpArticleHtml(html = "") {
+  return proxyWpMediaInHtml(html)
+    .replace(/[\u200e\u200f\ufeff]/g, "")
+    .replace(/<div[^>]*class=["'][^"']*\bwp-block-spacer\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "")
+    .replace(/(?:<br\s*\/?\s*>\s*){3,}/gi, "<br><br>")
+    .replace(/<p[^>]*>\s*Word\s*<\/p>\s*$/i, "")
+    .replace(/(^|>)\s*Word\s*$/i, "$1")
+    .replace(
+      /<p[^>]*>(?:\s|&nbsp;|&#160;|\u00a0|<br\s*\/?\s*>|<\/?(?:span|strong|em|b|i|small)[^>]*>)*<\/p>/gi,
+      "",
+    )
+    .replace(
+      /<div[^>]*>(?:\s|&nbsp;|&#160;|\u00a0|<br\s*\/?\s*>|<\/?(?:span|strong|em|b|i|small)[^>]*>)*<\/div>/gi,
+      "",
+    )
+    .trim();
+}
+
+export function getExternalCitationUrls(html = "") {
+  const urls = new Set<string>();
+  const linkPattern = /<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi;
+
+  for (const match of html.matchAll(linkPattern)) {
+    try {
+      const url = new URL(decodeHtmlEntities(match[1]), "https://clearfact.ng");
+
+      if (
+        ["http:", "https:"].includes(url.protocol) &&
+        !["clearfact.ng", "www.clearfact.ng", "cms.clearfact.ng"].includes(url.hostname)
+      ) {
+        url.hash = "";
+        urls.add(url.toString());
+      }
+    } catch {
+      // Invalid or non-web links are not citations.
+    }
+  }
+
+  return Array.from(urls).slice(0, 12);
 }

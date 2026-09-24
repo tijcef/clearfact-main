@@ -12,7 +12,9 @@ export const Route = createFileRoute("/newsletter")({
       },
       { property: "og:title", content: "The Morning Verify Newsletter" },
       { property: "og:description", content: "Five verified stories, every weekday." },
+      { property: "og:url", content: "https://clearfact.ng/newsletter" },
     ],
+    links: [{ rel: "canonical", href: "https://clearfact.ng/newsletter" }],
   }),
   component: () => (
     <div className="container-news py-12 md:py-16">

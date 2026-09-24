@@ -1,21 +1,29 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getFeaturedImageUrl, getPosts, normalizeWpSlug, stripHtml } from "../lib/wordpress";
+import {
+  getCategories,
+  getFeaturedImageUrl,
+  getPosts,
+  normalizeWpSlug,
+  stripHtml,
+} from "../lib/wordpress";
 import CategorySection from "@/components/home/CategorySection";
+import { filterNavigationCategories } from "@/lib/site-navigation";
+import AdSense from "@/components/AdSense";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {
-      const posts = await getPosts(24);
+      const [posts, categories] = await Promise.all([getPosts(24), getCategories()]);
 
       return {
         posts: Array.isArray(posts) ? posts : [],
+        categories: Array.isArray(categories) ? categories : [],
       };
     } catch (error) {
       console.error("Homepage posts failed to load:", error);
-
-      return {
-        posts: [],
-      };
+      throw new Error("The ClearFact newsroom is temporarily unavailable.", {
+        cause: error,
+      });
     }
   },
 
@@ -29,7 +37,7 @@ export const Route = createFileRoute("/")({
           "@id": "https://clearfact.ng/#organization",
 
           name: "ClearFact News",
-          legalName: "Clearfact Media Ltd",
+          legalName: "ClearFact Media Ltd",
           url: "https://clearfact.ng/",
 
           logo: {
@@ -40,7 +48,7 @@ export const Route = createFileRoute("/")({
           description:
             "ClearFact News is an independent Nigerian newsroom delivering verified, transparent and timely journalism.",
 
-          email: "clearfactmedia@gmail.com",
+          email: "info@clearfact.ng",
 
           address: {
             "@type": "PostalAddress",
@@ -154,7 +162,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { posts } = Route.useLoaderData();
+  const { posts, categories } = Route.useLoaderData();
 
   if (!posts.length) {
     return (
@@ -186,6 +194,7 @@ function Home() {
   const latestPosts = posts.slice(5, 11);
 
   const trendingPosts = posts.filter((post: any) => post.acf?.trending);
+  const homepageCategories = filterNavigationCategories(categories).all;
 
   const getVerificationColor = (status: string) => {
     switch (status) {
@@ -352,6 +361,8 @@ function Home() {
         </div>
       </section>
 
+      <AdSense className="mb-16" />
+
       {trendingPosts.length > 0 && (
         <section className="mb-16">
           <h2 className="text-4xl font-black mb-8">Trending News</h2>
@@ -368,22 +379,14 @@ function Home() {
         </section>
       )}
 
-      <CategorySection title="News" slug="news" posts={posts} />
-      <CategorySection title="Politics" slug="politics" posts={posts} />
-      <CategorySection title="Crime & Security" slug="crime-security" posts={posts} />
-      <CategorySection title="Law & Judiciary" slug="law-judiciary" posts={posts} />
-      <CategorySection title="Business" slug="business" posts={posts} />
-      <CategorySection title="Investigations" slug="investigations" posts={posts} />
-      <CategorySection
-        title="Accountability Journalism"
-        slug="accountability-journalism"
-        posts={posts}
-      />
-      <CategorySection title="Education" slug="education" posts={posts} />
-      <CategorySection title="Health" slug="health" posts={posts} />
-      <CategorySection title="Technology" slug="technology" posts={posts} />
-      <CategorySection title="Opportunities" slug="opportunities" posts={posts} />
-      <CategorySection title="Entertainment" slug="entertainment" posts={posts} />
+      {homepageCategories.map((category) => (
+        <CategorySection
+          key={category.slug}
+          title={category.name}
+          slug={category.slug}
+          posts={posts}
+        />
+      ))}
 
       <section className="content-auto mb-16 rounded-2xl bg-primary p-8 text-primary-foreground md:flex md:items-center md:justify-between md:gap-8 md:p-12">
         <div>

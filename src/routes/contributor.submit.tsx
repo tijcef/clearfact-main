@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { screenSubmission } from "@/lib/contributor.functions";
-import { categories, moreCategories } from "@/lib/site-navigation";
+import { fallbackEditorialCategories } from "@/lib/site-navigation";
 import { toast } from "sonner";
 import { Loader2, MapPin, Plus, UploadCloud, X, Sparkles, Send, Save } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Source = { title: string; url: string };
 type Evidence = { path: string; name: string; type: string };
+const CATEGORIES = fallbackEditorialCategories;
 
 export const Route = createFileRoute("/contributor/submit")({
   component: SubmitForm,
@@ -283,7 +284,7 @@ function SubmitForm() {
             onChange={(e) => setCategory(e.target.value)}
             className="h-10 w-full px-3 rounded-sm border border-border bg-background"
           >
-            {categories.map((c) => (
+            {CATEGORIES.map((c) => (
               <option key={c.slug}>{c.name}</option>
             ))}
           </select>

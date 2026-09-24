@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getComments, submitComment } from "@/lib/wordpress";
+import { getComments, submitComment, WordPressRequestError } from "@/lib/wordpress";
+
+type Feedback = {
+  kind: "error" | "success";
+  message: string;
+};
 
 export default function Comments({ postId }: { postId: number }) {
   const [comments, setComments] = useState<any[]>([]);
@@ -8,8 +13,9 @@ export default function Comments({ postId }: { postId: number }) {
   const sectionRef = useRef<HTMLElement>(null);
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -54,20 +60,60 @@ export default function Comments({ postId }: { postId: number }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
+
+    if (!name.trim() || !content.trim()) {
+      setFeedback({ kind: "error", message: "Please enter your name and comment." });
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      await submitComment(postId, name, email, content);
-
-      alert("Comment submitted successfully.");
+      const submittedName = name.trim();
+      const submitted = await submitComment(postId, name, content);
 
       setName("");
-      setEmail("");
       setContent("");
 
-      void loadComments();
+      if (submitted.status === "hold") {
+        setFeedback({
+          kind: "success",
+          message: "Your comment has been received and is awaiting moderation.",
+        });
+      } else {
+        setFeedback({ kind: "success", message: "Your comment has been published." });
+
+        if (submitted.id && typeof submitted.content?.rendered === "string") {
+          const publishedComment = {
+            ...submitted,
+            author_name: submitted.author_name || submittedName,
+          };
+
+          setComments((current) =>
+            current.some((comment) => comment.id === submitted.id)
+              ? current
+              : [...current, publishedComment],
+          );
+        } else {
+          await loadComments();
+        }
+      }
     } catch (error) {
       console.error(error);
-      alert("Failed to submit comment.");
+
+      const message =
+        error instanceof WordPressRequestError && error.code === "rest_comment_login_required"
+          ? "Commenting is temporarily unavailable. Please try again shortly."
+          : error instanceof WordPressRequestError
+            ? error.message
+            : error instanceof Error && error.message.includes("timed out")
+              ? "The comment server is responding slowly. Please wait a moment and try again."
+              : "We could not submit your comment. Please try again.";
+
+      setFeedback({ kind: "error", message });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -81,15 +127,8 @@ export default function Comments({ postId }: { postId: number }) {
           placeholder="Your Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          required
-          className="w-full border rounded-lg p-3"
-        />
-
-        <input
-          type="email"
-          placeholder="Your Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="name"
+          maxLength={100}
           required
           className="w-full border rounded-lg p-3"
         />
@@ -99,12 +138,28 @@ export default function Comments({ postId }: { postId: number }) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
+          maxLength={2000}
           rows={5}
           className="w-full border rounded-lg p-3"
         />
 
-        <button type="submit" className="bg-primary text-white px-5 py-3 rounded-lg">
-          Post Comment
+        {feedback ? (
+          <p
+            role={feedback.kind === "error" ? "alert" : "status"}
+            className={
+              feedback.kind === "error" ? "text-sm text-destructive" : "text-sm text-green-700"
+            }
+          >
+            {feedback.message}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="bg-primary text-white px-5 py-3 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Submitting…" : "Post Comment"}
         </button>
       </form>
 
