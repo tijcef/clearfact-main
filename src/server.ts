@@ -121,12 +121,13 @@ function getDefaultCache() {
 }
 
 function runInBackground(ctx: ExecutionContextLike, promise: Promise<unknown>) {
+  const safePromise = promise.catch((error) => console.error("Background cache refresh failed:", error));
   if (ctx.waitUntil) {
-    ctx.waitUntil(promise);
+    ctx.waitUntil(safePromise);
     return;
   }
 
-  void promise;
+  void safePromise;
 }
 
 function withCacheStatus(response: Response, status: "HIT" | "MISS" | "STALE") {
@@ -144,7 +145,7 @@ function withCacheStatus(response: Response, status: "HIT" | "MISS" | "STALE") {
 function withSecurityHeaders(response: Response, isHttps = true) {
   const headers = new Headers(response.headers);
 
-  headers.set("x-clearfact-build", "v6-seo-hardening");
+  headers.set("x-clearfact-build", "v7-indexing-recovery");
   headers.set("x-content-type-options", "nosniff");
   headers.set("x-frame-options", "SAMEORIGIN");
   headers.set("referrer-policy", "strict-origin-when-cross-origin");
@@ -179,9 +180,16 @@ async function fetchWithTimeout(
   }
 }
 
+function freshCacheKey(request: Request) {
+  const url = new URL(request.url);
+  url.searchParams.set("__clearfact_cache_version", "v7");
+  return new Request(url.toString(), { method: "GET" });
+}
+
 function staleCacheKey(request: Request, namespace: "page" | "wp") {
   const url = new URL(request.url);
   url.searchParams.set("__clearfact_stale", namespace);
+  url.searchParams.set("__clearfact_cache_version", "v7");
 
   return new Request(url.toString(), {
     method: "GET",
@@ -228,7 +236,7 @@ function cacheFreshAndStale(
   runInBackground(
     ctx,
     Promise.all([
-      cache.put(request, response.clone()),
+      cache.put(freshCacheKey(request), response.clone()),
       cache.put(staleCacheKey(request, namespace), staleResponse),
     ]),
   );
@@ -272,7 +280,7 @@ async function proxyWordPressRequest(
   }
 
   if (cache) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(freshCacheKey(request));
 
     if (cached) {
       return withCacheStatus(cached, "HIT");
@@ -426,7 +434,7 @@ async function proxyWordPressMedia(request: Request, ctx: ExecutionContextLike) 
   const cache = getDefaultCache();
 
   if (cache) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(freshCacheKey(request));
 
     if (cached) {
       return withCacheStatus(cached, "HIT");
@@ -494,7 +502,7 @@ async function proxyWordPressMedia(request: Request, ctx: ExecutionContextLike) 
   });
 
   if (cache) {
-    runInBackground(ctx, cache.put(request, response.clone()));
+    runInBackground(ctx, cache.put(freshCacheKey(request), response.clone()));
   }
 
   return withCacheStatus(response, "MISS");
@@ -525,6 +533,7 @@ function pageCacheTtl(request: Request) {
   // Keep the homepage uncached at the Worker layer while Google indexing is
   // being stabilised. This prevents an old regional 404 from persisting at edge.
   if (url.pathname === "/") return null;
+  if (shouldNoIndexPath(url.pathname)) return null;
   if (url.pathname.startsWith("/post/")) return 600;
   if (url.pathname.startsWith("/category/")) return 300;
   return 900;
@@ -568,7 +577,7 @@ async function servePage(
   const cache = ttl ? getDefaultCache() : undefined;
 
   if (cache) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(freshCacheKey(request));
 
     if (cached) {
       return withCacheStatus(cached, "HIT");
@@ -646,7 +655,7 @@ async function servePage(
     responseBody = await response.arrayBuffer();
   } catch (error) {
     console.error("Page response was interrupted before caching:", error);
-    return response;
+    return brandedErrorResponse();
   }
 
   // Buffer the rendered response before cloning it into fresh and stale cache
@@ -668,7 +677,7 @@ function escapeFallbackHtml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -677,7 +686,7 @@ function plainTextFromWp(value: unknown) {
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '\"')
+    .replace(/&quot;/gi, '"')
     .replace(/&#039;|&#39;/gi, "'")
     .replace(/\s+/g, " ")
     .trim();
@@ -855,7 +864,7 @@ export default {
         if (
           url.pathname === "/" &&
           (request.method === "GET" || request.method === "HEAD") &&
-          (response.status === 404 || response.status === 410)
+          (response.status === 404 || response.status === 410 || response.status >= 500)
         ) {
           response = await homepageFallbackResponse(request.method);
         }
@@ -890,7 +899,10 @@ export default {
       return withSecurityHeaders(response, url.protocol === "https:");
     } catch (error) {
       console.error(error);
-      return withSecurityHeaders(brandedErrorResponse(), url.protocol === "https:");
+      const failure = url.pathname === "/" && ["GET", "HEAD"].includes(request.method)
+        ? await homepageFallbackResponse(request.method)
+        : brandedErrorResponse();
+      return withSecurityHeaders(failure, url.protocol === "https:");
     }
   },
 };

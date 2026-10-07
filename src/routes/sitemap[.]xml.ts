@@ -113,7 +113,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           .filter((post) => Boolean(post.slug))
           .map((post) => ({
             loc: `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`,
-            lastmod: normalizeDate(post.modified || post.date),
+            lastmod: normalizeDate(post.modified_gmt ? `${post.modified_gmt.replace(/Z$/, "")}Z` : post.modified || post.date),
           }));
 
         const uniqueUrls = new Map<string, SitemapUrl>();

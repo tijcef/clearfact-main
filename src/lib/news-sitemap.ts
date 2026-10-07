@@ -18,7 +18,7 @@ function escapeXml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
 
@@ -26,9 +26,13 @@ function getPostTitle(post: SitemapPost) {
   return stripHtml(post.title?.rendered ?? "").trim();
 }
 
+function publicationTime(post: SitemapPost) {
+  return post.date_gmt ? `${post.date_gmt.replace(/Z$/, "")}Z` : post.date;
+}
+
 function newsUrl(post: SitemapPost) {
   const title = safeCdata(getPostTitle(post));
-  const publicationDate = new Date(post.date).toISOString();
+  const publicationDate = new Date(publicationTime(post)).toISOString();
   const postUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
   return `  <url>
@@ -77,21 +81,23 @@ export async function newsSitemapGetResponse() {
     });
   }
 
-  const recentPosts = posts
+  const recentPosts = Array.from(new Map(posts.map((post) => [post.slug, post])).values())
     .filter((post) => {
-      const publishedAt = new Date(post.date).getTime();
+      const publishedAt = new Date(publicationTime(post)).getTime();
 
       return (
         Number.isFinite(publishedAt) &&
         publishedAt >= cutoff &&
+        publishedAt <= Date.now() &&
+        Boolean(getPostTitle(post)) &&
         Boolean(post.slug)
       );
     })
     .sort(
       (a, b) =>
-        new Date(b.date).getTime() -
-        new Date(a.date).getTime(),
-    );
+        new Date(publicationTime(b)).getTime() -
+        new Date(publicationTime(a)).getTime(),
+    ).slice(0, 1000);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset
