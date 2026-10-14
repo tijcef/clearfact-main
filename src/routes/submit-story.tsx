@@ -37,8 +37,16 @@ function SubmitStory() {
     const story = String(form.get("story") || "").trim();
     const evidence = String(form.get("evidence") || "").trim();
     const contact = String(form.get("contact") || "Not provided").trim();
+    const senderName = String(form.get("sender_name") || "").trim();
+    const publishName = form.get("name_credit") === "publish";
+    if (publishName && !senderName) {
+      const nameInput = event.currentTarget.elements.namedItem("sender_name") as HTMLInputElement;
+      nameInput.setCustomValidity("Enter the name you would like published, or choose to keep your name private.");
+      nameInput.reportValidity();
+      return;
+    }
     const body = encodeURIComponent(
-      `Story details:\n${story}\n\nSupporting evidence or links:\n${evidence || "None listed"}\n\nPreferred contact:\n${contact}`,
+      `Sender name (for editorial use): ${senderName || "Not provided"}\nName publication preference: ${publishName ? "Permission to publish with my name: " + senderName : "Keep my name private; do not publish it"}\n\nStory details:\n${story}\n\nSupporting evidence or links:\n${evidence || "None listed"}\n\nPreferred contact:\n${contact}`,
     );
 
     window.location.href = `mailto:editor@clearfact.ng?subject=${encodeURIComponent(`News tip — ${subject}`)}&body=${body}`;
@@ -125,6 +133,37 @@ function SubmitStory() {
                 Give our newsroom enough information to understand and assess your submission.
               </p>
             </div>
+
+            <fieldset className="rounded-sm border border-border p-4 space-y-3">
+              <legend className="px-1 text-sm font-semibold">How should we credit you?</legend>
+              <label className="flex items-start gap-3 text-sm">
+                <input type="radio" name="name_credit" value="private" defaultChecked onChange={(event) => {
+                  const nameInput = event.currentTarget.form?.elements.namedItem("sender_name") as HTMLInputElement | null;
+                  nameInput?.setCustomValidity("");
+                }} className="mt-1 accent-primary" />
+                <span>Keep my name private. Do not publish it.</span>
+              </label>
+              <label className="flex items-start gap-3 text-sm">
+                <input type="radio" name="name_credit" value="publish" className="mt-1 accent-primary" />
+                <span>You may publish this story with my name.</span>
+              </label>
+              <label htmlFor="tip-name" className="text-sm font-medium block">Your name or preferred published credit</label>
+              <input
+                id="tip-name"
+                name="sender_name"
+                maxLength={120}
+                autoComplete="name"
+                onChange={(event) => event.currentTarget.setCustomValidity("")}
+                className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
+                placeholder="Required if you want your name published"
+              />
+              <p className="text-xs text-muted-foreground leading-5">
+                If you choose to keep your name private, you may leave the name field blank.
+                Your email address and any details you send remain visible to the editorial team.
+                This preference controls public credit; it does not make email anonymous.
+                Editors will review your story and credit preference before publication.
+              </p>
+            </fieldset>
 
             <div>
               <label htmlFor="tip-subject" className="text-sm font-medium block mb-2">
