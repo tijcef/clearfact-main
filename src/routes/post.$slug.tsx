@@ -86,12 +86,12 @@ export const Route = createFileRoute("/post/$slug")({
 
     const author = post._embedded?.author?.[0];
 
-    const authorName = author?.name || post.authors?.[0]?.display_name || SITE_NAME;
+    const authorName = post.clearfact_column?.byline || author?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
     const authorId = Number(author?.id || post.author || 0);
 
     const authorUrl =
-      Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
+      !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
 
     const citations = getExternalCitationUrls(post.content?.rendered || "");
     const quality = getArticleQuality(post);
@@ -412,18 +412,18 @@ function ArticlePage() {
   const categorySlug = category ? getPublicCategorySlug(category.slug) : "news";
 
   const authorName =
-    post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
+    post.clearfact_column?.byline || post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
   const authorId = Number(post._embedded?.author?.[0]?.id || post.author || 0);
 
-  const hasAuthorProfile = Number.isInteger(authorId) && authorId > 0;
+  const hasAuthorProfile = !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0;
 
   const embeddedAuthorDescription = stripHtml(post._embedded?.author?.[0]?.description || "");
 
-  const authorDescription =
+  const authorDescription = post.clearfact_column?.designation || (
     embeddedAuthorDescription.length >= 80
       ? embeddedAuthorDescription
-      : getClearFactAuthorBio(authorName);
+      : getClearFactAuthorBio(authorName));
 
   const quality = getArticleQuality(post);
 
@@ -497,6 +497,14 @@ function ArticlePage() {
             {categoryName}
           </span>
         </div>
+
+        {post.clearfact_column?.name && (
+          <p className="mb-3 text-sm font-semibold text-primary">
+            <Link to="/category/$slug" params={{ slug: "the-public-conscience" }}>{post.clearfact_column.name}</Link>
+            <span className="ml-3 text-muted-foreground">Opinion / Commentary</span>
+          </p>
+        )}
+        {post.clearfact_column?.designation && <p className="mb-4 text-sm text-muted-foreground">{post.clearfact_column.designation}</p>}
 
         <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-4">
           {articleTitle}

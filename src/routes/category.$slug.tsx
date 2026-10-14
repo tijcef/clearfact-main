@@ -122,7 +122,9 @@ export const Route = createFileRoute("/category/$slug")({
     const categoryTitle =
       categoryName.toLowerCase() === "news"
         ? "Latest News | ClearFact News"
-        : `${categoryName} News | ClearFact News`;
+        : ["opinion-commentary", "the-public-conscience", "video"].includes(category.slug)
+          ? `${categoryName} | ClearFact News`
+          : `${categoryName} News | ClearFact News`;
 
     const description =
       category?.description?.replace(/<[^>]+>/g, "") ||

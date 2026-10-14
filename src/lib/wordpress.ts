@@ -21,6 +21,7 @@ const LIST_FIELDS = [
   "featured_media",
   "acf",
   "clearfact_editorial",
+  "clearfact_column",
   "authors",
   "_links",
   "_embedded",
@@ -38,6 +39,7 @@ const CATEGORY_LIST_FIELDS = [
   "featured_media",
   "acf",
   "clearfact_editorial",
+  "clearfact_column",
   "_links",
   "_embedded",
 ].join(",");

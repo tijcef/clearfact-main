@@ -22,6 +22,9 @@ const navigationOrder = [
   "law-judiciary",
   "business",
   "education",
+  "opinion-commentary",
+  "the-public-conscience",
+  "video",
   "accountability",
   "entertainment",
   "features",
@@ -41,7 +44,7 @@ const shortNames: Record<string, string> = {
   "law-judiciary": "Judiciary",
 };
 
-const allowedSubcategorySlugs = new Set(["elections"]);
+const allowedSubcategorySlugs = new Set(["elections", "the-public-conscience"]);
 
 /** Old or removed category URLs resolve to their closest surviving section. */
 export const legacyCategoryRedirects: Record<string, string> = {
@@ -128,7 +131,7 @@ function normalizeUniqueCategories(available: WordPressCategory[]) {
  */
 export function filterNavigationCategories(available: WordPressCategory[]) {
   const all = normalizeUniqueCategories(
-    available.filter((category) => Number(category.parent ?? 0) === 0),
+    available.filter((category) => Number(category.parent ?? 0) === 0 || category.slug === "the-public-conscience"),
   );
 
   return {
