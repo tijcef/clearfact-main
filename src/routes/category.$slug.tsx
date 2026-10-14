@@ -122,7 +122,7 @@ export const Route = createFileRoute("/category/$slug")({
     const categoryTitle =
       categoryName.toLowerCase() === "news"
         ? "Latest News | ClearFact News"
-        : ["opinion-commentary", "the-public-conscience", "video"].includes(category.slug)
+        : ["opinion-commentary", "the-public-conscience", "video", "community"].includes(category.slug)
           ? `${categoryName} | ClearFact News`
           : `${categoryName} News | ClearFact News`;
 
@@ -186,6 +186,21 @@ function CategoryPage() {
             : `Verified reports, context and public-interest updates from the ${categoryName} desk.`}
         </p>
       </div>
+
+      {category.slug === "community" && (
+        <section className="mb-8 rounded-xl border border-border bg-card p-5 md:p-6">
+          <h2 className="font-serif text-2xl">What is happening in your community?</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Share local concerns about roads, water, electricity, schools and healthcare,
+            or tell us about community achievements. Include the location, date and
+            supporting evidence where available. Our editors review submissions and
+            verify information before publication.
+          </p>
+          <Link to="/submit-story" className="mt-4 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            Submit a community story
+          </Link>
+        </section>
+      )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(posts) &&

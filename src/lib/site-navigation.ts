@@ -22,6 +22,7 @@ const navigationOrder = [
   "law-judiciary",
   "business",
   "education",
+  "community",
   "opinion-commentary",
   "the-public-conscience",
   "video",

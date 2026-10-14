@@ -54,8 +54,8 @@ function SubmitStory() {
         </div>
         <h1 className="font-serif text-4xl md:text-5xl mt-2">Have information that matters?</h1>
         <p className="text-muted-foreground mt-4 text-lg leading-7">
-          Send ClearFact News a news tip, document, investigation lead or information that may be in
-          the public interest.
+          Send ClearFact News a community story, news tip, document or investigation lead.
+          Tell us about local concerns, essential services and community achievements.
         </p>
       </div>
       <div className="mt-10 grid lg:grid-cols-3 gap-8">

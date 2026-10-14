@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ClearFact Public Conscience
  * Description: Adds commentary and video categories, editorial bylines and an optional first draft. Does not change ads, URLs or SEO settings.
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 if (!defined('ABSPATH')) exit;
 function cf_column_term($name, $slug, $description, $parent = 0) {
@@ -15,8 +15,9 @@ register_activation_hook(__FILE__, function () {
     $opinion = cf_column_term('Opinion / Commentary', 'opinion-commentary', 'Clearly labelled opinions and commentary on governance, accountability and public life.');
     if (is_wp_error($opinion)) wp_die(esc_html($opinion->get_error_message()));
     $column = cf_column_term('The Public Conscience', 'the-public-conscience', 'Emmanuel Sunday Tijwun writes on governance, human dignity and public accountability.', $opinion);
+    $community = cf_column_term('Community', 'community', 'Local reporting on everyday concerns, essential services, community achievements and public accountability.');
     $video = cf_column_term('Video', 'video', 'ClearFact video reports, interviews and commentary.');
-    foreach (array($column, $video) as $term) if (is_wp_error($term)) wp_die(esc_html($term->get_error_message()));
+    foreach (array($column, $video, $community) as $term) if (is_wp_error($term)) wp_die(esc_html($term->get_error_message()));
 });
 add_action('rest_api_init', function () {
     register_rest_field('post', 'clearfact_column', array('get_callback' => function ($object) {
@@ -26,7 +27,7 @@ add_action('rest_api_init', function () {
 });
 add_action('admin_menu', function () {
     add_management_page('The Public Conscience', 'The Public Conscience', 'edit_posts', 'clearfact-column', function () {
-        echo '<div class="wrap"><h1>The Public Conscience</h1><p>Assign column articles to both Opinion / Commentary and The Public Conscience. For videos use the Video category and a WordPress Video or Embed block. Add a featured image before publication.</p><p>This column displays Emmanuel Sunday Tijwun as its byline. Use it only for his commentary.</p><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';
+        echo '<div class="wrap"><h1>The Public Conscience</h1><p>Assign column articles to both Opinion / Commentary and The Public Conscience. For community reports use the Community category. Readers can send tips through clearfact.ng/submit-story for editorial review. For videos use the Video category and a WordPress Video or Embed block. Add a featured image before publication.</p><p>This column displays Emmanuel Sunday Tijwun as its byline. Use it only for his commentary.</p><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';
         wp_nonce_field('cf_column_draft');
         echo '<input type="hidden" name="action" value="cf_column_draft">';
         submit_button('Create first commentary draft');
