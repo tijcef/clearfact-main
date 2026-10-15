@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/submit-story")({
   head: () => ({
@@ -29,7 +29,10 @@ export const Route = createFileRoute("/submit-story")({
 });
 
 function SubmitStory() {
-  function openTipEmail(event: FormEvent<HTMLFormElement>) {
+  const [busy, setBusy] = useState(false);
+  const [received, setReceived] = useState(false);
+  const [error, setError] = useState("");
+  async function openTipEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
@@ -41,15 +44,44 @@ function SubmitStory() {
     const publishName = form.get("name_credit") === "publish";
     if (publishName && !senderName) {
       const nameInput = event.currentTarget.elements.namedItem("sender_name") as HTMLInputElement;
-      nameInput.setCustomValidity("Enter the name you would like published, or choose to keep your name private.");
+      nameInput.setCustomValidity(
+        "Enter the name you would like published, or choose to keep your name private.",
+      );
       nameInput.reportValidity();
       return;
     }
-    const body = encodeURIComponent(
-      `Sender name (for editorial use): ${senderName || "Not provided"}\nName publication preference: ${publishName ? "Permission to publish with my name: " + senderName : "Keep my name private; do not publish it"}\n\nStory details:\n${story}\n\nSupporting evidence or links:\n${evidence || "None listed"}\n\nPreferred contact:\n${contact}`,
-    );
-
-    window.location.href = `mailto:editor@clearfact.ng?subject=${encodeURIComponent(`News tip — ${subject}`)}&body=${body}`;
+    setBusy(true);
+    setError("");
+    setReceived(false);
+    try {
+      const response = await fetch("/api/wp/clearfact-story-tip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject,
+          story,
+          evidence,
+          contact,
+          sender_name: senderName,
+          name_credit: publishName ? "publish" : "private",
+          website: String(form.get("website") || ""),
+        }),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(
+          response.status === 404
+            ? "Online submissions are not available yet. Please use the editorial email below."
+            : result?.message ||
+                "Could not send your story. Please try again or email the editorial desk.",
+        );
+      }
+      setReceived(true);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not send your story.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -62,8 +94,8 @@ function SubmitStory() {
         </div>
         <h1 className="font-serif text-4xl md:text-5xl mt-2">Have information that matters?</h1>
         <p className="text-muted-foreground mt-4 text-lg leading-7">
-          Send ClearFact News a community story, news tip, document or investigation lead.
-          Tell us about local concerns, essential services and community achievements.
+          Send ClearFact News a community story, news tip, document or investigation lead. Tell us
+          about local concerns, essential services and community achievements.
         </p>
       </div>
       <div className="mt-10 grid lg:grid-cols-3 gap-8">
@@ -123,6 +155,7 @@ function SubmitStory() {
         {/* SUBMISSION FORM */}
         <section className="lg:col-span-2">
           <form
+            aria-busy={busy}
             onSubmit={openTipEmail}
             className="rounded-sm border border-border p-6 md:p-8 bg-card space-y-5"
           >
@@ -134,20 +167,55 @@ function SubmitStory() {
               </p>
             </div>
 
-            <fieldset className="rounded-sm border border-border p-4 space-y-3">
+            <div hidden aria-hidden="true">
+              <label>
+                Website
+                <input name="website" tabIndex={-1} autoComplete="off" />
+              </label>
+            </div>
+            {received && (
+              <p role="status" className="rounded-lg border border-border bg-accent p-4">
+                Your story has been received for editorial review. It has not been published.
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+            <fieldset
+              disabled={busy || received}
+              className="rounded-sm border border-border p-4 space-y-3"
+            >
               <legend className="px-1 text-sm font-semibold">How should we credit you?</legend>
               <label className="flex items-start gap-3 text-sm">
-                <input type="radio" name="name_credit" value="private" defaultChecked onChange={(event) => {
-                  const nameInput = event.currentTarget.form?.elements.namedItem("sender_name") as HTMLInputElement | null;
-                  nameInput?.setCustomValidity("");
-                }} className="mt-1 accent-primary" />
+                <input
+                  type="radio"
+                  name="name_credit"
+                  value="private"
+                  defaultChecked
+                  onChange={(event) => {
+                    const nameInput = event.currentTarget.form?.elements.namedItem(
+                      "sender_name",
+                    ) as HTMLInputElement | null;
+                    nameInput?.setCustomValidity("");
+                  }}
+                  className="mt-1 accent-primary"
+                />
                 <span>Keep my name private. Do not publish it.</span>
               </label>
               <label className="flex items-start gap-3 text-sm">
-                <input type="radio" name="name_credit" value="publish" className="mt-1 accent-primary" />
+                <input
+                  type="radio"
+                  name="name_credit"
+                  value="publish"
+                  className="mt-1 accent-primary"
+                />
                 <span>You may publish this story with my name.</span>
               </label>
-              <label htmlFor="tip-name" className="text-sm font-medium block">Your name or preferred published credit</label>
+              <label htmlFor="tip-name" className="text-sm font-medium block">
+                Your name or preferred published credit
+              </label>
               <input
                 id="tip-name"
                 name="sender_name"
@@ -158,9 +226,9 @@ function SubmitStory() {
                 placeholder="Required if you want your name published"
               />
               <p className="text-xs text-muted-foreground leading-5">
-                If you choose to keep your name private, you may leave the name field blank.
-                Your email address and any details you send remain visible to the editorial team.
-                This preference controls public credit; it does not make email anonymous.
+                If you choose to keep your name private, you may leave the name field blank. Your
+                email address and any details you send remain visible to the editorial team. This
+                preference controls public credit; it does not make your submission anonymous.
                 Editors will review your story and credit preference before publication.
               </p>
             </fieldset>
@@ -173,6 +241,8 @@ function SubmitStory() {
               <input
                 id="tip-subject"
                 name="subject"
+                minLength={3}
+                maxLength={240}
                 className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
                 placeholder="What is the story about?"
                 required
@@ -187,6 +257,8 @@ function SubmitStory() {
               <textarea
                 id="tip-story"
                 name="story"
+                minLength={30}
+                maxLength={30000}
                 rows={10}
                 className="w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary resize-y"
                 placeholder="Describe what happened, who is involved, when it happened, where it happened and why you believe it is important..."
@@ -202,6 +274,7 @@ function SubmitStory() {
               <textarea
                 id="tip-evidence"
                 name="evidence"
+                maxLength={10000}
                 rows={5}
                 className="w-full p-3 rounded-sm border border-border bg-background outline-none focus:border-primary resize-y"
                 placeholder="Paste relevant document links, URLs or additional evidence..."
@@ -216,6 +289,7 @@ function SubmitStory() {
               <input
                 id="tip-contact"
                 name="contact"
+                maxLength={300}
                 className="h-11 w-full px-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
                 placeholder="Optional email or other contact method"
               />
@@ -244,15 +318,16 @@ function SubmitStory() {
 
             <button
               type="submit"
+              disabled={busy || received}
               className="h-11 px-6 rounded-sm bg-gold text-gold-foreground font-semibold"
             >
-              Open email to submit
+              {busy ? "Sending…" : received ? "Story received" : "Submit for editorial review"}
             </button>
 
             <p className="text-xs text-muted-foreground leading-5">
-              This opens your email app with the tip filled in. You can review it and attach files
-              before sending. Submissions are reviewed for editorial relevance and verification;
-              submission does not guarantee publication.
+              Your story is sent to the private editorial inbox. Include links to supporting files.
+              Editors review submissions before publication; submission does not guarantee
+              publication.
             </p>
           </form>
         </section>

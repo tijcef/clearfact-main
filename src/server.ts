@@ -264,15 +264,23 @@ async function proxyWordPressRequest(
     restPath = restPath.slice("/wp/v2".length);
   }
 
-  if (!/^\/(?:posts|categories|tags|comments|users)(?:\/|$)/.test(restPath)) {
+  if (!/^\/(?:posts|categories|tags|comments|users|clearfact-story-tip)(?:\/|$)/.test(restPath)) {
     return new Response("Not found", { status: 404 });
   }
 
   const method = request.method.toUpperCase();
   const cache = method === "GET" ? getDefaultCache() : undefined;
   const isCommentWrite = method === "POST" && restPath === "/comments";
+  const isStoryTip = restPath === "/clearfact-story-tip";
+  if (isStoryTip && method !== "POST") return new Response("Method not allowed", { status: 405 });
+  if (isStoryTip) {
+    const declaredSize = Number(request.headers.get("content-length") || 0);
+    if (declaredSize > 150000) return new Response("Submission too large", { status: 413 });
+    const body = await request.clone().arrayBuffer();
+    if (body.byteLength > 150000) return new Response("Submission too large", { status: 413 });
+  }
 
-  if (!["GET", "HEAD"].includes(method) && !isCommentWrite) {
+  if (!["GET", "HEAD"].includes(method) && !isCommentWrite && !isStoryTip) {
     return new Response("Method not allowed", {
       status: 405,
       headers: { allow: restPath === "/comments" ? "GET, HEAD, POST" : "GET, HEAD" },

@@ -1,8 +1,11 @@
+import { VideoLabel } from "@/components/site/VideoLabel";
 import AdSense from "@/components/AdSense";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdjacentPosts,
+  getArticlePreview,
+  isVideoPost,
   getArticleQuality,
   getExternalCitationUrls,
   getFeaturedImageUrl,
@@ -86,12 +89,15 @@ export const Route = createFileRoute("/post/$slug")({
 
     const author = post._embedded?.author?.[0];
 
-    const authorName = post.clearfact_column?.byline || author?.name || post.authors?.[0]?.display_name || SITE_NAME;
+    const authorName =
+      post.clearfact_column?.byline || author?.name || post.authors?.[0]?.display_name || SITE_NAME;
 
     const authorId = Number(author?.id || post.author || 0);
 
     const authorUrl =
-      !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0 ? `${SITE_ORIGIN}/author/${authorId}` : undefined;
+      !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0
+        ? `${SITE_ORIGIN}/author/${authorId}`
+        : undefined;
 
     const citations = getExternalCitationUrls(post.content?.rendered || "");
     const quality = getArticleQuality(post);
@@ -399,7 +405,10 @@ function ArticlePage() {
 
   const featuredImage = getFeaturedImageUrl(post, "", "large");
 
-  const cleanContent = sanitizeWpArticleHtml(post.content?.rendered || "", post.clearfact_video_url || "");
+  const cleanContent = sanitizeWpArticleHtml(
+    post.content?.rendered || "",
+    post.clearfact_video_url || "",
+  );
 
   const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 
@@ -412,22 +421,27 @@ function ArticlePage() {
   const categorySlug = category ? getPublicCategorySlug(category.slug) : "news";
 
   const authorName =
-    post.clearfact_column?.byline || post._embedded?.author?.[0]?.name || post.authors?.[0]?.display_name || SITE_NAME;
+    post.clearfact_column?.byline ||
+    post._embedded?.author?.[0]?.name ||
+    post.authors?.[0]?.display_name ||
+    SITE_NAME;
 
   const authorId = Number(post._embedded?.author?.[0]?.id || post.author || 0);
 
-  const hasAuthorProfile = !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0;
+  const hasAuthorProfile =
+    !post.clearfact_column?.byline && Number.isInteger(authorId) && authorId > 0;
 
   const embeddedAuthorDescription = stripHtml(post._embedded?.author?.[0]?.description || "");
 
-  const authorDescription = post.clearfact_column?.designation || (
-    embeddedAuthorDescription.length >= 80
+  const authorDescription =
+    post.clearfact_column?.designation ||
+    (embeddedAuthorDescription.length >= 80
       ? embeddedAuthorDescription
       : getClearFactAuthorBio(authorName));
 
   const quality = getArticleQuality(post);
 
-  const excerpt = stripHtml(post.excerpt?.rendered || "");
+  const excerpt = getArticlePreview(post, 280);
 
   const editorialAddedValue = stripHtml(post.clearfact_editorial?.added_value || "");
 
@@ -500,11 +514,15 @@ function ArticlePage() {
 
         {post.clearfact_column?.name && (
           <p className="mb-3 text-sm font-semibold text-primary">
-            <Link to="/category/$slug" params={{ slug: "the-public-conscience" }}>{post.clearfact_column.name}</Link>
+            <Link to="/category/$slug" params={{ slug: "the-public-conscience" }}>
+              {post.clearfact_column.name}
+            </Link>
             <span className="ml-3 text-muted-foreground">Opinion / Commentary</span>
           </p>
         )}
-        {post.clearfact_column?.designation && <p className="mb-4 text-sm text-muted-foreground">{post.clearfact_column.designation}</p>}
+        {post.clearfact_column?.designation && (
+          <p className="mb-4 text-sm text-muted-foreground">{post.clearfact_column.designation}</p>
+        )}
 
         <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-4">
           {articleTitle}
@@ -635,7 +653,8 @@ function ArticlePage() {
             </div>
 
             <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
-              {quality.wordCount.toLocaleString()} words · {externalCitations.length} external source{externalCitations.length === 1 ? "" : "s"}
+              {quality.wordCount.toLocaleString()} words · {externalCitations.length} external
+              source{externalCitations.length === 1 ? "" : "s"}
             </div>
           </div>
 
@@ -654,7 +673,9 @@ function ArticlePage() {
 
           {externalCitations.length > 0 && (
             <>
-              <h3 className="mt-5 text-sm font-bold">External records and sources linked in this report</h3>
+              <h3 className="mt-5 text-sm font-bold">
+                External records and sources linked in this report
+              </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {externalCitations.map((url) => (
                   <li key={url}>
@@ -739,6 +760,7 @@ function ArticlePage() {
                   )}
 
                   <div className="p-5">
+                    {isVideoPost(item) && <VideoLabel />}
                     <h3 className="font-semibold">{stripHtml(item.title.rendered)}</h3>
                   </div>
                 </Link>

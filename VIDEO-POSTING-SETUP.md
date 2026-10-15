@@ -22,3 +22,7 @@ Existing WordPress YouTube embed blocks and standalone YouTube links inside para
 Ad components, eligibility rules, ads.txt, homepage layout, canonical URLs, robots rules, sitemap generation and indexing settings are unchanged. The video field is optional. The plugin stores a URL only; the updated frontend displays the player.
 
 The supplied ZIP is source code for deployment, not a WordPress theme. Upload only the separate video plugin ZIP to WordPress.
+
+## Visible Videos section
+
+Videos now appears in the desktop main navigation, with a separate visible button on phones even while the menu is closed. Latest Videos appears just below the lead story on the homepage, with play symbols on thumbnails. It uses the existing /category/video address and needs no visitor login. The previous lower video section is removed to avoid duplication.

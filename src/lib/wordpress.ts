@@ -21,6 +21,7 @@ const LIST_FIELDS = [
   "categories",
   "featured_media",
   "acf",
+  "clearfact_video_url",
   "clearfact_editorial",
   "clearfact_column",
   "authors",
@@ -39,6 +40,7 @@ const CATEGORY_LIST_FIELDS = [
   "categories",
   "featured_media",
   "acf",
+  "clearfact_video_url",
   "clearfact_editorial",
   "clearfact_column",
   "_links",
@@ -413,15 +415,40 @@ export async function getTags() {
   );
 }
 
-export async function searchPosts(query: string, limit = 24) {
-  const posts = await requestJson<any[]>(
-    `/posts${listQuery({
-      search: query,
-      per_page: Math.min(Math.max(limit, 1), 100),
-    })}`,
-    { cacheTtl: 120 },
-  );
-
+export async function searchPosts(
+  query: string,
+  limit = 24,
+  filters: {
+    categoryId?: number;
+    after?: string;
+    before?: string;
+    page?: number;
+    tagId?: number;
+  } = {},
+) {
+  let posts: any[];
+  try {
+    posts = await requestJson<any[]>(
+      `/posts${listQuery({
+        search: query || undefined,
+        categories: filters.categoryId,
+        tags: filters.tagId,
+        after: filters.after ? `${filters.after}T00:00:00` : undefined,
+        before: filters.before ? `${filters.before}T23:59:59` : undefined,
+        page: filters.page || 1,
+        per_page: Math.min(Math.max(limit, 1), 100),
+      })}`,
+      { cacheTtl: 120 },
+    );
+  } catch (error) {
+    if (
+      error instanceof WordPressRequestError &&
+      error.code === "rest_post_invalid_page_number" &&
+      (filters.page || 1) > 1
+    )
+      return [];
+    throw error;
+  }
   primePostCache(posts);
   return posts;
 }
@@ -470,7 +497,7 @@ export async function getPostsByCategory(categoryId: number, limit = 24) {
     `/posts${buildQuery({
       categories: categoryId,
       per_page: Math.min(Math.max(limit, 1), 100),
-      _embed: "wp:featuredmedia",
+      _embed: "wp:featuredmedia,wp:term",
       acf_format: "standard",
       _fields: CATEGORY_LIST_FIELDS,
     })}`,
@@ -586,14 +613,23 @@ export async function getSitemapPosts(maxPages = 500) {
     let batch: SitemapPost[];
     try {
       batch = await requestJson<SitemapPost[]>(
-        `/posts${buildQuery({ per_page: 100, page, status: "publish",
-          orderby: "date", order: "desc",
-          _fields: "id,slug,date,date_gmt,modified,modified_gmt,title" })}`,
+        `/posts${buildQuery({
+          per_page: 100,
+          page,
+          status: "publish",
+          orderby: "date",
+          order: "desc",
+          _fields: "id,slug,date,date_gmt,modified,modified_gmt,title",
+        })}`,
         { cacheTtl: 300 },
       );
     } catch (error) {
-      if (error instanceof WordPressRequestError && error.status === 400 &&
-          error.code === "rest_post_invalid_page_number") break;
+      if (
+        error instanceof WordPressRequestError &&
+        error.status === 400 &&
+        error.code === "rest_post_invalid_page_number"
+      )
+        break;
       throw new Error(`WordPress sitemap page ${page} failed to load.`, { cause: error });
     }
     posts.push(...batch);
@@ -748,7 +784,9 @@ export function getArticleQuality(post: any): ArticleQuality {
     post?.clearfact_editorial && typeof post.clearfact_editorial === "object"
       ? post.clearfact_editorial
       : {};
-  const reportingType = String(editorial.reporting_type ?? "").trim().toLowerCase();
+  const reportingType = String(editorial.reporting_type ?? "")
+    .trim()
+    .toLowerCase();
   const addedValue = stripHtml(String(editorial.added_value ?? ""));
   const checklistComplete = editorial.checklist_complete === true;
   const originalReportingTypes = new Set(["original", "primary_analysis", "fact_check"]);
@@ -881,4 +919,41 @@ export function getExternalCitationUrls(html = "") {
   }
 
   return Array.from(urls).slice(0, 12);
+}
+
+/** Compact plain-text preview, without a repeated headline or media URLs. */
+export function getArticlePreview(post: any, limit = 200) {
+  let text = stripHtml(String(post?.excerpt?.rendered || ""));
+  const title = stripHtml(String(post?.title?.rendered || ""));
+  while (title && text.toLowerCase().startsWith(title.toLowerCase())) {
+    text = text.slice(title.length).replace(/^[\s:|—–-]+/, "");
+  }
+  text = text
+    .replace(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/\S+/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit + 1);
+  return (
+    cut
+      .slice(0, cut.lastIndexOf(" ") > limit / 2 ? cut.lastIndexOf(" ") : limit)
+      .replace(/[.,;:!?]+$/, "") + "…"
+  );
+}
+
+export function isVideoPost(post: any) {
+  return Boolean(
+    post?.clearfact_video_url ||
+    post?.acf?.isVideo ||
+    post?.acf?.is_video ||
+    post?._embedded?.["wp:term"]?.[0]?.some((term: any) => term.slug === "video"),
+  );
+}
+
+export async function getTagId(slug: string): Promise<number | undefined> {
+  const tags = await requestJson<Array<{ id: number }>>(
+    `/tags${buildQuery({ slug, per_page: 1, _fields: "id" })}`,
+    { cacheTtl: 900 },
+  );
+  return tags[0]?.id;
 }

@@ -1,7 +1,9 @@
 import {
   getCategories,
-  getPosts,
-  getPostsByCategory,
+  getTagId,
+  getFeaturedImageUrl,
+  getArticlePreview,
+  isVideoPost,
   normalizeWpSlug,
   searchPosts,
   stripHtml,
@@ -10,15 +12,24 @@ import {
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { filterEditorialCategories } from "@/lib/site-navigation";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
-import { Loader2, Search as SearchIcon, Tag, TrendingUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { VideoLabel } from "@/components/site/VideoLabel";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: (search.q as string) ?? "",
     category: (search.category as string) ?? "",
     tag: (search.tag as string) ?? "",
+    after:
+      typeof search.after === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.after)
+        ? search.after
+        : undefined,
+    before:
+      typeof search.before === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.before)
+        ? search.before
+        : undefined,
   }),
 
   head: () => ({
@@ -48,280 +59,247 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-const TRENDING = ["election", "naira", "fact-check", "tinubu", "lagos", "agriculture", "security"];
-
 function SearchPage() {
-  const { q, category, tag } = Route.useSearch();
+  const search = Route.useSearch();
+  const { q, category, tag, after, before } = search;
   const navigate = Route.useNavigate();
-
+  const generation = useRef(0);
   const [input, setInput] = useState(q);
   const [results, setResults] = useState<any[] | null>(null);
-  const [wordpressCategories, setWordpressCategories] = useState<any[]>([]);
-
+  const [categories, setCategories] = useState<any[]>([]);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [more, setMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   useEffect(() => {
     setInput(q);
   }, [q]);
-
   useEffect(() => {
-    const loadCategories = async () => {
+    let active = true;
+    generation.current += 1;
+    async function load() {
+      setResults(null);
+      setError("");
+      setPage(1);
       try {
-        const data = await getCategories();
-
-        setWordpressCategories(
-          Array.isArray(data)
-            ? filterEditorialCategories(data).filter((item) => item.slug !== "uncategorized")
-            : [],
-        );
-      } catch (error) {
-        console.error("Failed to load categories:", error);
-
-        setWordpressCategories([]);
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setResults(null);
-
-        const selectedCategory = wordpressCategories.find((item: any) => item.slug === category);
-
-        let posts: any[] = [];
-
-        if (selectedCategory) {
-          posts = await getPostsByCategory(selectedCategory.id);
-        } else if (q) {
-          posts = await searchPosts(q);
-        } else {
-          posts = await getPosts();
+        const available = filterEditorialCategories(await getCategories());
+        if (!active) return;
+        setCategories(available);
+        const selected = available.find((item) => item.slug === category);
+        if (category && !selected) {
+          setResults([]);
+          setMore(false);
+          return;
         }
-
-        const filteredPosts = Array.isArray(posts)
-          ? posts.filter((post: any) => {
-              const cleanTitle = post.title?.rendered?.replace(/<[^>]+>/g, "").toLowerCase() || "";
-
-              const cleanExcerpt =
-                post.excerpt?.rendered?.replace(/<[^>]+>/g, "").toLowerCase() || "";
-
-              const searchTerm = q.trim().toLowerCase();
-
-              const matchesSearch =
-                !searchTerm || cleanTitle.includes(searchTerm) || cleanExcerpt.includes(searchTerm);
-
-              const matchesTag =
-                !tag ||
-                post._embedded?.["wp:term"]?.[1]?.some((postTag: any) => postTag.slug === tag);
-
-              return matchesSearch && matchesTag;
-            })
-          : [];
-
-        setResults(filteredPosts);
-      } catch (error) {
-        console.error("Search failed:", error);
-        setResults([]);
+        const tagId = tag ? await getTagId(tag) : undefined;
+        if (tag && !tagId) {
+          setResults([]);
+          setMore(false);
+          return;
+        }
+        const posts = await searchPosts(q, 24, { categoryId: selected?.id, tagId, after, before });
+        if (active) {
+          setResults(posts);
+          setMore(posts.length === 24);
+        }
+      } catch {
+        if (active) {
+          setResults([]);
+          setError("Search is temporarily unavailable. Please try again.");
+        }
       }
-    };
-
-    if (!category || wordpressCategories.length > 0) {
-      loadPosts();
     }
-  }, [q, category, tag, wordpressCategories]);
-
-  const submit = (event: React.FormEvent) => {
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [q, category, tag, after, before]);
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
+    const form = new FormData(event.currentTarget);
+    const from = String(form.get("after") || "");
+    const to = String(form.get("before") || "");
+    if (from && to && from > to) {
+      setError("The start date must be on or before the end date.");
+      return;
+    }
     navigate({
       to: "/search",
       search: {
         q: input.trim(),
-        category,
+        category: String(form.get("category") || ""),
         tag,
+        after: from || undefined,
+        before: to || undefined,
       },
     });
   };
-
+  const loadMore = async () => {
+    const current = generation.current;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const selected = categories.find((item) => item.slug === category);
+      const tagId = tag ? await getTagId(tag) : undefined;
+      const posts = await searchPosts(q, 24, {
+        categoryId: selected?.id,
+        tagId,
+        after,
+        before,
+        page: page + 1,
+      });
+      if (current !== generation.current) return;
+      setResults((previous) => [
+        ...new Map([...(previous || []), ...posts].map((item) => [item.id, item])).values(),
+      ]);
+      setPage((value) => value + 1);
+      setMore(posts.length === 24);
+    } catch {
+      if (current === generation.current)
+        setError("Could not load more results. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
   return (
-    <div className="container-news py-10">
+    <main className="container-news py-8 md:py-10">
       <h1 className="font-serif text-3xl">Search ClearFact</h1>
-
-      <form onSubmit={submit} className="mt-4 flex gap-2 max-w-2xl">
-        <label className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
+      <form
+        key={`${category}:${after}:${before}:${categories.length}`}
+        onSubmit={submit}
+        className="mt-5 max-w-4xl space-y-4 rounded-xl border border-border p-4 md:p-6"
+      >
+        <label className="block text-sm font-semibold">
+          Keyword or topic
           <input
+            aria-label="Keyword or topic"
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Search news, investigations, reports and topics…"
-            className="w-full h-11 pl-9 pr-3 rounded-sm border border-border bg-background outline-none focus:border-primary"
+            placeholder="Search news, investigations and topics…"
+            className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 font-normal"
           />
         </label>
-
-        <button
-          type="submit"
-          className="h-11 px-5 rounded-sm bg-primary text-primary-foreground font-semibold"
-        >
-          Search
-        </button>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="text-sm font-semibold">
+            Category
+            <select
+              name="category"
+              defaultValue={category}
+              className="mt-2 h-11 w-full rounded-md border border-border bg-background px-2 font-normal"
+            >
+              <option value="">All categories</option>
+              {categories.map((item) => (
+                <option key={item.slug} value={item.slug}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-semibold">
+            From date
+            <input
+              type="date"
+              name="after"
+              defaultValue={after}
+              className="mt-2 h-11 w-full min-w-0 rounded-md border border-border bg-background px-2 font-normal"
+            />
+          </label>
+          <label className="text-sm font-semibold">
+            To date
+            <input
+              type="date"
+              name="before"
+              defaultValue={before}
+              className="mt-2 h-11 w-full min-w-0 rounded-md border border-border bg-background px-2 font-normal"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <button className="h-11 rounded-md bg-primary px-6 font-semibold text-primary-foreground">
+            Search
+          </button>
+          <Link
+            to="/search"
+            search={{ q: "", category: "", tag: "", after: undefined, before: undefined }}
+            className="text-sm font-semibold text-primary hover:underline"
+          >
+            Clear filters
+          </Link>
+        </div>
       </form>
-
-      <div className="mt-6 grid lg:grid-cols-4 gap-8">
-        <aside className="space-y-6">
-          <div>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-              Categories
-            </h3>
-
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link
-                  to="/search"
-                  search={{
-                    q,
-                    category: "",
-                    tag,
-                  }}
-                  className={`block px-2 py-1 rounded-sm ${
-                    !category ? "bg-accent font-semibold" : "hover:bg-accent"
-                  }`}
-                >
-                  All
-                </Link>
-              </li>
-
-              {wordpressCategories.map((item: any) => (
-                <li key={item.id}>
+      {tag && <p className="mt-4 text-sm">Tag: {tag}</p>}
+      {error && (
+        <p role="alert" className="mt-5 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      <section aria-live="polite" aria-busy={results === null} className="mt-8 max-w-4xl">
+        {results === null ? (
+          <p className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Searching…
+          </p>
+        ) : !results.length ? (
+          <p>No stories found. Try a broader keyword or date range.</p>
+        ) : (
+          <>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Showing {results.length} {results.length === 1 ? "story" : "stories"}
+              {more ? " · More available below" : ""}
+            </p>
+            <ul className="space-y-6">
+              {results.map((post) => (
+                <li key={post.id} className="border-b border-border pb-6">
                   <Link
-                    to="/search"
-                    search={{
-                      q,
-                      category: item.slug,
-                      tag,
-                    }}
-                    className={`block px-2 py-1 rounded-sm ${
-                      category === item.slug ? "bg-accent font-semibold" : "hover:bg-accent"
-                    }`}
+                    to="/post/$slug"
+                    params={{ slug: normalizeWpSlug(post.slug) }}
+                    className="group flex flex-col gap-4 sm:flex-row"
                   >
-                    {item.name}
+                    <div className="relative shrink-0 overflow-hidden rounded-lg sm:w-44">
+                      <img
+                        src={getFeaturedImageUrl(post, "/logo.jpg", "medium")}
+                        alt=""
+                        loading="lazy"
+                        className="aspect-video w-full object-cover"
+                      />
+                      {isVideoPost(post) && (
+                        <span className="absolute bottom-2 left-2">
+                          <VideoLabel />
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-serif text-xl group-hover:underline">
+                        {stripHtml(post.title.rendered)}
+                      </h2>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {getArticlePreview(post)}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {new Date(post.date).toLocaleDateString("en-NG", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          timeZone: "Africa/Lagos",
+                        })}
+                      </p>
+                    </div>
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1">
-              <TrendingUp className="h-3.5 w-3.5" />
-              Trending
-            </h3>
-
-            <div className="flex flex-wrap gap-1.5">
-              {TRENDING.map((item) => (
-                <Link
-                  key={item}
-                  to="/search"
-                  search={{
-                    q: item,
-                    category: "",
-                    tag: "",
-                  }}
-                  className="text-xs px-2 py-1 rounded-sm border border-border hover:bg-accent"
-                >
-                  #{item}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <div className="lg:col-span-3">
-          {(category || tag) && (
-            <div className="mb-4 flex gap-2 flex-wrap text-xs">
-              {category && (
-                <Link
-                  to="/search"
-                  search={{
-                    q,
-                    category: "",
-                    tag,
-                  }}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-primary text-primary-foreground"
-                >
-                  Category:{" "}
-                  {wordpressCategories.find((item: any) => item.slug === category)?.name ||
-                    category}{" "}
-                  ✕
-                </Link>
-              )}
-
-              {tag && (
-                <Link
-                  to="/search"
-                  search={{
-                    q,
-                    category,
-                    tag: "",
-                  }}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-gold text-gold-foreground"
-                >
-                  <Tag className="h-3 w-3" />
-                  {tag} ✕
-                </Link>
-              )}
-            </div>
-          )}
-
-          {results === null ? (
-            <div className="py-10 flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Searching…
-            </div>
-          ) : results.length === 0 ? (
-            <div className="py-10 text-muted-foreground">
-              No results. Try a different keyword or category.
-            </div>
-          ) : (
-            <>
-              <p className="mb-6 text-sm text-muted-foreground">
-                {results.length} {results.length === 1 ? "result" : "results"} found
-              </p>
-
-              <ul className="space-y-6">
-                {results.map((post: any) => (
-                  <li key={post.id} className="pb-6 border-b border-border last:border-0">
-                    <Link
-                      to="/post/$slug"
-                      params={{
-                        slug: normalizeWpSlug(post.slug),
-                      }}
-                    >
-                      <h3 className="font-serif text-xl hover:underline decoration-gold underline-offset-4">
-                        {stripHtml(post.title.rendered)}
-                      </h3>
-                    </Link>
-
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {stripHtml(post.excerpt.rendered)}
-                    </p>
-
-                    <div className="text-xs text-muted-foreground mt-2">
-                      {new Date(post.date).toLocaleDateString("en-NG", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        timeZone: "Africa/Lagos",
-                      })}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+            {more && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="mt-6 min-h-11 rounded-md border border-border px-5 font-semibold disabled:opacity-60"
+              >
+                {loadingMore ? "Loading…" : "Load more stories"}
+              </button>
+            )}
+          </>
+        )}
+      </section>
+    </main>
   );
 }

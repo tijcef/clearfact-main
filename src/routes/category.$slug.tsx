@@ -1,6 +1,9 @@
+import { VideoLabel } from "@/components/site/VideoLabel";
 import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import {
   getCategories,
+  getArticlePreview,
+  isVideoPost,
   getFeaturedImageUrl,
   getPostsByCategory,
   normalizeWpSlug,
@@ -122,7 +125,9 @@ export const Route = createFileRoute("/category/$slug")({
     const categoryTitle =
       categoryName.toLowerCase() === "news"
         ? "Latest News | ClearFact News"
-        : ["opinion-commentary", "the-public-conscience", "video", "community"].includes(category.slug)
+        : ["opinion-commentary", "the-public-conscience", "video", "community"].includes(
+              category.slug,
+            )
           ? `${categoryName} | ClearFact News`
           : `${categoryName} News | ClearFact News`;
 
@@ -191,12 +196,14 @@ function CategoryPage() {
         <section className="mb-8 rounded-xl border border-border bg-card p-5 md:p-6">
           <h2 className="font-serif text-2xl">What is happening in your community?</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Share local concerns about roads, water, electricity, schools and healthcare,
-            or tell us about community achievements. Include the location, date and
-            supporting evidence where available. Our editors review submissions and
-            verify information before publication.
+            Share local concerns about roads, water, electricity, schools and healthcare, or tell us
+            about community achievements. Include the location, date and supporting evidence where
+            available. Our editors review submissions and verify information before publication.
           </p>
-          <Link to="/submit-story" className="mt-4 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">
+          <Link
+            to="/submit-story"
+            className="mt-4 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
             Submit a community story
           </Link>
         </section>
@@ -210,14 +217,25 @@ function CategoryPage() {
               className="border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 bg-card"
             >
               {getFeaturedImageUrl(post) && (
-                <img
-                  src={getFeaturedImageUrl(post, "", "medium_large")}
-                  alt={stripHtml(post.title?.rendered)}
-                  className="w-full h-48 object-cover"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                />
+                <Link
+                  to="/post/$slug"
+                  params={{ slug: normalizeWpSlug(post.slug) }}
+                  className="relative block"
+                >
+                  <img
+                    src={getFeaturedImageUrl(post, "", "medium_large")}
+                    alt={stripHtml(post.title?.rendered)}
+                    className="w-full h-48 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  />
+                  {(category.slug === "video" || isVideoPost(post)) && (
+                    <span className="absolute bottom-3 left-3">
+                      <VideoLabel />
+                    </span>
+                  )}
+                </Link>
               )}
 
               <div className="p-4">
@@ -227,12 +245,9 @@ function CategoryPage() {
                   </h2>
                 </Link>
 
-                <div
-                  className="text-sm text-muted-foreground mt-2 line-clamp-3"
-                  dangerouslySetInnerHTML={{
-                    __html: post.excerpt.rendered,
-                  }}
-                />
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+                  {getArticlePreview(post)}
+                </p>
               </div>
             </article>
           ))}

@@ -355,3 +355,12 @@
 .article-body .clearfact-video-portrait { max-width: 360px; }
 .article-body .clearfact-video-portrait iframe { aspect-ratio: 9 / 16; }
 .article-body .clearfact-video > p { margin: .5rem 0 0; font-size: .875rem; text-align: center; }
+
+/* Keep long article text readable without changing ad containers. */
+.article-body { min-width: 0; overflow-wrap: anywhere; }
+.article-body :where(img, video) { height: auto; }
+@media (max-width: 639px) {
+  .article-body { font-size: 1rem; line-height: 1.8; }
+  .article-body :where(h2) { font-size: 1.5rem; line-height: 1.3; }
+  .article-body :where(h3, h4) { font-size: 1.2rem; line-height: 1.4; }
+}

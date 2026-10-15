@@ -1,8 +1,12 @@
+import { VideoLabel } from "@/components/site/VideoLabel";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   getCategories,
+  getArticlePreview,
+  isVideoPost,
   getFeaturedImageUrl,
   getPosts,
+  getPostsByCategory,
   normalizeWpSlug,
   stripHtml,
 } from "../lib/wordpress";
@@ -11,10 +15,7 @@ import { filterNavigationCategories } from "@/lib/site-navigation";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [postResult, categoryResult] = await Promise.allSettled([
-      getPosts(24),
-      getCategories(),
-    ]);
+    const [postResult, categoryResult] = await Promise.allSettled([getPosts(24), getCategories()]);
 
     if (postResult.status === "rejected") {
       console.error("Homepage posts failed to load:", postResult.reason);
@@ -24,7 +25,19 @@ export const Route = createFileRoute("/")({
       console.error("Homepage categories failed to load:", categoryResult.reason);
     }
 
+    const availableCategories = categoryResult.status === "fulfilled" ? categoryResult.value : [];
+    const videoCategory = availableCategories.find((category) => category.slug === "video");
+    let videoPosts: any[] = [];
+    if (videoCategory?.id) {
+      try {
+        videoPosts = await getPostsByCategory(videoCategory.id, 3);
+      } catch (error) {
+        console.error("Homepage videos failed to load:", error);
+      }
+    }
+
     return {
+      videoPosts,
       posts:
         postResult.status === "fulfilled" && Array.isArray(postResult.value)
           ? postResult.value
@@ -178,7 +191,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { posts, categories } = Route.useLoaderData();
+  const { posts, categories, videoPosts } = Route.useLoaderData();
 
   if (!posts.length) {
     return (
@@ -252,7 +265,7 @@ function Home() {
 
         <div className="flex flex-col justify-center p-6 md:p-8 lg:p-10">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-red-600">
-            Lead Story
+            {isVideoPost(heroPost) ? "Lead Story · Video" : "Lead Story"}
           </p>
           <div className="flex gap-2 flex-wrap mb-4">
             {heroPost._embedded?.["wp:term"]?.[0]?.map((cat: any) => (
@@ -297,14 +310,18 @@ function Home() {
               "ClearFact News"}
           </p>
 
-          <div
-            className="mt-5 line-clamp-4 text-base leading-relaxed text-muted-foreground"
-            dangerouslySetInnerHTML={{
-              __html: heroPost.excerpt.rendered,
-            }}
-          />
+          <p className="mt-5 line-clamp-4 text-base leading-relaxed text-muted-foreground">
+            {getArticlePreview(heroPost, 240)}
+          </p>
         </div>
       </section>
+
+      <CategorySection
+        title="Latest Videos"
+        slug="video"
+        posts={videoPosts.length ? videoPosts : posts}
+        prefiltered={videoPosts.length > 0}
+      />
 
       {topStories.length > 0 && (
         <section className="mb-16">
@@ -324,6 +341,7 @@ function Home() {
                   />
 
                   <div className="p-4">
+                    {isVideoPost(post) && <VideoLabel />}
                     <h3 className="text-lg font-bold leading-tight">
                       {stripHtml(post.title.rendered)}
                     </h3>
@@ -337,7 +355,9 @@ function Home() {
 
       <section className="mb-12 grid gap-5 rounded-2xl border border-border bg-muted/25 p-6 md:grid-cols-3 md:p-8">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">ClearFact standard</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">
+            ClearFact standard
+          </p>
           <h2 className="mt-2 font-serif text-2xl font-bold">Reporting that adds context</h2>
         </div>
         <p className="text-sm leading-7 text-muted-foreground">
@@ -388,6 +408,7 @@ function Home() {
                 />
 
                 <div className="p-5">
+                  {isVideoPost(post) && <VideoLabel />}
                   <h3 className="text-2xl font-bold leading-tight">
                     {stripHtml(post.title.rendered)}
                   </h3>
@@ -416,14 +437,16 @@ function Home() {
         </section>
       )}
 
-      {homepageCategories.map((category) => (
-        <CategorySection
-          key={category.slug}
-          title={category.name}
-          slug={category.slug}
-          posts={posts}
-        />
-      ))}
+      {homepageCategories
+        .filter((category) => category.slug !== "video")
+        .map((category) => (
+          <CategorySection
+            key={category.slug}
+            title={category.name}
+            slug={category.slug}
+            posts={posts}
+          />
+        ))}
 
       <section className="content-auto mb-16 rounded-2xl bg-primary p-8 text-primary-foreground md:flex md:items-center md:justify-between md:gap-8 md:p-12">
         <div>

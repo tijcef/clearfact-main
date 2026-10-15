@@ -38,11 +38,12 @@ const navigationOrder = [
   "world",
 ];
 
-const mainNavigationSlugs = new Set(navigationOrder.slice(0, 6));
+const mainNavigationSlugs = new Set([...navigationOrder.slice(0, 6), "video"]);
 
 const shortNames: Record<string, string> = {
   "crime-security": "Security",
   "law-judiciary": "Judiciary",
+  video: "Videos",
 };
 
 const allowedSubcategorySlugs = new Set(["elections", "the-public-conscience"]);

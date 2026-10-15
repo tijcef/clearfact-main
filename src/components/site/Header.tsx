@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, Search, ShieldCheck, X } from "lucide-react";
+import { Menu, Play, Search, ShieldCheck, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { SocialFollow } from "./SocialMedia";
 import { getCategories, normalizeWpSlug, primePostCache, stripHtml } from "@/lib/wordpress";
@@ -37,18 +37,22 @@ function isTickerPostList(value: unknown): value is TickerPost[] {
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-3 md:gap-4" aria-label="ClearFact News home">
+    <Link
+      to="/"
+      className="flex min-w-0 items-center gap-2 md:gap-4"
+      aria-label="ClearFact News home"
+    >
       <img
         src="/logo.jpg"
         alt="ClearFact News logo"
-        className="h-11 w-auto object-contain md:h-12"
+        className="h-9 w-auto object-contain sm:h-11 md:h-12"
         width="120"
         height="120"
         decoding="async"
       />
 
       <div>
-        <div className="text-3xl font-black tracking-tight transition-colors hover:text-red-600 md:text-4xl">
+        <div className="text-2xl sm:text-3xl font-black tracking-tight transition-colors hover:text-red-600 md:text-4xl">
           ClearFact
         </div>
 
@@ -235,8 +239,8 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
       </div>
 
       {/* Main bar */}
-      <div className="container-news flex min-h-20 items-center justify-between gap-4 py-3 md:min-h-24">
-        <div className="flex items-center gap-3 md:gap-4">
+      <div className="container-news flex min-h-20 items-center justify-between gap-2 sm:gap-4 py-3 md:min-h-24">
+        <div className="flex min-w-0 items-center gap-2 md:gap-4">
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -248,6 +252,16 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
 
           <Logo />
         </div>
+
+        <Link
+          to="/category/$slug"
+          params={{ slug: "video" }}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 lg:hidden"
+          onClick={() => setOpen(false)}
+        >
+          <Play className="h-4 w-4" aria-hidden="true" />
+          Videos
+        </Link>
 
         <form
           className="hidden md:flex items-center gap-2 max-w-md w-full"
@@ -286,7 +300,7 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
         aria-label="News sections"
       >
         <div className="container-news flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 py-2 text-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
+          <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-1 lg:gap-2">
             {activeMainCategories.map((category) => (
               <Link
                 key={category.slug}
@@ -299,6 +313,9 @@ export function Header({ categories = [] }: { categories?: WordPressCategory[] }
                 }}
                 onClick={() => setOpen(false)}
               >
+                {category.slug === "video" && (
+                  <Play className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+                )}
                 {"shortName" in category ? category.shortName : category.name}
               </Link>
             ))}
