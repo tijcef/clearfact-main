@@ -399,7 +399,7 @@ function ArticlePage() {
 
   const featuredImage = getFeaturedImageUrl(post, "", "large");
 
-  const cleanContent = sanitizeWpArticleHtml(post.content?.rendered || "");
+  const cleanContent = sanitizeWpArticleHtml(post.content?.rendered || "", post.clearfact_video_url || "");
 
   const articleUrl = `${SITE_ORIGIN}${getPublicPostPath(post.slug)}`;
 

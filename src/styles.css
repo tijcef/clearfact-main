@@ -348,3 +348,10 @@
     }
   }
 }
+
+/* Scoped video layout: existing article, ad and homepage containers stay unchanged. */
+.article-body .clearfact-video { width: 100%; margin: 1.5rem auto; clear: both; }
+.article-body .clearfact-video iframe { display: block; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; border: 0; }
+.article-body .clearfact-video-portrait { max-width: 360px; }
+.article-body .clearfact-video-portrait iframe { aspect-ratio: 9 / 16; }
+.article-body .clearfact-video > p { margin: .5rem 0 0; font-size: .875rem; text-align: center; }

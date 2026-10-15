@@ -1,3 +1,4 @@
+import { prepareYouTubeContent } from "./youtube";
 export const WP_API = "https://cms.clearfact.ng/wp-json/wp/v2";
 
 const WP_PROXY = "/api/wp";
@@ -841,8 +842,8 @@ export function proxyWpMediaInHtml(html: string) {
   return html.replace(/https?:\/\/cms\.clearfact\.ng\/wp-content\/uploads\//gi, "/media/");
 }
 
-export function sanitizeWpArticleHtml(html = "") {
-  return proxyWpMediaInHtml(html)
+export function sanitizeWpArticleHtml(html = "", videoUrl = "") {
+  return prepareYouTubeContent(proxyWpMediaInHtml(html), videoUrl)
     .replace(/[\u200e\u200f\ufeff]/g, "")
     .replace(/<div[^>]*class=["'][^"']*\bwp-block-spacer\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "")
     .replace(/(?:<br\s*\/?\s*>\s*){3,}/gi, "<br><br>")
