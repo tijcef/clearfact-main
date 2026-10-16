@@ -24,6 +24,7 @@ const LIST_FIELDS = [
   "clearfact_video_url",
   "clearfact_editorial",
   "clearfact_column",
+  "clearfact_publishing",
   "authors",
   "_links",
   "_embedded",
@@ -43,6 +44,7 @@ const CATEGORY_LIST_FIELDS = [
   "clearfact_video_url",
   "clearfact_editorial",
   "clearfact_column",
+  "clearfact_publishing",
   "_links",
   "_embedded",
 ].join(",");
@@ -60,6 +62,12 @@ type CloudflareRequestInit = RequestInit & {
   };
 };
 
+const MAX_CACHE_ENTRIES = 200;
+function remember<T>(cache: Map<string, T>, key: string, value: T) {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
+}
 const memoryCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<unknown>>();
 const serverGetWaiters: Array<() => void> = [];
@@ -168,7 +176,7 @@ export function primePostCache(posts: unknown) {
       typeof post.slug === "string" &&
       typeof post.content?.rendered === "string"
     ) {
-      postDetailCache.set(normalizeWpSlug(post.slug), {
+      remember(postDetailCache, normalizeWpSlug(post.slug), {
         expiresAt: Date.now() + POST_DETAIL_CACHE_TTL_MS,
         post,
       });
@@ -281,7 +289,7 @@ async function requestJson<T>(
         const value = sanitizePublicWordPressData(path, (await response.json()) as T);
 
         if (method === "GET") {
-          memoryCache.set(cacheKey, {
+          remember(memoryCache, cacheKey, {
             expiresAt: Date.now() + cacheTtl * 1_000,
             staleUntil: Date.now() + Math.max(cacheTtl * 1_000, MEMORY_STALE_TTL_MS),
             value,
@@ -874,6 +882,35 @@ export function getFeaturedImageUrl(
       .find(Boolean) ?? "";
 
   return proxyWpMediaUrl(sourceUrl) || fallback;
+}
+
+/** Use only real WordPress variants; browsers choose the appropriate download. */
+export function getFeaturedImageSrcSet(post: any) {
+  const media = post?._embedded?.["wp:featuredmedia"]?.[0];
+  const candidates = new Map<number, string>();
+  for (const size of Object.values(media?.media_details?.sizes ?? {}) as any[]) {
+    if (size?.source_url && Number(size.width) > 0 && !/crop|thumbnail/i.test(size.file ?? "")) {
+      candidates.set(Number(size.width), proxyWpMediaUrl(size.source_url));
+    }
+  }
+  // Do not mix cropped thumbnail aspect ratios into the main image.
+  const width = Number(media?.media_details?.width);
+  const height = Number(media?.media_details?.height);
+  if (!width || !height) return undefined;
+  const variants = Object.values(media?.media_details?.sizes ?? {}) as any[];
+  const entries = [...candidates].filter(([w]) =>
+    variants.some(
+      (v) =>
+        Number(v.width) === w &&
+        Math.abs(Number(v.width) / Number(v.height) - width / height) < 0.03,
+    ),
+  );
+  return (
+    entries
+      .sort(([a], [b]) => a - b)
+      .map(([w, url]) => `${url} ${w}w`)
+      .join(", ") || undefined
+  );
 }
 
 export function proxyWpMediaInHtml(html: string) {

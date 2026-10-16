@@ -1,3 +1,4 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import { VideoLabel } from "@/components/site/VideoLabel";
 import AdSense from "@/components/AdSense";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
@@ -9,6 +10,7 @@ import {
   getArticleQuality,
   getExternalCitationUrls,
   getFeaturedImageUrl,
+  getFeaturedImageSrcSet,
   getPublicPostPath,
   getPostBySlug,
   getRelatedPosts,
@@ -524,6 +526,8 @@ function ArticlePage() {
           <p className="mb-4 text-sm text-muted-foreground">{post.clearfact_column.designation}</p>
         )}
 
+        <EditorialDisclosure post={post} />
+
         <h1 className="text-balance font-serif text-3xl font-bold leading-[1.12] sm:text-4xl md:text-6xl md:leading-tight mb-4">
           {articleTitle}
         </h1>
@@ -604,6 +608,7 @@ function ArticlePage() {
           <figure className="mb-8">
             <img
               src={featuredImage}
+              srcSet={getFeaturedImageSrcSet(post)}
               alt={featuredImageAlt}
               className="w-full rounded-xl"
               loading="eager"
@@ -751,6 +756,7 @@ function ArticlePage() {
                   {getFeaturedImageUrl(item) && (
                     <img
                       src={getFeaturedImageUrl(item, "", "medium_large")}
+                      srcSet={getFeaturedImageSrcSet(item)}
                       alt={stripHtml(item.title.rendered)}
                       className="w-full h-40 object-cover"
                       loading="lazy"

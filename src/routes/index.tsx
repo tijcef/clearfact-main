@@ -1,3 +1,4 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import { VideoLabel } from "@/components/site/VideoLabel";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -5,6 +6,7 @@ import {
   getArticlePreview,
   isVideoPost,
   getFeaturedImageUrl,
+  getFeaturedImageSrcSet,
   getPosts,
   getPostsByCategory,
   normalizeWpSlug,
@@ -15,26 +17,24 @@ import { filterNavigationCategories } from "@/lib/site-navigation";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [postResult, categoryResult] = await Promise.allSettled([getPosts(24), getCategories()]);
-
-    if (postResult.status === "rejected") {
-      console.error("Homepage posts failed to load:", postResult.reason);
-    }
-
-    if (categoryResult.status === "rejected") {
-      console.error("Homepage categories failed to load:", categoryResult.reason);
-    }
-
-    const availableCategories = categoryResult.status === "fulfilled" ? categoryResult.value : [];
-    const videoCategory = availableCategories.find((category) => category.slug === "video");
-    let videoPosts: any[] = [];
-    if (videoCategory?.id) {
-      try {
-        videoPosts = await getPostsByCategory(videoCategory.id, 3);
-      } catch (error) {
-        console.error("Homepage videos failed to load:", error);
-      }
-    }
+    // Start the category-dependent video branch alongside the main news request.
+    const categoriesPromise = getCategories();
+    const videosPromise = categoriesPromise.then(async (categories) => {
+      const videoCategory = categories.find((category) => category.slug === "video");
+      return videoCategory?.id ? getPostsByCategory(videoCategory.id, 3) : [];
+    });
+    const [postResult, categoryResult, videoResult] = await Promise.allSettled([
+      getPosts(24),
+      categoriesPromise,
+      videosPromise,
+    ]);
+    if (postResult.status === "rejected")
+      console.error("Homepage posts failed:", postResult.reason);
+    if (categoryResult.status === "rejected")
+      console.error("Homepage categories failed:", categoryResult.reason);
+    if (videoResult.status === "rejected")
+      console.error("Homepage videos failed:", videoResult.reason);
+    const videoPosts = videoResult.status === "fulfilled" ? videoResult.value : [];
 
     return {
       videoPosts,
@@ -254,6 +254,7 @@ function Home() {
         >
           <img
             src={getFeaturedImageUrl(heroPost, "/logo.jpg", "large")}
+            srcSet={getFeaturedImageSrcSet(heroPost)}
             alt={stripHtml(heroPost.title.rendered)}
             className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.015]"
             loading="eager"
@@ -289,6 +290,7 @@ function Home() {
           </div>
 
           <Link to="/post/$slug" params={{ slug: normalizeWpSlug(heroPost.slug) }}>
+            <EditorialDisclosure post={heroPost} compact />
             <h1 className="text-balance font-serif text-3xl font-black leading-[1.06] hover:underline sm:text-4xl lg:text-5xl">
               {stripHtml(heroPost.title.rendered)}
             </h1>
@@ -333,6 +335,7 @@ function Home() {
                 <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
                   <img
                     src={getFeaturedImageUrl(post, "/logo.jpg", "medium_large")}
+                    srcSet={getFeaturedImageSrcSet(post)}
                     alt={stripHtml(post.title.rendered)}
                     className="w-full h-40 object-cover"
                     loading="lazy"
@@ -342,6 +345,7 @@ function Home() {
 
                   <div className="p-4">
                     {isVideoPost(post) && <VideoLabel />}
+                    <EditorialDisclosure post={post} compact />
                     <h3 className="text-lg font-bold leading-tight">
                       {stripHtml(post.title.rendered)}
                     </h3>
@@ -400,6 +404,7 @@ function Home() {
               <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
                 <img
                   src={getFeaturedImageUrl(post, "/logo.jpg", "medium_large")}
+                  srcSet={getFeaturedImageSrcSet(post)}
                   alt={stripHtml(post.title.rendered)}
                   className="w-full h-56 object-cover"
                   loading="lazy"
@@ -409,6 +414,7 @@ function Home() {
 
                 <div className="p-5">
                   {isVideoPost(post) && <VideoLabel />}
+                  <EditorialDisclosure post={post} compact />
                   <h3 className="text-2xl font-bold leading-tight">
                     {stripHtml(post.title.rendered)}
                   </h3>
@@ -429,6 +435,7 @@ function Home() {
             {trendingPosts.slice(0, 3).map((post: any) => (
               <article key={post.id} className="border rounded-2xl p-5">
                 <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
+                  <EditorialDisclosure post={post} compact />
                   <h3 className="text-xl font-bold">{stripHtml(post.title.rendered)}</h3>
                 </Link>
               </article>

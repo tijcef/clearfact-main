@@ -1,3 +1,4 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import { VideoLabel } from "@/components/site/VideoLabel";
 import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import {
@@ -5,6 +6,7 @@ import {
   getArticlePreview,
   isVideoPost,
   getFeaturedImageUrl,
+  getFeaturedImageSrcSet,
   getPostsByCategory,
   normalizeWpSlug,
   stripHtml,
@@ -224,6 +226,7 @@ function CategoryPage() {
                 >
                   <img
                     src={getFeaturedImageUrl(post, "", "medium_large")}
+                    srcSet={getFeaturedImageSrcSet(post)}
                     alt={stripHtml(post.title?.rendered)}
                     className="w-full h-48 object-cover"
                     loading="lazy"
@@ -240,6 +243,7 @@ function CategoryPage() {
 
               <div className="p-4">
                 <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
+                  <EditorialDisclosure post={post} compact />
                   <h2 className="font-serif text-xl hover:text-primary transition-colors">
                     {stripHtml(post.title.rendered)}
                   </h2>

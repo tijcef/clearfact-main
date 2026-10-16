@@ -1,6 +1,13 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import { Play } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { getFeaturedImageUrl, normalizeWpSlug, stripHtml, isVideoPost } from "@/lib/wordpress";
+import {
+  getFeaturedImageSrcSet,
+  getFeaturedImageUrl,
+  normalizeWpSlug,
+  stripHtml,
+  isVideoPost,
+} from "@/lib/wordpress";
 
 type Props = {
   title: string;
@@ -39,6 +46,7 @@ export default function CategorySection({ title, slug, posts, prefiltered = fals
               <div className="relative">
                 <img
                   src={getFeaturedImageUrl(post, "/logo.jpg", "medium_large")}
+                  srcSet={getFeaturedImageSrcSet(post)}
                   alt={stripHtml(post.title.rendered)}
                   className="w-full h-52 object-cover"
                   loading="lazy"
@@ -59,6 +67,7 @@ export default function CategorySection({ title, slug, posts, prefiltered = fals
               </div>
 
               <div className="p-5">
+                <EditorialDisclosure post={post} compact />
                 <h3 className="text-xl font-bold leading-tight">
                   {stripHtml(post.title.rendered)}
                 </h3>

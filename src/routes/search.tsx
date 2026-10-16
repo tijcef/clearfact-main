@@ -1,7 +1,9 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import {
   getCategories,
   getTagId,
   getFeaturedImageUrl,
+  getFeaturedImageSrcSet,
   getArticlePreview,
   isVideoPost,
   normalizeWpSlug,
@@ -258,6 +260,7 @@ function SearchPage() {
                     <div className="relative shrink-0 overflow-hidden rounded-lg sm:w-44">
                       <img
                         src={getFeaturedImageUrl(post, "/logo.jpg", "medium")}
+                        srcSet={getFeaturedImageSrcSet(post)}
                         alt=""
                         loading="lazy"
                         className="aspect-video w-full object-cover"
@@ -269,6 +272,7 @@ function SearchPage() {
                       )}
                     </div>
                     <div className="min-w-0">
+                      <EditorialDisclosure post={post} compact />
                       <h2 className="font-serif text-xl group-hover:underline">
                         {stripHtml(post.title.rendered)}
                       </h2>

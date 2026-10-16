@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ClearFact Editorial Quality
  * Description: Adds an editorial-value checklist to WordPress and exposes a safe quality signal to the ClearFact frontend.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: ClearFact Media Ltd
  */
 
@@ -104,7 +104,7 @@ function clearfact_quality_payload( $post_id ) {
 	$word_count   = clearfact_quality_word_count( $post->post_content );
 	$source_count = clearfact_quality_external_source_count( $post->post_content );
 	$strong_types = [ 'original', 'primary_analysis', 'fact_check' ];
-	$original_value = $complete && in_array( $reporting_type, $strong_types, true ) && mb_strlen( $added_value ) >= 40;
+	$original_value = $complete && in_array( $reporting_type, $strong_types, true ) && ( function_exists( 'mb_strlen' ) ? mb_strlen( $added_value ) : strlen( $added_value ) ) >= 40;
 	$plain_content = wp_strip_all_tags( $post->post_content );
 	$statement_based = (bool) preg_match( '/\b(?:in|according to) (?:a |an )?(?:press )?statement\b|\bstatement (?:issued|released)\b|\bpress release\b/i', $plain_content );
 	$paragraph_count = preg_match_all( '/<p\b/i', $post->post_content, $paragraph_matches );
@@ -112,8 +112,12 @@ function clearfact_quality_payload( $post_id ) {
 	$has_evidence    = $source_count >= 1 || $original_value;
 	$substantial_unlinked = ! $statement_based && $word_count >= 700 && $paragraph_count >= 8 && $heading_count >= 2;
 
-	$index_ready = ( $word_count >= 220 && $has_evidence ) || ( $word_count >= 350 && $substantial_unlinked );
-	$ad_ready    = $index_ready && $word_count >= 450 && $has_evidence;
+	// Mirror the frontend: published stories are indexable regardless of quality.
+	$index_ready = 'publish' === $post->post_status && '' !== $post->post_name;
+	$excerpt_text = trim( preg_replace( '/\s+/u', ' ', html_entity_decode( wp_strip_all_tags( get_the_excerpt( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) );
+	$title_text = html_entity_decode( wp_strip_all_tags( $post->post_title ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$text_length = static function ( $text ) { return function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text ); };
+	$ad_ready = $word_count >= 450 && $has_evidence && $text_length( $excerpt_text ) >= 70 && $text_length( $title_text ) >= 12 && ( $paragraph_count >= 3 || $heading_count >= 1 );
 
 	return [
 		'reporting_type'        => $reporting_type,
@@ -171,7 +175,7 @@ function clearfact_quality_render_meta_box( $post ) {
 		<li><?php echo esc_html( number_format_i18n( $quality['word_count'] ) ); ?> words</li>
 		<li><?php echo esc_html( number_format_i18n( $quality['external_source_count'] ) ); ?> external source domain(s) linked</li>
 		<li>Statement/press-release language: <strong><?php echo $quality['statement_based'] ? 'detected' : 'not detected'; ?></strong></li>
-		<li>Search indexing: <strong><?php echo $quality['index_ready'] ? 'ready' : 'hold / noindex'; ?></strong></li>
+		<li>Search indexing: <strong><?php echo $quality['index_ready'] ? 'published / indexable' : 'not yet published'; ?></strong></li>
 		<li>Ad placement: <strong><?php echo $quality['ad_ready'] ? 'eligible' : 'not yet'; ?></strong></li>
 	</ul>
 	<p style="font-size:11px;color:#646970">The frontend applies the final quality gate. This checklist does not replace editor review.</p>
@@ -262,7 +266,7 @@ function clearfact_quality_admin_notice() {
 
 	$message = $quality['index_ready']
 		? 'This article can be indexed, but the ClearFact frontend will withhold ad placement until it has stronger sourcing/original-value signals and at least 450 words.'
-		: 'This article is published, but the ClearFact frontend may mark it noindex until it has enough substantive reporting, a useful excerpt and stronger sourcing/original-value signals.';
+		: 'Publication status controls indexing. Editorial completeness does not add noindex. Review the canonical frontend URL after publishing.';
 
 	echo '<div class="notice notice-warning"><p><strong>ClearFact Editorial Quality:</strong> ' . esc_html( $message ) . '</p></div>';
 }

@@ -1,3 +1,7 @@
+# New newsroom and performance update
+
+Read `../NEWSROOM-AND-PERFORMANCE-UPDATE.md` for the current installation and validation instructions. The category cleanup script below is legacy and is not part of this update.
+
 # ClearFact WordPress tools
 
 ## Required for AdSense/search quality: headless SEO guard
@@ -11,7 +15,7 @@ Install `clearfact-headless-seo-guard.php` as a WordPress plugin on `cms.clearfa
 
 ## Required for future content quality: editorial quality checklist
 
-Install `clearfact-editorial-quality.php` as a WordPress plugin. It adds a **ClearFact Editorial Value** panel to the post editor, a quality column to the Posts screen, and a safe `clearfact_editorial` field to the public REST API. The frontend uses that signal together with article length and linked source records to decide whether a page should be indexed and whether an ad unit is eligible to load.
+Install `clearfact-editorial-quality.php` as a WordPress plugin. It adds a **ClearFact Editorial Value** panel to the post editor, a quality column to the Posts screen, and a safe `clearfact_editorial` field to the public REST API. The frontend uses that signal together with article length and linked source records to decide ad eligibility. Published articles with a slug remain indexable; the checklist does not apply noindex.
 
 The checklist does **not** claim that word count alone makes journalism high quality. It is a guardrail against obviously thin, unsourced or lightly rewritten pages. Original interviews, field reporting, document/data analysis and fact checks can be marked as such with a short explanation of what ClearFact added.
 

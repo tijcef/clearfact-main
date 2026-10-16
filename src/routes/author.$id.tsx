@@ -1,3 +1,4 @@
+import { EditorialDisclosure } from "@/components/site/EditorialDisclosure";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, User } from "lucide-react";
@@ -9,6 +10,7 @@ import { getClearFactAuthorBio, hasCuratedAuthorBio } from "@/lib/site-config";
 import {
   getAuthorById,
   getFeaturedImageUrl,
+  getFeaturedImageSrcSet,
   getPostsByAuthor,
   normalizeWpSlug,
   stripHtml,
@@ -72,13 +74,10 @@ export const Route = createFileRoute("/author/$id")({
     const { author, posts } = data;
     const wordpressDescription = stripHtml(author.description || "");
     const description =
-      wordpressDescription.length >= 80
-        ? wordpressDescription
-        : getClearFactAuthorBio(author.name);
+      wordpressDescription.length >= 80 ? wordpressDescription : getClearFactAuthorBio(author.name);
     const canonical = `https://clearfact.ng/author/${author.id}`;
     const avatar = author.avatar_urls?.["96"] || author.avatar_urls?.["48"];
-    const hasSubstantiveBio =
-      wordpressDescription.length >= 80 || hasCuratedAuthorBio(author.name);
+    const hasSubstantiveBio = wordpressDescription.length >= 80 || hasCuratedAuthorBio(author.name);
     const isSubstantialProfile = hasSubstantiveBio && posts.length >= 3;
     const schema = {
       "@context": "https://schema.org",
@@ -140,9 +139,7 @@ function WordPressAuthorPage({ data }: { data: WordPressAuthorData }) {
   const avatar = author.avatar_urls?.["96"] || author.avatar_urls?.["48"];
   const wordpressDescription = stripHtml(author.description || "");
   const description =
-    wordpressDescription.length >= 80
-      ? wordpressDescription
-      : getClearFactAuthorBio(author.name);
+    wordpressDescription.length >= 80 ? wordpressDescription : getClearFactAuthorBio(author.name);
 
   return (
     <main className="container-news py-10 md:py-14">
@@ -184,6 +181,7 @@ function WordPressAuthorPage({ data }: { data: WordPressAuthorData }) {
                 <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
                   <img
                     src={getFeaturedImageUrl(post, "", "medium_large")}
+                    srcSet={getFeaturedImageSrcSet(post)}
                     alt={stripHtml(post.title?.rendered || "")}
                     loading="lazy"
                     decoding="async"
@@ -194,6 +192,7 @@ function WordPressAuthorPage({ data }: { data: WordPressAuthorData }) {
 
               <div className="p-5">
                 <Link to="/post/$slug" params={{ slug: normalizeWpSlug(post.slug) }}>
+                  <EditorialDisclosure post={post} compact />
                   <h3 className="font-serif text-xl font-bold hover:text-primary">
                     {stripHtml(post.title?.rendered || "")}
                   </h3>
